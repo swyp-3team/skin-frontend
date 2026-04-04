@@ -10,6 +10,19 @@
 }
 
 @layer base {
+  :root {
+    color: #1e293b;
+    background: white;
+    font-family:
+      "Pretendard Variable",
+      "Pretendard",
+      "Noto Sans KR",
+      system-ui,
+      sans-serif;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+  }
+
   *,
   *::before,
   *::after {
@@ -27,6 +40,7 @@
     background: white;
     color: #1e293b;
     font-family: var(--font-sans);
+    line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
