@@ -83,7 +83,7 @@ function SurveyPage() {
 
         <fieldset className="flex flex-1 flex-col">
           <legend className="sr-only">피부 타입 선택</legend>
-          <ul className="grid  grid-cols-1 gap-5 p-0 sm:grid-cols-2 sm:gap-7.5">
+          <ul className="grid list-none grid-cols-1 gap-5 p-0 sm:grid-cols-2 sm:gap-7.5">
             {skinTypeOptions.map((option) => {
               const checked = selectedSkinType === option.value;
 
