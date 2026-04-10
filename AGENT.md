@@ -97,7 +97,7 @@
 
 기본 원칙:
 
-- TypeScript strict 설정을 유지합니다 (`tsconfig.app.json`, `tsconfig.node.json`).
+- TypeScript strict 설정을 유지합니다 (`tsconfig.json`, `tsconfig.node.json`).
 - ESLint 규칙을 단일 기준으로 따릅니다 (`eslint.config.js`).
 - React 함수형 컴포넌트 + 훅 패턴을 사용합니다.
 

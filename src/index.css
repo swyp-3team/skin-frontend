@@ -14,10 +14,17 @@
   --color-cta: #121212;
   --color-option-border: #cccccc;
   --color-option-selected: #e7f1ff;
+  --color-login-surface: #ffffff;
+  --color-login-muted: #f7f7f8;
+  --color-login-border: #e3e5e8;
+  --color-login-emphasis: #111827;
+  --color-social-kakao: #fee500;
+  --color-social-kakao-foreground: #1c1c1c;
   --shadow-menu: 0 1px 7px rgba(0, 0, 0, 0.08);
   --shadow-option: 0 4px 12px rgba(0, 0, 0, 0.08);
   --shadow-option-hover: 0 8px 20px rgba(0, 0, 0, 0.12);
   --shadow-cta: 0 4px 10px rgba(0, 0, 0, 0.3);
+  --shadow-dialog: 0 24px 48px rgba(15, 23, 42, 0.16);
 
   /* Fluid typography tokens for improved readability across viewport sizes */
   --text-app-title: clamp(1.25rem, 0.1rem + 5.7vw, 1.5rem);

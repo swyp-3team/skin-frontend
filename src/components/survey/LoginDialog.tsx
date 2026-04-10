@@ -1,10 +1,8 @@
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from "../ui/dialog";
+import GoogleLogo from "@/components/icons/GoogleLogo";
+import KakaoLogo from "@/components/icons/KakaoLogo";
+
+import { Button } from "../ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog";
 
 interface LoginDialogProps {
   open: boolean;
@@ -22,49 +20,53 @@ function LoginDialog({
   onLoginKakao,
 }: LoginDialogProps) {
   return (
-    <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="sm:items-start sm:pt-[25vh]">
-        <div
-          aria-busy={isPromoting}
-          className="flex min-h-[200px] w-full max-w-[360px] flex-col rounded-[10px] border border-slate-200 bg-white px-5 pb-5 pt-4 shadow-sm"
-        >
-          <div className="mb-6 flex items-start justify-between">
-            <div>
-              <DialogTitle className="text-lg text-zinc-800">로그인</DialogTitle>
-              <DialogDescription className="mt-1.5 text-sm text-zinc-600">
-                간편한 소셜로그인으로 빠르게 시작하세요.
-              </DialogDescription>
-            </div>
-            <DialogClose asChild>
-              <button
-                aria-label="로그인 모달 닫기"
-                className="text-2xl leading-none text-slate-500"
-                type="button"
-              >
-                ×
-              </button>
-            </DialogClose>
-          </div>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-[22rem] gap-0 overflow-hidden border border-login-border bg-login-surface p-0 ring-0 shadow-dialog sm:max-w-[24rem]">
+        <DialogHeader className="gap-2 border-b border-login-border bg-linear-to-b from-white to-card-bg px-6 py-5">
+          <DialogTitle className="text-[1.375rem] font-semibold tracking-tight text-slate-950">
+            로그인
+          </DialogTitle>
+          <DialogDescription className="text-sm leading-6 text-slate-600">
+            추천 제품까지 포함된 전체 결과를 확인하려면 간편 로그인으로 이어서 진행하세요.
+          </DialogDescription>
+        </DialogHeader>
 
-          <div className="mt-auto space-y-3">
-            <button
-              autoFocus
-              className="w-full rounded-[10px] bg-[#f3f3f3] px-4 py-2 text-base font-semibold text-slate-900"
-              disabled={isPromoting}
-              onClick={onLoginGoogle}
-              type="button"
-            >
-              Google 계정으로 로그인
-            </button>
-            <button
-              className="w-full rounded-[10px] bg-[#f3f3f3] px-4 py-2 text-base font-semibold text-slate-900"
-              disabled={isPromoting}
-              onClick={onLoginKakao}
-              type="button"
-            >
-              카카오 계정으로 로그인
-            </button>
-          </div>
+        <div className="grid gap-3 px-6 py-5">
+          <p className="rounded-xl border border-login-border bg-login-muted px-4 py-3 text-xs leading-5 text-slate-600">
+            현재 결과는 일부만 보여지고 있어요. 로그인 후 이어서 전체 추천을 바로 확인할 수 있습니다.
+          </p>
+
+          <Button
+            disabled={isPromoting}
+            onClick={onLoginGoogle}
+            variant="outline"
+          >
+            <span className="grid w-full grid-cols-[1.25rem_1fr_1.25rem] items-center gap-3">
+              <GoogleLogo className="size-3.5" />
+              <span className="truncate text-center">
+                {isPromoting ? "로그인 처리 중..." : "Google로 계속하기"}
+              </span>
+              <span aria-hidden="true" className="size-5" />
+            </span>
+          </Button>
+
+          <Button
+            disabled={isPromoting}
+            onClick={onLoginKakao}
+            variant="outline"
+          >
+            <span className="grid w-full grid-cols-[1.25rem_1fr_1.25rem] items-center gap-3">
+              <KakaoLogo className="size-3.5" />
+              <span className="truncate text-center">
+                {isPromoting ? "로그인 처리 중..." : "Kakao로 계속하기"}
+              </span>
+              <span aria-hidden="true" className="size-5" />
+            </span>
+          </Button>
+
+          <p className="text-center text-[11px] leading-5 text-slate-500">
+            계정을 선택하면 현재 설문 결과 화면에서 바로 이어집니다.
+          </p>
         </div>
       </DialogContent>
     </Dialog>
