@@ -1,16 +1,16 @@
-﻿import { Link } from "react-router-dom";
+﻿import { Link } from 'react-router-dom'
 
-import { APP_ROUTES, createRoutineDetailPath } from "../app/routes";
-import PillCtaLink from "../components/common/PillCtaLink";
-import SurfaceCard from "../components/common/SurfaceCard";
-import MobilePage from "../components/MobilePage";
-import { useAuthStore } from "../stores/authStore";
-import { useSurveyStore } from "../stores/surveyStore";
+import { APP_ROUTES, createRoutineDetailPath } from '../app/routes'
+import PillCtaLink from '../components/common/PillCtaLink'
+import SurfaceCard from '../components/common/SurfaceCard'
+import MobilePage from '../components/MobilePage'
+import { useAuthStore } from '../stores/authStore'
+import { useSurveyStore } from '../stores/surveyStore'
 
 function MyPage() {
-  const logoutMock = useAuthStore((state) => state.logoutMock);
-  const nickname = useAuthStore((state) => state.nickname);
-  const result = useSurveyStore((state) => state.lastResult);
+  const logoutMock = useAuthStore((state) => state.logoutMock)
+  const nickname = useAuthStore((state) => state.nickname)
+  const result = useSurveyStore((state) => state.lastResult)
 
   return (
     <MobilePage
@@ -27,9 +27,7 @@ function MyPage() {
       <section className="space-y-5">
         <SurfaceCard>
           <p className="text-xs text-slate-500">안녕하세요</p>
-          <p className="mt-1 text-xl font-semibold text-slate-900">
-            {nickname ?? "레이어드 사용자"}님
-          </p>
+          <p className="mt-1 text-xl font-semibold text-slate-900">{nickname ?? '레이어드 사용자'}님</p>
         </SurfaceCard>
 
         <SurfaceCard className="space-y-3">
@@ -64,7 +62,7 @@ function MyPage() {
         </SurfaceCard>
       </section>
     </MobilePage>
-  );
+  )
 }
 
-export default MyPage;
+export default MyPage

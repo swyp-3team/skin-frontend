@@ -1,10 +1,10 @@
 interface SurveyStepActionsProps {
-  currentStep: number;
-  isSubmitting: boolean;
-  isFinalStep: boolean;
-  onPrev: () => void;
-  onNext: () => void;
-  onSubmit: () => void;
+  currentStep: number
+  isSubmitting: boolean
+  isFinalStep: boolean
+  onPrev: () => void
+  onNext: () => void
+  onSubmit: () => void
 }
 
 function SurveyStepActions({
@@ -33,7 +33,7 @@ function SurveyStepActions({
           onClick={onSubmit}
           type="button"
         >
-          {isSubmitting ? "제출 중..." : "결과 확인하기"}
+          {isSubmitting ? '제출 중...' : '결과 확인하기'}
         </button>
       ) : (
         <button
@@ -45,7 +45,7 @@ function SurveyStepActions({
         </button>
       )}
     </div>
-  );
+  )
 }
 
-export default SurveyStepActions;
+export default SurveyStepActions

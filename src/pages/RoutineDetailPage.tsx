@@ -1,18 +1,18 @@
-﻿import { Link, useParams } from "react-router-dom";
+﻿import { Link, useParams } from 'react-router-dom'
 
-import { createRoutineProductsPath } from "../app/routes";
-import PageHeading from "../components/common/PageHeading";
-import SurfaceCard from "../components/common/SurfaceCard";
-import MobilePage from "../components/MobilePage";
+import { createRoutineProductsPath } from '../app/routes'
+import PageHeading from '../components/common/PageHeading'
+import SurfaceCard from '../components/common/SurfaceCard'
+import MobilePage from '../components/MobilePage'
 
 const routineSteps = [
-  { category: "토너", guide: "진정 성분으로 피부결을 정돈해 주세요." },
-  { category: "세럼", guide: "집중 성분으로 고민 부위를 관리해 주세요." },
-  { category: "크림", guide: "보습막을 형성해 장벽을 마무리해 주세요." },
-];
+  { category: '토너', guide: '진정 성분으로 피부결을 정돈해 주세요.' },
+  { category: '세럼', guide: '집중 성분으로 고민 부위를 관리해 주세요.' },
+  { category: '크림', guide: '보습막을 형성해 장벽을 마무리해 주세요.' },
+]
 
 function RoutineDetailPage() {
-  const { id } = useParams();
+  const { id } = useParams()
 
   return (
     <MobilePage>
@@ -20,10 +20,8 @@ function RoutineDetailPage() {
         <PageHeading>나의 루틴</PageHeading>
 
         <SurfaceCard className="space-y-3">
-          <p className="text-xs text-slate-500">루틴 그룹 #{id ?? "-"}</p>
-          <p className="text-sm leading-6 text-slate-700">
-            아침과 저녁 루틴을 분리해 피부 컨디션에 맞게 관리하세요.
-          </p>
+          <p className="text-xs text-slate-500">루틴 그룹 #{id ?? '-'}</p>
+          <p className="text-sm leading-6 text-slate-700">아침과 저녁 루틴을 분리해 피부 컨디션에 맞게 관리하세요.</p>
         </SurfaceCard>
 
         <div className="space-y-3">
@@ -62,7 +60,7 @@ function RoutineDetailPage() {
         </Link>
       </section>
     </MobilePage>
-  );
+  )
 }
 
-export default RoutineDetailPage;
+export default RoutineDetailPage

@@ -1,11 +1,11 @@
-import { Link } from "react-router-dom";
+import { Link } from 'react-router-dom'
 
-import type { RecommendedProduct } from "../../api/types";
-import { createProductDetailPath } from "../../app/routes";
-import ProductThumbnail from "../common/ProductThumbnail";
+import type { RecommendedProduct } from '../../api/types'
+import { createProductDetailPath } from '../../app/routes'
+import ProductThumbnail from '../common/ProductThumbnail'
 
 interface RecommendedProductsListProps {
-  products: RecommendedProduct[];
+  products: RecommendedProduct[]
 }
 
 function RecommendedProductsList({ products }: RecommendedProductsListProps) {
@@ -31,7 +31,7 @@ function RecommendedProductsList({ products }: RecommendedProductsListProps) {
         </article>
       ))}
     </div>
-  );
+  )
 }
 
-export default RecommendedProductsList;
+export default RecommendedProductsList

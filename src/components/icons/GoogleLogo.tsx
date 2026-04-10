@@ -1,4 +1,4 @@
-import type { SVGProps } from "react";
+import type { SVGProps } from 'react'
 
 function GoogleLogo(props: SVGProps<SVGSVGElement>) {
   return (
@@ -20,7 +20,7 @@ function GoogleLogo(props: SVGProps<SVGSVGElement>) {
         fill="#EA4335"
       />
     </svg>
-  );
+  )
 }
 
-export default GoogleLogo;
+export default GoogleLogo

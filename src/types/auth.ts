@@ -1,4 +1,4 @@
 export interface AuthState {
-  isAuthenticated: boolean;
-  accessToken?: string;
+  isAuthenticated: boolean
+  accessToken?: string
 }

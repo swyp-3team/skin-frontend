@@ -1,7 +1,7 @@
-﻿import { APP_ROUTES } from "../app/routes";
-import PageHeading from "../components/common/PageHeading";
-import PillCtaLink from "../components/common/PillCtaLink";
-import MobilePage from "../components/MobilePage";
+﻿import { APP_ROUTES } from '../app/routes'
+import PageHeading from '../components/common/PageHeading'
+import PillCtaLink from '../components/common/PillCtaLink'
+import MobilePage from '../components/MobilePage'
 
 function NotFoundPage() {
   return (
@@ -16,7 +16,7 @@ function NotFoundPage() {
         </PillCtaLink>
       </section>
     </MobilePage>
-  );
+  )
 }
 
-export default NotFoundPage;
+export default NotFoundPage

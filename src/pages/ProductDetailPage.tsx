@@ -1,12 +1,12 @@
-﻿import { useParams } from "react-router-dom";
+﻿import { useParams } from 'react-router-dom'
 
-import PageHeading from "../components/common/PageHeading";
-import PillCtaButton from "../components/common/PillCtaButton";
-import SurfaceCard from "../components/common/SurfaceCard";
-import MobilePage from "../components/MobilePage";
+import PageHeading from '../components/common/PageHeading'
+import PillCtaButton from '../components/common/PillCtaButton'
+import SurfaceCard from '../components/common/SurfaceCard'
+import MobilePage from '../components/MobilePage'
 
 function ProductDetailPage() {
-  const { id } = useParams();
+  const { id } = useParams()
 
   return (
     <MobilePage>
@@ -16,11 +16,10 @@ function ProductDetailPage() {
         </SurfaceCard>
 
         <div className="space-y-2">
-          <p className="text-xs text-slate-500">제품 ID #{id ?? "-"}</p>
+          <p className="text-xs text-slate-500">제품 ID #{id ?? '-'}</p>
           <PageHeading>제품 상세</PageHeading>
           <p className="text-sm leading-6 text-slate-700">
-            피부 고민과 성분 우선순위를 바탕으로 추천된 제품입니다. 주요 성분, 사용 순서,
-            주의사항을 확인해 주세요.
+            피부 고민과 성분 우선순위를 바탕으로 추천된 제품입니다. 주요 성분, 사용 순서, 주의사항을 확인해 주세요.
           </p>
         </div>
 
@@ -38,7 +37,7 @@ function ProductDetailPage() {
         </PillCtaButton>
       </section>
     </MobilePage>
-  );
+  )
 }
 
-export default ProductDetailPage;
+export default ProductDetailPage

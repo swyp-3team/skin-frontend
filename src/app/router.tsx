@@ -1,17 +1,17 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
 
-import AppLayout from "./AppLayout";
-import ProtectedRoute from "./ProtectedRoute";
-import { APP_ROUTES } from "./routes";
-import HomePage from "../pages/HomePage";
-import MyPage from "../pages/MyPage";
-import NotFoundPage from "../pages/NotFoundPage";
-import ProductDetailPage from "../pages/ProductDetailPage";
-import RoutineDetailPage from "../pages/RoutineDetailPage";
-import RoutineProductsPage from "../pages/RoutineProductsPage";
-import SurveyIntroPage from "../pages/SurveyIntroPage";
-import SurveyResultPage from "../pages/SurveyResultPage";
-import SurveyStepsPage from "../pages/SurveyStepsPage";
+import AppLayout from './AppLayout'
+import ProtectedRoute from './ProtectedRoute'
+import { APP_ROUTES } from './routes'
+import HomePage from '../pages/HomePage'
+import MyPage from '../pages/MyPage'
+import NotFoundPage from '../pages/NotFoundPage'
+import ProductDetailPage from '../pages/ProductDetailPage'
+import RoutineDetailPage from '../pages/RoutineDetailPage'
+import RoutineProductsPage from '../pages/RoutineProductsPage'
+import SurveyIntroPage from '../pages/SurveyIntroPage'
+import SurveyResultPage from '../pages/SurveyResultPage'
+import SurveyStepsPage from '../pages/SurveyStepsPage'
 
 function AppRouter() {
   return (
@@ -55,7 +55,7 @@ function AppRouter() {
         </Route>
       </Routes>
     </BrowserRouter>
-  );
+  )
 }
 
-export default AppRouter;
+export default AppRouter

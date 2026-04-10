@@ -1,18 +1,18 @@
-﻿import { APP_ROUTES } from "../app/routes";
-import PageHeading from "../components/common/PageHeading";
-import PillCtaLink from "../components/common/PillCtaLink";
-import MobilePage from "../components/MobilePage";
-import { useSurveyStore } from "../stores/surveyStore";
+﻿import { APP_ROUTES } from '../app/routes'
+import PageHeading from '../components/common/PageHeading'
+import PillCtaLink from '../components/common/PillCtaLink'
+import MobilePage from '../components/MobilePage'
+import { useSurveyStore } from '../stores/surveyStore'
 
 function SurveyIntroPage() {
-  const resetSurvey = useSurveyStore((state) => state.resetSurvey);
+  const resetSurvey = useSurveyStore((state) => state.resetSurvey)
 
   return (
     <MobilePage>
       <div className="flex min-h-[66dvh] flex-col justify-between">
         <div>
           <PageHeading className="whitespace-pre-line">
-            피부 고민을 입력하면{"\n"}나에게 맞는 성분과{"\n"}루틴을 알려드려요
+            피부 고민을 입력하면{'\n'}나에게 맞는 성분과{'\n'}루틴을 알려드려요
           </PageHeading>
           <p className="mt-6 text-base leading-7 text-slate-600">
             설문 단계별 응답은 자동 저장되며, 마지막 단계에서 결과를 조회합니다.
@@ -36,7 +36,7 @@ function SurveyIntroPage() {
         </div>
       </div>
     </MobilePage>
-  );
+  )
 }
 
-export default SurveyIntroPage;
+export default SurveyIntroPage

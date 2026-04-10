@@ -1,4 +1,4 @@
-import type { SVGProps } from "react";
+import type { SVGProps } from 'react'
 
 function KakaoLogo(props: SVGProps<SVGSVGElement>) {
   return (
@@ -11,7 +11,7 @@ function KakaoLogo(props: SVGProps<SVGSVGElement>) {
       <circle cx="12" cy="10.8" fill="#FEE500" r="1" />
       <circle cx="15" cy="10.8" fill="#FEE500" r="1" />
     </svg>
-  );
+  )
 }
 
-export default KakaoLogo;
+export default KakaoLogo
