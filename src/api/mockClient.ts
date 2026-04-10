@@ -1,0 +1,184 @@
+import type { AuthState } from "../types/auth";
+import type {
+  Concern,
+  IngredientGroup,
+  ProductCategory,
+  SkinType,
+} from "../types/domain";
+import type { ApiClient } from "./client";
+import type {
+  FullResult,
+  PreviewResult,
+  SurveyQuestion,
+  SurveySubmitPayload,
+  TopIngredientGroup,
+} from "./types";
+
+const defaultQuestionOptions = [
+  { value: 85, label: "매우 그렇다" },
+  { value: 70, label: "그렇다" },
+  { value: 55, label: "보통이다" },
+  { value: 40, label: "아니다" },
+  { value: 25, label: "전혀 아니다" },
+] as const;
+
+const mockSurveyQuestions: SurveyQuestion[] = [
+  {
+    questionId: 1,
+    text: "세안 직후 피부가 당기나요?",
+    options: [...defaultQuestionOptions],
+  },
+  {
+    questionId: 2,
+    text: "오후가 되면 번들거림이 느껴지나요?",
+    options: [...defaultQuestionOptions],
+  },
+  {
+    questionId: 3,
+    text: "트러블이 자주 올라오나요?",
+    options: [...defaultQuestionOptions],
+  },
+  {
+    questionId: 4,
+    text: "피부가 쉽게 붉어지거나 자극을 받나요?",
+    options: [...defaultQuestionOptions],
+  },
+];
+
+const concernToGroup: Record<Concern, IngredientGroup> = {
+  DRY: "HYDRATION",
+  SEBUM: "SEBUM_CONTROL",
+  ACNE: "ACNE",
+  SENSITIVE: "SOOTHING",
+  PIGMENTATION: "BRIGHTENING",
+  AGING: "ANTI_AGING",
+};
+
+const groupIngredientMap: Record<IngredientGroup, string[]> = {
+  HYDRATION: ["히알루론산", "글리세린"],
+  BARRIER: ["세라마이드", "판테놀"],
+  ACNE: ["살리실산", "아젤라익산"],
+  SEBUM_CONTROL: ["나이아신아마이드", "징크 PCA"],
+  SOOTHING: ["센텔라", "알란토인"],
+  BRIGHTENING: ["비타민C", "트라넥사믹애씨드"],
+  TURNOVER: ["레티놀", "락틱애씨드"],
+  ANTI_AGING: ["레티날", "펩타이드"],
+};
+
+const groupReasonMap: Record<IngredientGroup, string> = {
+  HYDRATION: "수분 보충과 건조 완화를 우선으로 케어하세요.",
+  BARRIER: "피부 장벽을 보강해 자극에 대한 방어력을 높이세요.",
+  ACNE: "트러블 유발 요인을 줄이고 진정을 병행하세요.",
+  SEBUM_CONTROL: "과도한 피지 분비를 조절하는 성분이 필요합니다.",
+  SOOTHING: "예민해진 피부를 진정시키는 접근이 중요합니다.",
+  BRIGHTENING: "칙칙함과 색소 고민 완화를 위한 케어가 필요합니다.",
+  TURNOVER: "묵은 각질 순환을 도와 피부결 개선이 필요합니다.",
+  ANTI_AGING: "탄력 저하 신호를 완화하는 안티에이징 케어가 필요합니다.",
+};
+
+const skinTypeSummaryMap: Record<SkinType, string> = {
+  DRY: "건조형 피부로 보이며 보습과 장벽 중심 루틴을 권장합니다.",
+  OILY: "지성형 피부로 보이며 피지 조절과 진정 중심 루틴을 권장합니다.",
+  COMBINATION:
+    "복합성 피부로 보이며 유수분 균형을 맞추는 루틴을 권장합니다.",
+  SENSITIVE: "민감형 피부로 보이며 저자극 진정 루틴을 권장합니다.",
+};
+
+const skinTypeFallbackGroups: Record<SkinType, IngredientGroup[]> = {
+  DRY: ["HYDRATION", "BARRIER", "SOOTHING"],
+  OILY: ["SEBUM_CONTROL", "ACNE", "SOOTHING"],
+  COMBINATION: ["HYDRATION", "SEBUM_CONTROL", "SOOTHING"],
+  SENSITIVE: ["SOOTHING", "BARRIER", "HYDRATION"],
+};
+
+function dedupeGroups(payload: SurveySubmitPayload): IngredientGroup[] {
+  const groupsFromConcerns = payload.concerns.map((concern) => concernToGroup[concern]);
+  const fallbackGroups = skinTypeFallbackGroups[payload.skinType];
+  const defaultGroups: IngredientGroup[] = ["HYDRATION", "SOOTHING", "BARRIER"];
+
+  const merged = [...groupsFromConcerns, ...fallbackGroups, ...defaultGroups];
+  return [...new Set(merged)].slice(0, 3);
+}
+
+function buildTop3(payload: SurveySubmitPayload): TopIngredientGroup[] {
+  const groups = dedupeGroups(payload);
+
+  return groups.map((group, index) => ({
+    group,
+    score: Number((0.95 - index * 0.1).toFixed(2)),
+    priority: index + 1,
+    ingredients: groupIngredientMap[group],
+    reason: groupReasonMap[group],
+  }));
+}
+
+function createPreviewResult(payload: SurveySubmitPayload): PreviewResult {
+  return {
+    skinType: payload.skinType,
+    summary: skinTypeSummaryMap[payload.skinType],
+    top3: buildTop3(payload),
+  };
+}
+
+function createRoutine(top3: TopIngredientGroup[]): FullResult["routine"] {
+  const categories: ProductCategory[] = ["TONER", "SERUM", "CREAM"];
+
+  return categories.map((category, index) => {
+    const source = top3[index % top3.length];
+    return {
+      category,
+      guide: `${source.ingredients[0]} 중심으로 ${groupReasonMap[source.group]}`,
+    };
+  });
+}
+
+function createFullResult(payload: SurveySubmitPayload): FullResult {
+  const preview = createPreviewResult(payload);
+
+  return {
+    ...preview,
+    recommendedProducts: [
+      {
+        productId: 101,
+        name: "밸런스 수분 토너",
+        category: "TONER",
+        imageUrl:
+          "https://images.unsplash.com/photo-1556228578-8c89e6adf883?auto=format&fit=crop&w=600&q=80",
+        reason: `${preview.top3[0].ingredients[0]} 기반의 첫 단계 보습 케어`,
+      },
+      {
+        productId: 102,
+        name: "카밍 리페어 세럼",
+        category: "SERUM",
+        imageUrl:
+          "https://images.unsplash.com/photo-1571781926291-c477ebfd024b?auto=format&fit=crop&w=600&q=80",
+        reason: `${preview.top3[1].ingredients[0]} 중심의 집중 케어`,
+      },
+    ],
+    routine: createRoutine(preview.top3),
+  };
+}
+
+function withDelay<T>(value: T, ms = 350): Promise<T> {
+  return new Promise((resolve) => {
+    window.setTimeout(() => resolve(value), ms);
+  });
+}
+
+export const mockApiClient: ApiClient = {
+  async getSurveyQuestions() {
+    return withDelay(mockSurveyQuestions);
+  },
+
+  async submitSurveyPreview(payload) {
+    return withDelay(createPreviewResult(payload));
+  },
+
+  async submitSurveyResult(payload, authState: AuthState) {
+    if (!authState.isAuthenticated) {
+      throw new Error("로그인된 사용자만 전체 결과를 조회할 수 있습니다.");
+    }
+
+    return withDelay(createFullResult(payload));
+  },
+};

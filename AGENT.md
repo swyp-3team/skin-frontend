@@ -1,31 +1,47 @@
-# AGENTS.md
+﻿# AGENTS.md
 
 ## Project Overview
 
-- 이 저장소는 피부 타입 단일 선택 설문을 제공하는 React + TypeScript + Vite 프로젝트입니다.
-- 현재 엔트리포인트는 `src/main.tsx`이며, `SurveyPage` 단일 화면을 렌더링합니다.
-- 주요 기술 스택:
-  - React 19
-  - TypeScript (strict 모드)
-  - Vite 8
-- Tailwind CSS 4 (`@tailwindcss/vite` 플러그인 사용)
-- 설문 선택값은 `localStorage` 키 `survey.selectedSkinType`에 저장/복원됩니다.
+- 이 저장소는 피부 설문 기반 추천을 위한 React + TypeScript + Vite 프로젝트입니다.
+- 엔트리포인트는 `src/main.tsx`이며, `src/app/router.tsx`에서 라우팅을 구성합니다.
+- 현재 주요 라우트:
+  - `/`
+  - `/survey`
+  - `/survey/steps`
+  - `/survey/result`
+  - `/mypage` (보호 라우트)
+  - `/routines/:id` (보호 라우트)
+  - `/routines/:id/products` (보호 라우트)
+  - `/products/:id`
+- 설문은 단계형 UI이며, 마지막 단계에서만 결과 API를 호출합니다.
 
 ## Architecture and Design Patterns
 
-- 앱 구조는 `main.tsx` → `SurveyPage.tsx`의 단일 화면(SPA) 진입 구조를 유지합니다.
-- 화면 상태는 컴포넌트 로컬 상태(`useState`)로 관리하고, 전역 상태 라이브러리는 도입하지 않습니다.
-- 영속화가 필요한 값은 `localStorage`에 저장하되, 저장/복원 키는 상수(`STORAGE_KEY` 패턴)로 관리합니다.
-- 저장소에서 읽은 값은 타입 가드로 검증한 뒤 상태에 반영합니다.
-- 스타일은 Tailwind 유틸리티와 `src/index.css`의 `@theme` 토큰을 함께 사용합니다.
+- 앱 구조: `main.tsx` → `app/router.tsx` → `pages/*`.
+- 공통 레이아웃은 `app/AppLayout.tsx`에서 관리합니다.
+- 보호 라우트는 `app/ProtectedRoute.tsx`에서 모의 인증 상태(`authStore`) 기준으로 처리합니다.
+- 상태 관리는 `zustand`를 사용합니다.
+  - `surveyStore`: 설문 단계/응답/피부타입/고민/제출 상태
+  - `authStore`: 모의 로그인 세션
+- 영속화는 `zustand persist`로 처리합니다.
+  - 레거시 키: `survey.selectedSkinType`
+  - 설문 세션 키: `survey.session`
+  - 인증 세션 키: `auth.mockSession`
+- API 계층은 인터페이스 기반으로 분리합니다.
+  - `api/client.ts` 인터페이스
+  - `api/mockClient.ts`, `api/liveClient.ts`
+  - `api/index.ts`에서 `VITE_API_MODE` 기반 선택
 
 ## Repository Layout
 
-- `src/main.tsx`: 앱 엔트리포인트
-- `src/SurveyPage.tsx`: 설문 UI/상태 로직
-- `src/index.css`: Tailwind import 및 테마 토큰/기본 스타일
-- `public/`: 정적 리소스
-- `dist/`: 빌드 산출물 (커밋 대상 아님)
+- `src/main.tsx`: 앱 엔트리
+- `src/app/`: 라우팅, 레이아웃, 보호 라우트, 경로 상수
+- `src/pages/`: URL 단위 페이지 컴포넌트
+- `src/stores/`: zustand 스토어
+- `src/api/`: API 클라이언트/타입/에러
+- `src/types/`: 도메인 타입
+- `src/SurveyPage.tsx`: 단계형 설문 UI
+- `src/index.css`: Tailwind import 및 테마 토큰
 
 ## Setup Commands
 
@@ -74,8 +90,7 @@
 
 테스트 관련 참고:
 
-- 현재 커버리지 품질 게이트는 없습니다. 테스트 러너 도입 전까지는 `lint` + `build`를 필수 게이트로 사용합니다.
-- 특정 테스트만 실행하는 명령은 없습니다(테스트 러너 미구성).
+- 현재 커버리지 품질 게이트는 없습니다.
 - 테스트 러너 도입 시 `npm test` 스크립트, 단일 테스트 실행 명령, 최소 커버리지 기준을 본 섹션에 즉시 추가합니다.
 
 ## Code Style Guidelines
@@ -89,9 +104,10 @@
 구체 규칙:
 
 - 불필요한 미사용 변수/파라미터를 남기지 않습니다.
-- import는 외부 패키지 → 로컬 모듈 순서를 유지합니다.
-- Tailwind 스타일 토큰은 `src/index.css`의 `@theme` 변수 사용을 우선합니다.
-- 상태 영속화 키는 상수로 관리하고(`STORAGE_KEY` 패턴), 문자열 하드코딩 중복을 피합니다.
+- import 순서는 외부 패키지 → 로컬 모듈을 유지합니다.
+- 라우트 문자열 하드코딩을 피하고 `src/app/routes.ts`를 사용합니다.
+- 설문 제출 payload는 질문 순서가 아닌 `questionId` 기준으로 생성합니다.
+- 에러 처리는 `ApiError`로 정규화합니다.
 
 ## Build and Deployment
 
@@ -104,7 +120,7 @@
 
 - 비밀값(토큰/키/인증정보)은 코드나 저장소에 커밋하지 않습니다.
 - 환경변수를 도입할 경우 Vite 규칙(`VITE_` 접두사)을 따릅니다.
-- 현재 `localStorage`에는 민감정보가 아닌 설문 선택값만 저장합니다.
+- 로컬 저장소에는 설문 상태/모의 인증 정보만 저장합니다.
 
 ## Pull Request Guidelines
 
@@ -118,13 +134,12 @@
 ## Debugging and Troubleshooting
 
 - 개발 서버 문제 시:
-  1. `node_modules`가 손상되었는지 확인
+  1. `node_modules` 상태 확인
   2. `npm install` 재실행
 - 타입 빌드 캐시 이슈 시:
-  - `node_modules/.tmp` 캐시 파일 확인 후 `npm run build` 재실행
-- 스타일 반영 문제 시:
-  - `src/index.css`의 `@import "tailwindcss";` 존재 여부
-  - `vite.config.ts`의 `tailwindcss()` 플러그인 설정 여부 확인
+  - `node_modules/.tmp` 캐시 확인 후 `npm run build` 재실행
+- API 연동 점검 시:
+  - `VITE_API_MODE`, `VITE_API_BASE_URL` 값 확인
 
 ## Monorepo Notes
 
