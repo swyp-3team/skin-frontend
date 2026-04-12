@@ -4,6 +4,7 @@ import { APP_ROUTES } from '../app/routes'
 import PageHeading from '../components/common/PageHeading'
 import MobilePage from '../components/MobilePage'
 import { Button, buttonVariants } from '../components/ui/button'
+import { LANDING_COPY } from '../constants/landing'
 import { cn } from '../lib/utils'
 import { useSurveyStore } from '../stores/surveyStore'
 
@@ -14,11 +15,9 @@ function SurveyIntroPage() {
     <MobilePage>
       <div className="flex min-h-[66dvh] flex-col justify-between">
         <div>
-          <PageHeading className="leading-[1.4] whitespace-pre-line">
-            피부 고민을 입력하면{'\n'}나에게 맞는 성분과{'\n'}루틴을 알려드려요
-          </PageHeading>
+          <PageHeading className="leading-[1.4] whitespace-pre-line">{LANDING_COPY.heroHeadline}</PageHeading>
           <p className="mt-6 text-base leading-7 text-slate-600">
-            설문 단계별 응답은 자동 저장되며, 마지막 단계에서 결과를 조회합니다.
+            {LANDING_COPY.surveyIntroDescription}
           </p>
         </div>
 
@@ -30,7 +29,7 @@ function SurveyIntroPage() {
             )}
             to={APP_ROUTES.surveySteps}
           >
-            피부 진단 시작하기
+            {LANDING_COPY.diagnosisStartCta}
           </Link>
           <Button
             className="h-auto w-full rounded-[12px] px-4 py-3 text-sm font-medium text-slate-700"
@@ -38,7 +37,7 @@ function SurveyIntroPage() {
             type="button"
             variant="surface"
           >
-            설문 상태 초기화
+            {LANDING_COPY.resetSurveyCta}
           </Button>
         </div>
       </div>

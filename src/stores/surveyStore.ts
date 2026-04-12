@@ -3,10 +3,11 @@ import { createJSONStorage, persist } from 'zustand/middleware'
 
 import { SKIN_TYPE_OPTIONS, VALID_CONCERNS } from '../domain/surveyConfig'
 import type { FullResult, PreviewResult } from '../api/types'
+import { STORAGE_KEYS } from '../constants/storage'
 import type { Concern, SkinTypeSelection } from '../types/domain'
 
-export const LEGACY_SKIN_TYPE_KEY = 'survey.selectedSkinType'
-const SESSION_STORAGE_KEY = 'survey.session'
+export const LEGACY_SKIN_TYPE_KEY = STORAGE_KEYS.legacySurveySkinType
+const SESSION_STORAGE_KEY = STORAGE_KEYS.surveySession
 
 const validSkinTypeSelections: readonly SkinTypeSelection[] = SKIN_TYPE_OPTIONS.map((option) => option.value)
 

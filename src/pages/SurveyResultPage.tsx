@@ -10,7 +10,9 @@ import LoginGateOverlay from '../components/survey/LoginGateOverlay'
 import RecommendedProductsList from '../components/survey/RecommendedProductsList'
 import RoutineSection from '../components/survey/RoutineSection'
 import { buttonVariants } from '../components/ui/button'
-import { MOCK_ACCESS_TOKEN } from '../constants/auth'
+import { AUTH_PROVIDERS, MOCK_ACCESS_TOKEN } from '../constants/auth'
+import { LANDING_COPY } from '../constants/landing'
+import { SURVEY_STATUS_MESSAGES } from '../constants/survey'
 import { cn } from '../lib/utils'
 import { useAuthStore } from '../stores/authStore'
 import { useSurveyStore } from '../stores/surveyStore'
@@ -39,15 +41,15 @@ function SurveyResultPage() {
     return (
       <MobilePage>
         <div className="space-y-6">
-          <PageHeading size="lg">설문 결과가 없습니다</PageHeading>
+          <PageHeading size="lg">{SURVEY_STATUS_MESSAGES.emptyResultTitle}</PageHeading>
           <p className="text-sm leading-6 text-slate-600">
-            설문 완료 후 이 페이지에서 루틴과 제품 추천 결과를 확인할 수 있습니다.
+            {SURVEY_STATUS_MESSAGES.emptyResultDescription}
           </p>
           <Link
             className={cn(buttonVariants({ variant: 'cta' }), 'h-auto rounded-full px-6 py-3 text-sm')}
             to={APP_ROUTES.survey}
           >
-            설문 시작하기
+            {LANDING_COPY.surveyStartCta}
           </Link>
         </div>
       </MobilePage>
@@ -108,10 +110,10 @@ function SurveyResultPage() {
       <LoginDialog
         isPromoting={promoteMutation.isPending}
         onLoginGoogle={() => {
-          promoteToFullResult('Google')
+          promoteToFullResult(AUTH_PROVIDERS.google.label)
         }}
         onLoginKakao={() => {
-          promoteToFullResult('Kakao')
+          promoteToFullResult(AUTH_PROVIDERS.kakao.label)
         }}
         onOpenChange={setIsLoginModalOpen}
         open={isLoginModalOpen}

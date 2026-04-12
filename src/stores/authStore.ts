@@ -1,9 +1,10 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 
-import { MOCK_ACCESS_TOKEN } from '../constants/auth'
+import { AUTH_UI_TEXT, MOCK_ACCESS_TOKEN } from '../constants/auth'
+import { STORAGE_KEYS } from '../constants/storage'
 
-const STORAGE_KEY = 'auth.mockSession'
+const STORAGE_KEY = STORAGE_KEYS.authSession
 
 interface AuthStoreState {
   isAuthenticated: boolean
@@ -24,7 +25,7 @@ export const useAuthStore = create<AuthStore>()(
       isAuthenticated: false,
       accessToken: undefined,
       nickname: undefined,
-      loginMock: (nickname = '레이어드 사용자') => {
+      loginMock: (nickname = AUTH_UI_TEXT.defaultMockNickname) => {
         set({
           isAuthenticated: true,
           accessToken: MOCK_ACCESS_TOKEN,

@@ -3,6 +3,7 @@ import { useShallow } from 'zustand/react/shallow'
 
 import { apiClient } from '../../api'
 import type { FullResult, PreviewResult, SurveyAnswer, SurveySubmitPayload } from '../../api/types'
+import { SURVEY_VALIDATION_MESSAGES } from '../../constants/survey'
 import { SELECTION_TO_API_SKIN_TYPE } from '../../domain/surveyConfig'
 import { useSurveyStore } from '../../stores/surveyStore'
 import type { AuthState } from '../../types/auth'
@@ -37,7 +38,7 @@ export function useSurveySubmit() {
   return useMutation<PreviewResult | FullResult, Error, AuthState>({
     mutationFn: async (authState) => {
       if (!skinType) {
-        throw new Error('피부 타입을 먼저 선택해주세요.')
+        throw new Error(SURVEY_VALIDATION_MESSAGES.skinTypeRequiredBeforeSubmit)
       }
 
       const payload = buildPayload(answersByQuestionId, skinType, concerns)

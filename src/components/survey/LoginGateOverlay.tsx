@@ -1,3 +1,4 @@
+import { AUTH_UI_TEXT } from '../../constants/auth'
 import { Button } from '../ui/button'
 
 interface LoginGateOverlayProps {
@@ -23,7 +24,7 @@ function LoginGateOverlay({ onClick }: LoginGateOverlayProps) {
           type="button"
           variant="cta"
         >
-          로그인하고 전체 결과 보기
+          {AUTH_UI_TEXT.gatedResultCta}
         </Button>
       </div>
     </>

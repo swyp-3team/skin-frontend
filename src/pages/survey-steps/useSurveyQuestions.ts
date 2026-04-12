@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 
 import { apiClient } from '../../api'
 import type { SurveyQuestion } from '../../api/types'
+import { SURVEY_QUERY_KEYS, SURVEY_STATUS_MESSAGES } from '../../constants/survey'
 
 interface UseSurveyQuestionsResult {
   questions: SurveyQuestion[]
@@ -11,7 +12,7 @@ interface UseSurveyQuestionsResult {
 
 export function useSurveyQuestions(): UseSurveyQuestionsResult {
   const { data, isPending, error } = useQuery({
-    queryKey: ['surveyQuestions'],
+    queryKey: SURVEY_QUERY_KEYS.questions,
     queryFn: () => apiClient.getSurveyQuestions(),
     staleTime: Infinity,
   })
@@ -19,7 +20,7 @@ export function useSurveyQuestions(): UseSurveyQuestionsResult {
   const questionLoadError = error
     ? error instanceof Error
       ? error.message
-      : '설문 문항을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'
+      : SURVEY_STATUS_MESSAGES.loadQuestionsFailed
     : null
 
   return {

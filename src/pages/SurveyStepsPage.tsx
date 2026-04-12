@@ -4,6 +4,7 @@ import { useShallow } from 'zustand/react/shallow'
 
 import { APP_ROUTES } from '../app/routes'
 import MobilePage from '../components/MobilePage'
+import { SURVEY_STATUS_MESSAGES, SURVEY_VALIDATION_MESSAGES } from '../constants/survey'
 import { useAuthStore } from '../stores/authStore'
 import { useSurveyStore } from '../stores/surveyStore'
 import ConcernStepSection from './survey-steps/ConcernStepSection'
@@ -77,13 +78,13 @@ function SurveyStepsPage() {
     if (isQuestionStep && activeQuestion) {
       const answer = answersByQuestionId[activeQuestion.questionId]
       if (answer === undefined) {
-        setValidationError('해당 문항의 응답을 선택해주세요.')
+        setValidationError(SURVEY_VALIDATION_MESSAGES.questionRequired)
         return
       }
     }
 
     if (isSkinTypeStep && !skinType) {
-      setValidationError('피부 타입을 선택해주세요.')
+      setValidationError(SURVEY_VALIDATION_MESSAGES.skinTypeRequiredForStep)
       return
     }
 
@@ -100,13 +101,13 @@ function SurveyStepsPage() {
     if (firstMissingQuestion) {
       const missingStep = questions.findIndex((question) => question.questionId === firstMissingQuestion.questionId)
       goToStep(missingStep + 1)
-      setValidationError('응답하지 않은 문항이 있습니다. 먼저 응답을 완료해주세요.')
+      setValidationError(SURVEY_VALIDATION_MESSAGES.missingAnswers)
       return
     }
 
     if (!skinType) {
       goToStep(questions.length + 1)
-      setValidationError('피부 타입 선택이 필요합니다.')
+      setValidationError(SURVEY_VALIDATION_MESSAGES.skinTypeRequiredForSubmit)
       return
     }
 
@@ -120,7 +121,7 @@ function SurveyStepsPage() {
     return (
       <MobilePage>
         <div className="rounded-[12px] bg-card-bg px-4 py-5 text-sm text-slate-700">
-          설문 문항을 불러오는 중입니다...
+          {SURVEY_STATUS_MESSAGES.loadingQuestions}
         </div>
       </MobilePage>
     )

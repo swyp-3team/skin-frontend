@@ -5,7 +5,8 @@ import { APP_ROUTES } from '../app/routes'
 import PageHeading from '../components/common/PageHeading'
 import MobilePage from '../components/MobilePage'
 import { Button, buttonVariants } from '../components/ui/button'
-import { isAuthRedirectState } from '../constants/auth'
+import { AUTH_UI_TEXT, isAuthRedirectState } from '../constants/auth'
+import { LANDING_COPY } from '../constants/landing'
 import { cn } from '../lib/utils'
 import { useAuthStore } from '../stores/authStore'
 
@@ -26,13 +27,12 @@ function HomePage() {
     <MobilePage>
       <div className="flex min-h-[66dvh] flex-col justify-between">
         <div>
-          <PageHeading className="leading-[1.4] whitespace-pre-line">
-            피부 고민을 입력하면{'\n'}나에게 맞는 성분과{'\n'}루틴을 알려드려요
-          </PageHeading>
+          <PageHeading className="leading-[1.4] whitespace-pre-line">{LANDING_COPY.heroHeadline}</PageHeading>
 
           {hasAuthRedirect ? (
             <p className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-              {authRedirectState?.from ?? '보호 페이지'}는 로그인 후 접근할 수 있습니다.
+              {authRedirectState?.from ?? AUTH_UI_TEXT.protectedPageFallback}
+              {AUTH_UI_TEXT.protectedPageHintSuffix}
             </p>
           ) : null}
         </div>
@@ -45,7 +45,7 @@ function HomePage() {
             )}
             to={APP_ROUTES.survey}
           >
-            피부 진단 시작하기
+            {LANDING_COPY.diagnosisStartCta}
           </Link>
 
           <Button
@@ -60,7 +60,7 @@ function HomePage() {
             type="button"
             variant="surface"
           >
-            {isAuthenticated ? '모의 로그아웃' : '모의 로그인'}
+            {isAuthenticated ? AUTH_UI_TEXT.mockLogout : AUTH_UI_TEXT.mockLogin}
           </Button>
         </div>
       </div>

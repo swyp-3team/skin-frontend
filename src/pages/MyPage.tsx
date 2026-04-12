@@ -4,6 +4,9 @@ import { APP_ROUTES, createRoutineDetailPath } from '../app/routes'
 import SurfaceCard from '../components/common/SurfaceCard'
 import MobilePage from '../components/MobilePage'
 import { Button, buttonVariants } from '../components/ui/button'
+import { AUTH_UI_TEXT } from '../constants/auth'
+import { LANDING_COPY } from '../constants/landing'
+import { SURVEY_STATUS_MESSAGES } from '../constants/survey'
 import { cn } from '../lib/utils'
 import { useAuthStore } from '../stores/authStore'
 import { useSurveyStore } from '../stores/surveyStore'
@@ -22,14 +25,16 @@ function MyPage() {
           type="button"
           variant="surface"
         >
-          로그아웃
+          {AUTH_UI_TEXT.logout}
         </Button>
       }
     >
       <section className="space-y-5">
         <SurfaceCard>
           <p className="text-xs text-slate-500">안녕하세요</p>
-          <p className="mt-1 text-xl font-semibold text-slate-900">{nickname ?? '레이어드 사용자'}님</p>
+          <p className="mt-1 text-xl font-semibold text-slate-900">
+            {nickname ?? AUTH_UI_TEXT.defaultMockNickname}님
+          </p>
         </SurfaceCard>
 
         <SurfaceCard className="space-y-3">
@@ -42,7 +47,7 @@ function MyPage() {
                 className={cn(buttonVariants({ variant: 'cta' }), 'h-auto rounded-full px-4 py-2 text-sm')}
                 to={APP_ROUTES.surveyResult}
               >
-                진단 결과 보기
+                {SURVEY_STATUS_MESSAGES.viewResultCta}
               </Link>
             </>
           ) : (
@@ -52,7 +57,7 @@ function MyPage() {
                 className={cn(buttonVariants({ variant: 'cta' }), 'h-auto rounded-full px-4 py-2 text-sm')}
                 to={APP_ROUTES.survey}
               >
-                설문 시작하기
+                {LANDING_COPY.surveyStartCta}
               </Link>
             </>
           )}

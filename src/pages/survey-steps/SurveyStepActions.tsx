@@ -1,4 +1,5 @@
 import { Button } from '../../components/ui/button'
+import { SURVEY_STEP_TEXT } from '../../constants/survey'
 
 interface SurveyStepActionsProps {
   currentStep: number
@@ -26,7 +27,7 @@ function SurveyStepActions({
         type="button"
         variant="surface"
       >
-        이전
+        {SURVEY_STEP_TEXT.previous}
       </Button>
 
       {isFinalStep ? (
@@ -37,11 +38,11 @@ function SurveyStepActions({
           type="button"
           variant="cta"
         >
-          {isSubmitting ? '제출 중...' : '결과 확인하기'}
+          {isSubmitting ? SURVEY_STEP_TEXT.submitPending : SURVEY_STEP_TEXT.submit}
         </Button>
       ) : (
         <Button className="h-auto flex-1 rounded-full px-4 py-3 text-sm" onClick={onNext} type="button" variant="cta">
-          다음
+          {SURVEY_STEP_TEXT.next}
         </Button>
       )}
     </div>
