@@ -1,4 +1,7 @@
 import type { SurveyQuestion } from '../../api/types'
+import PageHeading from '../../components/common/PageHeading'
+import { cn } from '../../lib/utils'
+import { surveyOptionCardVariants } from './surveyStepVariants'
 
 interface QuestionStepSectionProps {
   activeQuestion: SurveyQuestion
@@ -9,9 +12,7 @@ interface QuestionStepSectionProps {
 function QuestionStepSection({ activeQuestion, answersByQuestionId, onAnswerChange }: QuestionStepSectionProps) {
   return (
     <article className="space-y-4">
-      <h2 className="text-page-title leading-[1.35] font-semibold tracking-tight text-slate-950">
-        {activeQuestion.text}
-      </h2>
+      <PageHeading>{activeQuestion.text}</PageHeading>
       <ul className="space-y-2">
         {activeQuestion.options.map((option) => {
           const checked = answersByQuestionId[activeQuestion.questionId] === option.value
@@ -26,15 +27,7 @@ function QuestionStepSection({ activeQuestion, answersByQuestionId, onAnswerChan
                   type="radio"
                   value={option.value}
                 />
-                <span
-                  className={`block rounded-[10px] border px-4 py-3 text-sm font-medium transition ${
-                    checked
-                      ? 'border-slate-900 bg-[#d1d1d1] text-slate-950'
-                      : 'border-card-border bg-card-bg text-slate-700'
-                  }`}
-                >
-                  {option.label}
-                </span>
+                <span className={cn(surveyOptionCardVariants({ selected: checked }))}>{option.label}</span>
               </label>
             </li>
           )

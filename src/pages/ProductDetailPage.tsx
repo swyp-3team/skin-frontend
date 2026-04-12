@@ -1,9 +1,9 @@
-﻿import { useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 
 import PageHeading from '../components/common/PageHeading'
-import PillCtaButton from '../components/common/PillCtaButton'
 import SurfaceCard from '../components/common/SurfaceCard'
 import MobilePage from '../components/MobilePage'
+import { Button } from '../components/ui/button'
 
 function ProductDetailPage() {
   const { id } = useParams()
@@ -32,9 +32,9 @@ function ProductDetailPage() {
           </ul>
         </SurfaceCard>
 
-        <PillCtaButton className="w-full px-6 py-3 text-sm" type="button">
+        <Button className="h-auto w-full rounded-full px-6 py-3 text-sm" type="button" variant="cta">
           구매 링크로 이동
-        </PillCtaButton>
+        </Button>
       </section>
     </MobilePage>
   )

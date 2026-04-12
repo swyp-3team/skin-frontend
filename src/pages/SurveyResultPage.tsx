@@ -1,25 +1,27 @@
-﻿import { useState } from 'react'
+import { Link } from 'react-router-dom'
+import { useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 
 import { APP_ROUTES } from '../app/routes'
 import PageHeading from '../components/common/PageHeading'
-import PillCtaLink from '../components/common/PillCtaLink'
 import MobilePage from '../components/MobilePage'
 import LoginDialog from '../components/survey/LoginDialog'
 import LoginGateOverlay from '../components/survey/LoginGateOverlay'
 import RecommendedProductsList from '../components/survey/RecommendedProductsList'
 import RoutineSection from '../components/survey/RoutineSection'
+import { buttonVariants } from '../components/ui/button'
 import { MOCK_ACCESS_TOKEN } from '../constants/auth'
+import { cn } from '../lib/utils'
 import { useAuthStore } from '../stores/authStore'
 import { useSurveyStore } from '../stores/surveyStore'
 import { isFullResult } from './survey-result/guards'
 import { toRoutineItems } from './survey-result/toRoutineItems'
+import { useSurveySubmit } from './survey-steps/useSurveySubmit'
 
 function SurveyResultPage() {
-  const { result, submitSurvey } = useSurveyStore(
+  const { result } = useSurveyStore(
     useShallow((state) => ({
       result: state.lastResult,
-      submitSurvey: state.submitSurvey,
     }))
   )
 
@@ -30,22 +32,23 @@ function SurveyResultPage() {
     }))
   )
 
+  const promoteMutation = useSurveySubmit()
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
-  const [isPromoting, setIsPromoting] = useState(false)
 
   if (!result) {
     return (
       <MobilePage>
         <div className="space-y-6">
-          <h2 className="text-page-title-lg leading-[1.35] font-semibold tracking-tight text-slate-950">
-            설문 결과가 없습니다
-          </h2>
+          <PageHeading size="lg">설문 결과가 없습니다</PageHeading>
           <p className="text-sm leading-6 text-slate-600">
             설문 완료 후 이 페이지에서 루틴과 제품 추천 결과를 확인할 수 있습니다.
           </p>
-          <PillCtaLink className="px-6 py-3 text-sm" to={APP_ROUTES.survey}>
+          <Link
+            className={cn(buttonVariants({ variant: 'cta' }), 'h-auto rounded-full px-6 py-3 text-sm')}
+            to={APP_ROUTES.survey}
+          >
             설문 시작하기
-          </PillCtaLink>
+          </Link>
         </div>
       </MobilePage>
     )
@@ -54,25 +57,18 @@ function SurveyResultPage() {
   const fullResult = isFullResult(result) ? result : null
   const fullResultVisible = isAuthenticated && fullResult !== null
 
-  const promoteToFullResult = async (providerLabel: string) => {
-    setIsPromoting(true)
+  const promoteToFullResult = (providerLabel: string) => {
     loginMock(providerLabel)
-
-    try {
-      await submitSurvey({
-        isAuthenticated: true,
-        accessToken: MOCK_ACCESS_TOKEN,
-      })
-      setIsLoginModalOpen(false)
-    } finally {
-      setIsPromoting(false)
-    }
+    promoteMutation.mutate(
+      { isAuthenticated: true, accessToken: MOCK_ACCESS_TOKEN },
+      { onSuccess: () => setIsLoginModalOpen(false) },
+    )
   }
 
   return (
     <MobilePage>
       <section className="relative space-y-7 pb-10">
-        <PageHeading className="whitespace-pre-line">
+        <PageHeading className="leading-[1.4] whitespace-pre-line">
           [{result.skinType}] 타입을 기준으로{'\n'}맞춤 루틴을 추천드려요.
         </PageHeading>
 
@@ -110,12 +106,12 @@ function SurveyResultPage() {
       </section>
 
       <LoginDialog
-        isPromoting={isPromoting}
+        isPromoting={promoteMutation.isPending}
         onLoginGoogle={() => {
-          void promoteToFullResult('Google')
+          promoteToFullResult('Google')
         }}
         onLoginKakao={() => {
-          void promoteToFullResult('Kakao')
+          promoteToFullResult('Kakao')
         }}
         onOpenChange={setIsLoginModalOpen}
         open={isLoginModalOpen}

@@ -1,9 +1,11 @@
-﻿import { Link, useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 
 import { createRoutineProductsPath } from '../app/routes'
 import PageHeading from '../components/common/PageHeading'
 import SurfaceCard from '../components/common/SurfaceCard'
 import MobilePage from '../components/MobilePage'
+import { buttonVariants } from '../components/ui/button'
+import { cn } from '../lib/utils'
 
 const routineSteps = [
   { category: '토너', guide: '진정 성분으로 피부결을 정돈해 주세요.' },
@@ -26,7 +28,7 @@ function RoutineDetailPage() {
 
         <div className="space-y-3">
           <p className="text-base font-semibold text-slate-900">아침 루틴</p>
-          <div className="space-y-2 rounded-[8px] bg-card-bg p-4">
+          <SurfaceCard className="space-y-2" density="compact">
             {routineSteps.map((step) => (
               <div className="flex items-start gap-3" key={`am-${step.category}`}>
                 <span className="rounded-[8px] bg-chip-bg px-3 py-1 text-xs font-medium text-slate-800">
@@ -35,12 +37,12 @@ function RoutineDetailPage() {
                 <p className="pt-0.5 text-xs leading-5 text-slate-700">{step.guide}</p>
               </div>
             ))}
-          </div>
+          </SurfaceCard>
         </div>
 
         <div className="space-y-3">
           <p className="text-base font-semibold text-slate-900">저녁 루틴</p>
-          <div className="space-y-2 rounded-[8px] bg-card-bg p-4">
+          <SurfaceCard className="space-y-2" density="compact">
             {routineSteps.map((step) => (
               <div className="flex items-start gap-3" key={`pm-${step.category}`}>
                 <span className="rounded-[8px] bg-chip-bg px-3 py-1 text-xs font-medium text-slate-800">
@@ -49,11 +51,14 @@ function RoutineDetailPage() {
                 <p className="pt-0.5 text-xs leading-5 text-slate-700">{step.guide}</p>
               </div>
             ))}
-          </div>
+          </SurfaceCard>
         </div>
 
         <Link
-          className="block w-full rounded-[10px] border border-card-border bg-card-bg px-4 py-3 text-center text-sm font-semibold text-slate-800"
+          className={cn(
+            buttonVariants({ variant: 'surface' }),
+            'h-auto w-full rounded-[10px] px-4 py-3 text-center text-sm font-semibold'
+          )}
           to={createRoutineProductsPath(id ?? 1)}
         >
           루틴 제품 보기

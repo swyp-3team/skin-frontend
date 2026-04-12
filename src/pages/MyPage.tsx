@@ -1,9 +1,10 @@
-﻿import { Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 
 import { APP_ROUTES, createRoutineDetailPath } from '../app/routes'
-import PillCtaLink from '../components/common/PillCtaLink'
 import SurfaceCard from '../components/common/SurfaceCard'
 import MobilePage from '../components/MobilePage'
+import { Button, buttonVariants } from '../components/ui/button'
+import { cn } from '../lib/utils'
 import { useAuthStore } from '../stores/authStore'
 import { useSurveyStore } from '../stores/surveyStore'
 
@@ -15,13 +16,14 @@ function MyPage() {
   return (
     <MobilePage
       rightSlot={
-        <button
-          className="rounded-[10px] border border-card-border bg-card-bg px-3 py-1.5 text-xs font-semibold text-slate-700"
+        <Button
+          className="h-auto rounded-[10px] px-3 py-1.5 text-xs font-semibold text-slate-700"
           onClick={logoutMock}
           type="button"
+          variant="surface"
         >
           로그아웃
-        </button>
+        </Button>
       }
     >
       <section className="space-y-5">
@@ -36,16 +38,22 @@ function MyPage() {
             <>
               <p className="text-sm text-slate-700">피부 타입: {result.skinType}</p>
               <p className="text-sm text-slate-600">{result.summary}</p>
-              <PillCtaLink className="px-4 py-2 text-sm" to={APP_ROUTES.surveyResult}>
+              <Link
+                className={cn(buttonVariants({ variant: 'cta' }), 'h-auto rounded-full px-4 py-2 text-sm')}
+                to={APP_ROUTES.surveyResult}
+              >
                 진단 결과 보기
-              </PillCtaLink>
+              </Link>
             </>
           ) : (
             <>
               <p className="text-sm text-slate-600">아직 저장된 결과가 없습니다.</p>
-              <PillCtaLink className="px-4 py-2 text-sm" to={APP_ROUTES.survey}>
+              <Link
+                className={cn(buttonVariants({ variant: 'cta' }), 'h-auto rounded-full px-4 py-2 text-sm')}
+                to={APP_ROUTES.survey}
+              >
                 설문 시작하기
-              </PillCtaLink>
+              </Link>
             </>
           )}
         </SurfaceCard>

@@ -1,4 +1,5 @@
 import type { RoutineItem } from './types'
+import SurfaceCard from '../common/SurfaceCard'
 
 interface RoutineSectionProps {
   title: string
@@ -7,7 +8,7 @@ interface RoutineSectionProps {
 
 function RoutineSection({ title, items }: RoutineSectionProps) {
   return (
-    <div className="space-y-2 rounded-[8px] bg-card-bg p-4">
+    <SurfaceCard className="space-y-2" density="compact">
       <p className="text-base font-semibold text-slate-800">{title}</p>
       {items.map((item) => (
         <div className="flex items-start gap-3" key={item.key}>
@@ -15,7 +16,7 @@ function RoutineSection({ title, items }: RoutineSectionProps) {
           <p className="pt-0.5 text-xs leading-5 text-slate-700">{item.guide}</p>
         </div>
       ))}
-    </div>
+    </SurfaceCard>
   )
 }
 

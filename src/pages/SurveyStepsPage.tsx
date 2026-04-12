@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useShallow } from 'zustand/react/shallow'
 
@@ -12,6 +12,7 @@ import SkinTypeStepSection from './survey-steps/SkinTypeStepSection'
 import SurveyProgressHeader from './survey-steps/SurveyProgressHeader'
 import SurveyStepActions from './survey-steps/SurveyStepActions'
 import { useSurveyQuestions } from './survey-steps/useSurveyQuestions'
+import { useSurveySubmit } from './survey-steps/useSurveySubmit'
 
 function SurveyStepsPage() {
   const navigate = useNavigate()
@@ -28,36 +29,29 @@ function SurveyStepsPage() {
     answersByQuestionId,
     skinType,
     concerns,
-    isSubmitting,
-    submitError,
     setAnswer,
     nextStep,
     prevStep,
     goToStep,
     setSkinType,
     toggleConcern,
-    submitSurvey,
-    clearSubmitError,
   } = useSurveyStore(
     useShallow((state) => ({
       currentStep: state.currentStep,
       answersByQuestionId: state.answersByQuestionId,
       skinType: state.skinType,
       concerns: state.concerns,
-      isSubmitting: state.isSubmitting,
-      submitError: state.submitError,
       setAnswer: state.setAnswer,
       nextStep: state.nextStep,
       prevStep: state.prevStep,
       goToStep: state.goToStep,
       setSkinType: state.setSkinType,
       toggleConcern: state.toggleConcern,
-      submitSurvey: state.submitSurvey,
-      clearSubmitError: state.clearSubmitError,
     }))
   )
 
   const { questions, isLoadingQuestions, questionLoadError } = useSurveyQuestions()
+  const submitMutation = useSurveySubmit()
   const [validationError, setValidationError] = useState<string | null>(null)
 
   const totalSteps = useMemo(() => Math.max(questions.length + 2, 2), [questions.length])
@@ -74,7 +68,7 @@ function SurveyStepsPage() {
 
   const clearErrors = () => {
     setValidationError(null)
-    clearSubmitError()
+    submitMutation.reset()
   }
 
   const handleNext = () => {
@@ -98,7 +92,7 @@ function SurveyStepsPage() {
     }
   }
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     clearErrors()
 
     const firstMissingQuestion = questions.find((question) => answersByQuestionId[question.questionId] === undefined)
@@ -116,15 +110,10 @@ function SurveyStepsPage() {
       return
     }
 
-    try {
-      await submitSurvey({
-        isAuthenticated,
-        accessToken,
-      })
-      navigate(APP_ROUTES.surveyResult)
-    } catch {
-      // submitError는 store에서 관리
-    }
+    submitMutation.mutate(
+      { isAuthenticated, accessToken },
+      { onSuccess: () => navigate(APP_ROUTES.surveyResult) },
+    )
   }
 
   if (isLoadingQuestions) {
@@ -189,24 +178,22 @@ function SurveyStepsPage() {
           </p>
         ) : null}
 
-        {submitError ? (
+        {submitMutation.error ? (
           <p className="rounded-[10px] border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-            {submitError}
+            {submitMutation.error.message}
           </p>
         ) : null}
 
         <SurveyStepActions
           currentStep={currentStep}
           isFinalStep={isFinalStep}
-          isSubmitting={isSubmitting}
+          isSubmitting={submitMutation.isPending}
           onNext={handleNext}
           onPrev={() => {
             clearErrors()
             prevStep()
           }}
-          onSubmit={() => {
-            void handleSubmit()
-          }}
+          onSubmit={handleSubmit}
         />
       </section>
     </MobilePage>

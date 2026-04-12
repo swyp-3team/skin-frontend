@@ -1,11 +1,8 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 
-import { apiClient } from '../api'
-import { normalizeApiError } from '../api/errors'
-import type { FullResult, PreviewResult, SurveyAnswer, SurveySubmitPayload } from '../api/types'
-import { SELECTION_TO_API_SKIN_TYPE, SKIN_TYPE_OPTIONS, VALID_CONCERNS } from '../domain/surveyConfig'
-import type { AuthState } from '../types/auth'
+import { SKIN_TYPE_OPTIONS, VALID_CONCERNS } from '../domain/surveyConfig'
+import type { FullResult, PreviewResult } from '../api/types'
 import type { Concern, SkinTypeSelection } from '../types/domain'
 
 export const LEGACY_SKIN_TYPE_KEY = 'survey.selectedSkinType'
@@ -44,32 +41,11 @@ function syncLegacySkinType(value: SkinTypeSelection | null) {
   window.localStorage.setItem(LEGACY_SKIN_TYPE_KEY, value)
 }
 
-function toSubmitPayload(state: SurveyStoreState): SurveySubmitPayload {
-  if (!state.skinType) {
-    throw new Error('피부 타입을 먼저 선택해주세요.')
-  }
-
-  const answers: SurveyAnswer[] = Object.entries(state.answersByQuestionId)
-    .map(([questionId, value]) => ({
-      questionId: Number(questionId),
-      value,
-    }))
-    .sort((a, b) => a.questionId - b.questionId)
-
-  return {
-    answers,
-    skinType: SELECTION_TO_API_SKIN_TYPE[state.skinType],
-    concerns: state.concerns,
-  }
-}
-
 export interface SurveyStoreState {
   currentStep: number
   answersByQuestionId: Record<number, number>
   skinType: SkinTypeSelection | null
   concerns: Concern[]
-  isSubmitting: boolean
-  submitError: string | null
   lastResult: PreviewResult | FullResult | null
 }
 
@@ -80,22 +56,19 @@ export interface SurveyStoreActions {
   goToStep: (step: number) => void
   setSkinType: (value: SkinTypeSelection) => void
   toggleConcern: (value: Concern) => void
-  submitSurvey: (authState: AuthState) => Promise<PreviewResult | FullResult>
+  setLastResult: (result: PreviewResult | FullResult) => void
   resetSurvey: () => void
-  clearSubmitError: () => void
 }
 
 type SurveyStore = SurveyStoreState & SurveyStoreActions
 
 export const useSurveyStore = create<SurveyStore>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       currentStep: 1,
       answersByQuestionId: {},
       skinType: readLegacySkinType(),
       concerns: [],
-      isSubmitting: false,
-      submitError: null,
       lastResult: null,
       setAnswer: (questionId, value) => {
         set((state) => ({
@@ -136,30 +109,8 @@ export const useSurveyStore = create<SurveyStore>()(
           }
         })
       },
-      submitSurvey: async (authState) => {
-        set({ isSubmitting: true, submitError: null })
-
-        try {
-          const payload = toSubmitPayload(get())
-          const result = authState.isAuthenticated
-            ? await apiClient.submitSurveyResult(payload, authState)
-            : await apiClient.submitSurveyPreview(payload)
-
-          set({
-            isSubmitting: false,
-            submitError: null,
-            lastResult: result,
-          })
-
-          return result
-        } catch (error) {
-          const normalizedError = normalizeApiError(error)
-          set({
-            isSubmitting: false,
-            submitError: normalizedError.message,
-          })
-          throw normalizedError
-        }
+      setLastResult: (result) => {
+        set({ lastResult: result })
       },
       resetSurvey: () => {
         syncLegacySkinType(null)
@@ -168,13 +119,8 @@ export const useSurveyStore = create<SurveyStore>()(
           answersByQuestionId: {},
           skinType: null,
           concerns: [],
-          isSubmitting: false,
-          submitError: null,
           lastResult: null,
         })
-      },
-      clearSubmitError: () => {
-        set({ submitError: null })
       },
     }),
     {

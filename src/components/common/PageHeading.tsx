@@ -1,22 +1,27 @@
 import type { ReactNode } from 'react'
+import { cva, type VariantProps } from 'class-variance-authority'
 
-interface PageHeadingProps {
+import { cn } from '@/lib/utils'
+
+const pageHeadingVariants = cva('font-semibold tracking-tight text-slate-950', {
+  variants: {
+    size: {
+      default: 'text-page-title leading-[1.35]',
+      lg: 'text-page-title-lg leading-[1.35]',
+    },
+  },
+  defaultVariants: {
+    size: 'default',
+  },
+})
+
+interface PageHeadingProps extends VariantProps<typeof pageHeadingVariants> {
   children: ReactNode
   className?: string
 }
 
-function joinClassNames(...classes: Array<string | undefined>) {
-  return classes.filter(Boolean).join(' ')
-}
-
-function PageHeading({ children, className }: PageHeadingProps) {
-  return (
-    <h2
-      className={joinClassNames('text-page-title leading-[1.4] font-semibold tracking-tight text-slate-950', className)}
-    >
-      {children}
-    </h2>
-  )
+function PageHeading({ children, className, size }: PageHeadingProps) {
+  return <h2 className={cn(pageHeadingVariants({ size }), className)}>{children}</h2>
 }
 
 export default PageHeading

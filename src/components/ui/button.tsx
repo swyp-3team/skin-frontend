@@ -1,3 +1,5 @@
+/* eslint-disable react-refresh/only-export-components */
+
 import { Button as ButtonPrimitive } from '@base-ui/react/button'
 import { cva, type VariantProps } from 'class-variance-authority'
 
@@ -9,6 +11,8 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: 'bg-primary text-primary-foreground hover:bg-primary/80',
+        cta: 'bg-cta font-semibold text-white hover:bg-cta/90',
+        surface: 'border-card-border bg-card-bg text-slate-800',
         outline:
           'border-border hover:bg-input/50 hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:bg-input/30',
         secondary:
@@ -47,4 +51,4 @@ function Button({
   return <ButtonPrimitive data-slot="button" className={cn(buttonVariants({ variant, size, className }))} {...props} />
 }
 
-export { Button }
+export { Button, buttonVariants }
