@@ -6,15 +6,15 @@ import { APP_ROUTES, createResultDetailPath } from '../../../app/routes'
 import AlertMessage from '../../../components/common/AlertMessage'
 import MobilePage from '../../../components/MobilePage'
 import { CloseButton } from '../../../components/MobilePageHeading'
-import { SURVEY_RESULT_COPY, SURVEY_STATUS_MESSAGES, SURVEY_VALIDATION_MESSAGES } from '../../../constants/survey'
+import { SURVEY_PAGE_TITLE, SURVEY_RESULT_COPY, SURVEY_STATUS_MESSAGES, SURVEY_VALIDATION_MESSAGES } from '../../../constants/survey'
 import { useAuthStore } from '../../../stores/authStore'
 import { useSurveyStore } from '../../../stores/surveyStore'
+import type { Concern, SkinTypeSelection } from '../../../types/domain'
 import { useSurveySubmit } from '../useSurveySubmit'
-import ConcernStepSection from './ConcernStepSection'
-import QuestionStepSection from './QuestionStepSection'
-import SkinTypeStepSection from './SkinTypeStepSection'
 import SurveyStepActions from './SurveyStepActions'
+import SurveyStepSection from './SurveyStepSection'
 import { useSurveyQuestions } from './useSurveyQuestions'
+import { useSurveyStepConfig } from './useSurveyStepConfig'
 
 function SurveyStepsPage() {
   const navigate = useNavigate()
@@ -48,6 +48,7 @@ function SurveyStepsPage() {
   )
 
   const { questions, isLoadingQuestions, questionLoadError } = useSurveyQuestions()
+  const { stepConfig } = useSurveyStepConfig()
   const submitMutation = useSurveySubmit()
   const [validationError, setValidationError] = useState<string | null>(null)
 
@@ -153,41 +154,67 @@ function SurveyStepsPage() {
     )
   }
 
+  const footer = (
+    <div className="px-3 pt-4 pb-12">
+      <SurveyStepActions
+        currentStep={safeCurrentStep}
+        isFinalStep={isFinalStep}
+        isSubmitting={submitMutation.isPending}
+        onNext={handleNext}
+        onPrev={() => {
+          clearErrors()
+          prevStep()
+        }}
+        onSubmit={handleSubmit}
+      />
+    </div>
+  )
+
   return (
     <MobilePage
       headingLeft={null}
-      headingCenter="피부 진단받기"
+      headingCenter={SURVEY_PAGE_TITLE}
       headingRight={<CloseButton onClick={() => navigate(APP_ROUTES.home)} aria-label="설문 닫기" />}
+      footer={footer}
     >
-
-      {/* 콘텐츠 영역: 총 수평 패딩 28px (MobilePage px-4=16px + 추가 px-3=12px) */}
-      <section className="w-full px-4 pt-23 flex flex-col">
+      <section className="w-full px-4 pt-4 flex flex-col items-center">
         {isQuestionStep && activeQuestion ? (
-          <QuestionStepSection
-            activeQuestion={activeQuestion}
-            answersByQuestionId={answersByQuestionId}
-            onAnswerChange={(questionId, value) => {
-              setAnswer(questionId, value)
+          <SurveyStepSection<number>
+            name={`question-${activeQuestion.questionId}`}
+            options={activeQuestion.options}
+            title={activeQuestion.text}
+            isSelected={(value) => answersByQuestionId[activeQuestion.questionId] === value}
+            onChange={(value) => {
+              setAnswer(activeQuestion.questionId, value)
               clearErrors()
             }}
           />
         ) : null}
 
-        {isSkinTypeStep ? (
-          <SkinTypeStepSection
-            skinType={skinType}
-            onSkinTypeChange={(value) => {
-              setSkinType(value)
+        {isSkinTypeStep && stepConfig ? (
+          <SurveyStepSection<string>
+            columns={2}
+            name="skinType"
+            options={stepConfig.skinTypeStep.options}
+            title={stepConfig.skinTypeStep.title}
+            isSelected={(value) => skinType === value}
+            onChange={(value) => {
+              setSkinType(value as SkinTypeSelection)
               clearErrors()
             }}
           />
         ) : null}
 
-        {isFinalStep ? (
-          <ConcernStepSection
-            concerns={concerns}
-            onConcernToggle={(value) => {
-              toggleConcern(value)
+        {isFinalStep && stepConfig ? (
+          <SurveyStepSection<string>
+            columns={2}
+            inputType="checkbox"
+            name="concerns"
+            options={stepConfig.concernStep.options}
+            title={stepConfig.concernStep.title}
+            isSelected={(value) => concerns.includes(value as Concern)}
+            onChange={(value) => {
+              toggleConcern(value as Concern)
               clearErrors()
             }}
           />
@@ -206,20 +233,6 @@ function SurveyStepsPage() {
         ) : null}
       </section>
 
-      {/* 하단 고정 액션 바 — 모바일 카드 영역(390px)에 맞춰 고정 */}
-      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[390px] px-7 pt-4 pb-12 bg-white">
-        <SurveyStepActions
-          currentStep={safeCurrentStep}
-          isFinalStep={isFinalStep}
-          isSubmitting={submitMutation.isPending}
-          onNext={handleNext}
-          onPrev={() => {
-            clearErrors()
-            prevStep()
-          }}
-          onSubmit={handleSubmit}
-        />
-      </div>
     </MobilePage>
   )
 }

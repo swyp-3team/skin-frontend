@@ -22,9 +22,9 @@ function HomePage() {
 
   return (
     <MobilePage>
-      <div className="flex min-h-[66dvh] flex-col justify-between">
-        <div>
-          <PageHeading className="whitespace-pre-line leading-[1.4]">{LANDING_COPY.heroHeadline}</PageHeading>
+      <div className="flex min-h-[70dvh] flex-col justify-between">
+        <div className='pt-20 '>
+          <PageHeading className="whitespace-pre-line tracking-wide leading-[1.4]">{LANDING_COPY.heroHeadline}</PageHeading>
 
           {hasAuthRedirect ? (
             <AlertMessage className="mt-6" size="md" variant="warning">

@@ -19,6 +19,7 @@ export const MOCK_SURVEY_QUESTIONS = [
 
 export const SURVEY_QUERY_KEYS = {
   questions: (step: number) => ['surveyQuestions', step],
+  stepConfig: ['surveyStepConfig'],
 } as const
 
 export const SURVEY_STEP_TEXT = {
@@ -35,6 +36,8 @@ export const SURVEY_VALIDATION_MESSAGES = {
   skinTypeRequiredForSubmit: '피부 타입 선택이 필요합니다.',
   skinTypeRequiredBeforeSubmit: '피부 타입을 먼저 선택해주세요.',
 } as const
+
+export const SURVEY_PAGE_TITLE = '피부 진단받기'
 
 export const SURVEY_RESULT_COPY = {
   needSectionTitle: '필요',

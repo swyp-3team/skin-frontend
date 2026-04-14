@@ -1,18 +1,7 @@
+import type { SurveyOption } from '../api/types'
 import type { Concern, IngredientGroup, ProductCategory, SkinType, SkinTypeSelection } from '../types/domain'
 
-export interface SkinTypeOption {
-  value: SkinTypeSelection
-  label: string
-  description: string
-}
-
-export interface ConcernOption {
-  value: Concern
-  label: string
-  description: string
-}
-
-export const SKIN_TYPE_OPTIONS: readonly SkinTypeOption[] = [
+export const SKIN_TYPE_OPTIONS: readonly SurveyOption<SkinTypeSelection>[] = [
   {
     value: 'dry',
     label: '건성',
@@ -35,7 +24,7 @@ export const SKIN_TYPE_OPTIONS: readonly SkinTypeOption[] = [
   },
 ]
 
-export const CONCERN_OPTIONS: readonly ConcernOption[] = [
+export const CONCERN_OPTIONS: readonly SurveyOption<Concern>[] = [
   { value: 'DRY', label: '건조', description: '수분 부족과 당김' },
   { value: 'SEBUM', label: '피지', description: '유분/번들거림' },
   { value: 'ACNE', label: '트러블', description: '뾰루지/염증' },
@@ -44,7 +33,7 @@ export const CONCERN_OPTIONS: readonly ConcernOption[] = [
   { value: 'AGING', label: '노화', description: '탄력/주름' },
 ]
 
-export const VALID_CONCERNS: readonly Concern[] = CONCERN_OPTIONS.map((option) => option.value)
+export const VALID_CONCERNS: readonly Concern[] = CONCERN_OPTIONS.map((o) => o.value)
 
 export const INGREDIENT_GROUP_LABELS: Record<IngredientGroup, string> = {
   HYDRATION: '수분 공급',

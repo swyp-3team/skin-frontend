@@ -1,4 +1,5 @@
 import { MOCK_SURVEY_QUESTIONS } from '../constants/survey'
+import { CONCERN_OPTIONS, SKIN_TYPE_OPTIONS } from '../domain/surveyConfig'
 import type { AuthState } from '../types/auth'
 import type { Concern, IngredientGroup, ProductCategory, SkinType } from '../types/domain'
 import type { ApiClient } from './client'
@@ -130,6 +131,19 @@ export const mockApiClient: ApiClient = {
   async getSurveyQuestions(step: number) {
     const question = mockSurveyQuestions[step - 1]
     return withDelay(question ? [question] : [])
+  },
+
+  async getSurveyStepConfig() {
+    return withDelay({
+      skinTypeStep: {
+        title: '피부 타입을 선택해주세요',
+        options: [...SKIN_TYPE_OPTIONS],
+      },
+      concernStep: {
+        title: '고민을 선택해주세요',
+        options: [...CONCERN_OPTIONS],
+      },
+    })
   },
 
   async submitSurveyPreview(payload) {

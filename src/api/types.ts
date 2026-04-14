@@ -1,14 +1,27 @@
 import type { Concern, IngredientGroup, ProductCategory, SkinType } from '../types/domain'
 
-export interface SurveyQuestionOption {
-  value: number
+export interface SurveyOption<TValue extends string | number = string> {
+  value: TValue
   label: string
+  description?: string
 }
+
+export type SurveyQuestionOption = SurveyOption<number>
 
 export interface SurveyQuestion {
   questionId: number
   text: string
   options: SurveyQuestionOption[]
+}
+
+export interface SurveyDescriptiveStep {
+  title: string
+  options: SurveyOption<string>[]
+}
+
+export interface SurveyStepConfig {
+  skinTypeStep: SurveyDescriptiveStep
+  concernStep: SurveyDescriptiveStep
 }
 
 export interface SurveyQuestionsResponse {

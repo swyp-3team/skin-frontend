@@ -16,7 +16,6 @@ import { selectIsAuthenticated, useAuthStore } from '../../../stores/authStore'
 import { useSurveyStore } from '../../../stores/surveyStore'
 import type { PreviewResult } from '../../../api/types'
 import { useLoginAndPromote } from './useLoginAndPromote'
-import { de } from 'zod/v4/locales'
 
 const getParticle = josa.pick
 

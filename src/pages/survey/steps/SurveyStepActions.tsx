@@ -10,7 +10,7 @@ interface SurveyStepActionsProps {
 }
 
 const pillBase =
-  'h-12 rounded-full border border-[#EDEEED] bg-[#F8F9F7] text-base font-medium text-[#3A3D3B] transition-opacity disabled:opacity-40'
+  'h-12 w-18 rounded-full bg-[#EDEEED] text-base font-medium text-[#A4AAA6] transition-colors disabled:bg-[#EDEEED] disabled:text-[#A4AAA6] disabled:cursor-not-allowed'
 
 function SurveyStepActions({
   currentStep,
@@ -23,7 +23,7 @@ function SurveyStepActions({
   return (
     <div className="flex items-center justify-between gap-4">
       <button
-        className={`${pillBase} w-[76px] shrink-0`}
+        className={`${pillBase} shrink-0`}
         disabled={currentStep === 1 || isSubmitting}
         onClick={onPrev}
         type="button"
@@ -42,7 +42,7 @@ function SurveyStepActions({
         </button>
       ) : (
         <button
-          className={`${pillBase} w-[76px] shrink-0`}
+          className={`${pillBase} shrink-0`}
           onClick={onNext}
           type="button"
         >
