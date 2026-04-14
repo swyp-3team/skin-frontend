@@ -3,7 +3,18 @@
     "allow": [
       "Bash(grep -E \"\\\\.\\(json|config|rc\\)$|tailwind|vite\")",
       "Bash(npm install:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(npx tsc:*)",
+      "WebSearch",
+      "WebFetch(domain:www.npmjs.com)",
+      "WebFetch(domain:github.com)",
+      "Bash(npm list:*)",
+      "WebFetch(domain:ui.shadcn.com)",
+      "WebFetch(domain:www.shadcn.io)",
+      "WebFetch(domain:3.37.26.4)",
+      "Bash(ls -la /c/Users/dayou/skin-web/*.config.*)",
+      "Read(//tmp/**)",
+      "Bash(node:*)"
     ]
   }
 }

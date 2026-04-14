@@ -1,19 +1,25 @@
 import type { ReactNode } from 'react'
 
+import MobilePageHeading from './MobilePageHeading'
+
 interface MobilePageProps {
   children: ReactNode
-  rightSlot?: ReactNode
-  title?: string
+  headingLeft?: ReactNode
+  headingCenter?: ReactNode
+  headingRight?: ReactNode
 }
 
-function MobilePage({ children, rightSlot, title = 'Layerd' }: MobilePageProps) {
+function MobilePage({ children, headingLeft, headingCenter, headingRight }: MobilePageProps) {
   return (
-    <section className="mx-auto w-full max-w-[390px] min-h-dvh bg-page-bg px-6 pb-20 pt-4">
-      <header className="mb-10 flex items-center justify-between">
-        <h1 className="text-app-title leading-none font-bold tracking-tight text-slate-950">{title}</h1>
-        {rightSlot}
-      </header>
-      {children}
+    <section className="mx-auto w-full min-h-dvh max-w-[390px] bg-white pb-20 px-4">
+      <MobilePageHeading
+        left={headingLeft}
+        center={headingCenter}
+        right={headingRight}
+      />
+      <main>
+        {children}
+      </main>
     </section>
   )
 }

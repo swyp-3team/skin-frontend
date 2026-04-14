@@ -7,7 +7,6 @@ import { STORAGE_KEYS } from '../constants/storage'
 const STORAGE_KEY = STORAGE_KEYS.authSession
 
 interface AuthStoreState {
-  isAuthenticated: boolean
   accessToken?: string
   nickname?: string
 }
@@ -19,22 +18,21 @@ interface AuthStoreActions {
 
 export type AuthStore = AuthStoreState & AuthStoreActions
 
+export const selectIsAuthenticated = (state: { accessToken?: string }) => state.accessToken !== undefined
+
 export const useAuthStore = create<AuthStore>()(
   persist(
     (set) => ({
-      isAuthenticated: false,
       accessToken: undefined,
       nickname: undefined,
       loginMock: (nickname = AUTH_UI_TEXT.defaultMockNickname) => {
         set({
-          isAuthenticated: true,
           accessToken: MOCK_ACCESS_TOKEN,
           nickname,
         })
       },
       logoutMock: () => {
         set({
-          isAuthenticated: false,
           accessToken: undefined,
           nickname: undefined,
         })
@@ -43,6 +41,10 @@ export const useAuthStore = create<AuthStore>()(
     {
       name: STORAGE_KEY,
       storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        accessToken: state.accessToken,
+        nickname: state.nickname,
+      }),
     }
   )
 )

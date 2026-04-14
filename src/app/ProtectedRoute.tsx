@@ -1,17 +1,15 @@
-import type { ReactNode } from 'react'
-import { Navigate, useLocation } from 'react-router-dom'
+import { Navigate, Outlet, useLocation } from 'react-router-dom'
 
 import { APP_ROUTES } from './routes'
 import { AUTH_REDIRECT_REASON } from '../constants/auth'
-import { useAuthStore } from '../stores/authStore'
+import { selectIsAuthenticated, useAuthStore } from '../stores/authStore'
 
 interface ProtectedRouteProps {
-  children: ReactNode
   redirectTo?: string
 }
 
-function ProtectedRoute({ children, redirectTo = APP_ROUTES.home }: ProtectedRouteProps) {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+function ProtectedRoute({ redirectTo = APP_ROUTES.home }: ProtectedRouteProps) {
+  const isAuthenticated = useAuthStore(selectIsAuthenticated)
   const location = useLocation()
 
   if (!isAuthenticated) {
@@ -20,7 +18,7 @@ function ProtectedRoute({ children, redirectTo = APP_ROUTES.home }: ProtectedRou
     )
   }
 
-  return children
+  return <Outlet />
 }
 
 export default ProtectedRoute

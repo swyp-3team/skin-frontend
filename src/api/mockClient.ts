@@ -1,38 +1,10 @@
+import { MOCK_SURVEY_QUESTIONS } from '../constants/survey'
 import type { AuthState } from '../types/auth'
 import type { Concern, IngredientGroup, ProductCategory, SkinType } from '../types/domain'
 import type { ApiClient } from './client'
-import type { FullResult, PreviewResult, SurveyQuestion, SurveySubmitPayload, TopIngredientGroup } from './types'
+import type { FullResult, PreviewResult, SurveyQuestion, SurveyResultPayload, SurveySubmitPayload, TopIngredientGroup } from './types'
 
-const defaultQuestionOptions = [
-  { value: 85, label: '매우 그렇다' },
-  { value: 70, label: '그렇다' },
-  { value: 55, label: '보통이다' },
-  { value: 40, label: '아니다' },
-  { value: 25, label: '전혀 아니다' },
-] as const
-
-const mockSurveyQuestions: SurveyQuestion[] = [
-  {
-    questionId: 1,
-    text: '세안 직후 피부가 당기나요?',
-    options: [...defaultQuestionOptions],
-  },
-  {
-    questionId: 2,
-    text: '오후가 되면 번들거림이 느껴지나요?',
-    options: [...defaultQuestionOptions],
-  },
-  {
-    questionId: 3,
-    text: '트러블이 자주 올라오나요?',
-    options: [...defaultQuestionOptions],
-  },
-  {
-    questionId: 4,
-    text: '피부가 쉽게 붉어지거나 자극을 받나요?',
-    options: [...defaultQuestionOptions],
-  },
-]
+const mockSurveyQuestions: SurveyQuestion[] = MOCK_SURVEY_QUESTIONS.map((q) => ({ ...q, options: [...q.options] }))
 
 const concernToGroup: Record<Concern, IngredientGroup> = {
   DRY: 'HYDRATION',
@@ -125,6 +97,7 @@ function createFullResult(payload: SurveySubmitPayload): FullResult {
 
   return {
     ...preview,
+    resultId: Date.now(),
     recommendedProducts: [
       {
         productId: 101,
@@ -151,20 +124,42 @@ function withDelay<T>(value: T, ms = 350): Promise<T> {
   })
 }
 
+const mockResultsDb = new Map<number, FullResult>()
+
 export const mockApiClient: ApiClient = {
-  async getSurveyQuestions() {
-    return withDelay(mockSurveyQuestions)
+  async getSurveyQuestions(step: number) {
+    const question = mockSurveyQuestions[step - 1]
+    return withDelay(question ? [question] : [])
   },
 
   async submitSurveyPreview(payload) {
     return withDelay(createPreviewResult(payload))
   },
 
-  async submitSurveyResult(payload, authState: AuthState) {
-    if (!authState.isAuthenticated) {
+  async submitSurveyResult(payload: SurveyResultPayload, authState: AuthState) {
+    if (!authState.accessToken) {
       throw new Error('로그인된 사용자만 전체 결과를 조회할 수 있습니다.')
     }
 
-    return withDelay(createFullResult(payload))
+    if ('resultId' in payload) {
+      throw new Error('Mock 클라이언트는 resultId 기반 조회를 지원하지 않습니다.')
+    }
+
+    const result = createFullResult(payload)
+    mockResultsDb.set(result.resultId, result)
+    return withDelay(result)
+  },
+
+  async getResult(resultId: number, authState: AuthState) {
+    if (!authState.accessToken) {
+      throw new Error('로그인된 사용자만 결과를 조회할 수 있습니다.')
+    }
+
+    const result = mockResultsDb.get(resultId)
+    if (!result) {
+      throw new Error(`결과를 찾을 수 없습니다. (ID: ${resultId})`)
+    }
+
+    return withDelay(result)
   },
 }

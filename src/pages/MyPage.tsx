@@ -1,27 +1,40 @@
+import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 
-import { APP_ROUTES, createRoutineDetailPath } from '../app/routes'
+import { apiClient } from '../api'
+import { APP_ROUTES, createResultDetailPath, createRoutineDetailPath } from '../app/routes'
+import SectionTitle from '../components/common/SectionTitle'
 import SurfaceCard from '../components/common/SurfaceCard'
 import MobilePage from '../components/MobilePage'
 import { Button, buttonVariants } from '../components/ui/button'
 import { AUTH_UI_TEXT } from '../constants/auth'
 import { LANDING_COPY } from '../constants/landing'
 import { SURVEY_STATUS_MESSAGES } from '../constants/survey'
+import { useLogout } from '../hooks/useLogout'
+import { queryKeys } from '../lib/queryKeys'
 import { cn } from '../lib/utils'
-import { useAuthStore } from '../stores/authStore'
+import { selectIsAuthenticated, useAuthStore } from '../stores/authStore'
 import { useSurveyStore } from '../stores/surveyStore'
 
 function MyPage() {
-  const logoutMock = useAuthStore((state) => state.logoutMock)
+  const isAuthenticated = useAuthStore(selectIsAuthenticated)
+  const accessToken = useAuthStore((state) => state.accessToken)
   const nickname = useAuthStore((state) => state.nickname)
-  const result = useSurveyStore((state) => state.lastResult)
+  const latestResultId = useSurveyStore((state) => state.latestResultId)
+  const logout = useLogout()
+
+  const { data: result } = useQuery({
+    queryKey: queryKeys.result(latestResultId!),
+    queryFn: () => apiClient.getResult(latestResultId!, { accessToken }),
+    enabled: isAuthenticated && latestResultId != null,
+  })
 
   return (
     <MobilePage
-      rightSlot={
+      headingRight={
         <Button
           className="h-auto rounded-[10px] px-3 py-1.5 text-xs font-semibold text-slate-700"
-          onClick={logoutMock}
+          onClick={logout}
           type="button"
           variant="surface"
         >
@@ -38,14 +51,14 @@ function MyPage() {
         </SurfaceCard>
 
         <SurfaceCard className="space-y-3">
-          <h2 className="text-lg font-semibold text-slate-900">최신 피부 진단</h2>
-          {result ? (
+          <SectionTitle size="lg">최신 피부 진단</SectionTitle>
+          {result && latestResultId != null ? (
             <>
               <p className="text-sm text-slate-700">피부 타입: {result.skinType}</p>
               <p className="text-sm text-slate-600">{result.summary}</p>
               <Link
                 className={cn(buttonVariants({ variant: 'cta' }), 'h-auto rounded-full px-4 py-2 text-sm')}
-                to={APP_ROUTES.surveyResult}
+                to={createResultDetailPath(latestResultId)}
               >
                 {SURVEY_STATUS_MESSAGES.viewResultCta}
               </Link>
@@ -64,9 +77,12 @@ function MyPage() {
         </SurfaceCard>
 
         <SurfaceCard className="space-y-3">
-          <h2 className="text-lg font-semibold text-slate-900">나의 루틴</h2>
+          <SectionTitle size="lg">나의 루틴</SectionTitle>
           <Link
-            className="flex items-center justify-between rounded-[10px] border border-card-border bg-white px-3 py-3 text-sm text-slate-700"
+            className={cn(
+              buttonVariants({ variant: 'surface' }),
+              'h-auto w-full justify-between rounded-[10px] bg-white px-3 py-3 text-sm',
+            )}
             to={createRoutineDetailPath(1)}
           >
             <span>최근 루틴 상세</span>

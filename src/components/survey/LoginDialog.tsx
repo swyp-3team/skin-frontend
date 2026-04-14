@@ -9,11 +9,10 @@ interface LoginDialogProps {
   open: boolean
   isPromoting: boolean
   onOpenChange: (open: boolean) => void
-  onLoginGoogle: () => void
-  onLoginKakao: () => void
+  onLogin: (providerLabel: string) => void
 }
 
-function LoginDialog({ open, isPromoting, onOpenChange, onLoginGoogle, onLoginKakao }: LoginDialogProps) {
+function LoginDialog({ open, isPromoting, onOpenChange, onLogin }: LoginDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="rounded-md max-w-[22rem] gap-0 overflow-hidden border border-login-border bg-login-surface p-0 sm:max-w-[24rem]">
@@ -27,7 +26,12 @@ function LoginDialog({ open, isPromoting, onOpenChange, onLoginGoogle, onLoginKa
         </DialogHeader>
 
         <div className="grid gap-4 px-6 py-7">
-          <Button className="h-11 font-normal" disabled={isPromoting} onClick={onLoginGoogle} variant="outline">
+          <Button
+            className="h-11 font-normal"
+            disabled={isPromoting}
+            onClick={() => onLogin(AUTH_PROVIDERS.google.label)}
+            variant="outline"
+          >
             <span className="grid w-full grid-cols-[1.25rem_1fr_1.25rem] items-center gap-3">
               <GoogleLogo className="size-4" />
               <span className="truncate text-center">
@@ -37,7 +41,12 @@ function LoginDialog({ open, isPromoting, onOpenChange, onLoginGoogle, onLoginKa
             </span>
           </Button>
 
-          <Button className="h-11 font-normal" disabled={isPromoting} onClick={onLoginKakao} variant="outline">
+          <Button
+            className="h-11 font-normal"
+            disabled={isPromoting}
+            onClick={() => onLogin(AUTH_PROVIDERS.kakao.label)}
+            variant="outline"
+          >
             <span className="grid w-full grid-cols-[1.25rem_1fr_1.25rem] items-center gap-3">
               <KakaoLogo className="size-5" />
               <span className="truncate text-center">

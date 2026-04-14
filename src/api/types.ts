@@ -26,6 +26,8 @@ export interface SurveySubmitPayload {
   concerns: Concern[]
 }
 
+export type SurveyResultPayload = SurveySubmitPayload | { resultId: number }
+
 export interface TopIngredientGroup {
   group: IngredientGroup
   score?: number
@@ -54,6 +56,11 @@ export interface RoutineGuide {
 }
 
 export interface FullResult extends PreviewResult {
+  resultId: number
   recommendedProducts: RecommendedProduct[]
   routine: RoutineGuide[]
 }
+
+export type SubmitOutcome =
+  | { kind: 'preview'; result: PreviewResult }
+  | { kind: 'full'; result: FullResult }

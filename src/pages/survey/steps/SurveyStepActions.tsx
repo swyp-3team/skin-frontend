@@ -1,5 +1,4 @@
-import { Button } from '../../components/ui/button'
-import { SURVEY_STEP_TEXT } from '../../constants/survey'
+import { SURVEY_STEP_TEXT } from '../../../constants/survey'
 
 interface SurveyStepActionsProps {
   currentStep: number
@@ -10,6 +9,9 @@ interface SurveyStepActionsProps {
   onSubmit: () => void
 }
 
+const pillBase =
+  'h-12 rounded-full border border-[#EDEEED] bg-[#F8F9F7] text-base font-medium text-[#3A3D3B] transition-opacity disabled:opacity-40'
+
 function SurveyStepActions({
   currentStep,
   isSubmitting,
@@ -19,31 +21,33 @@ function SurveyStepActions({
   onSubmit,
 }: SurveyStepActionsProps) {
   return (
-    <div className="flex items-center gap-2 pt-2">
-      <Button
-        className="h-auto flex-1 rounded-[10px] px-4 py-3 text-sm font-semibold"
+    <div className="flex items-center justify-between gap-4">
+      <button
+        className={`${pillBase} w-[76px] shrink-0`}
         disabled={currentStep === 1 || isSubmitting}
         onClick={onPrev}
         type="button"
-        variant="surface"
       >
         {SURVEY_STEP_TEXT.previous}
-      </Button>
+      </button>
 
       {isFinalStep ? (
-        <Button
-          className="h-auto flex-1 rounded-full px-4 py-3 text-sm disabled:opacity-60"
+        <button
+          className="flex-1 h-12 rounded-full bg-[#1A1C18] text-base font-semibold text-white transition-opacity disabled:opacity-60"
           disabled={isSubmitting}
           onClick={onSubmit}
           type="button"
-          variant="cta"
         >
           {isSubmitting ? SURVEY_STEP_TEXT.submitPending : SURVEY_STEP_TEXT.submit}
-        </Button>
+        </button>
       ) : (
-        <Button className="h-auto flex-1 rounded-full px-4 py-3 text-sm" onClick={onNext} type="button" variant="cta">
+        <button
+          className={`${pillBase} w-[76px] shrink-0`}
+          onClick={onNext}
+          type="button"
+        >
           {SURVEY_STEP_TEXT.next}
-        </Button>
+        </button>
       )}
     </div>
   )

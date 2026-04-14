@@ -29,6 +29,10 @@ const buttonVariants = cva(
         xs: "h-5 gap-1 rounded-sm px-2 text-[0.625rem] has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-2.5",
         sm: "h-6 gap-1 px-2 text-xs/relaxed has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
         lg: "h-8 gap-1 px-2.5 text-xs/relaxed has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*='size-'])]:size-4",
+        // 소형 인라인 버튼 (에러 페이지, 보조 액션 등)
+        compact: "h-9 gap-1.5 px-5 text-sm",
+        // 페이지 단위 풀너비 버튼 (CTA, 주요 액션)
+        page: "h-auto w-full px-6 py-3 text-sm",
         icon: "size-7 [&_svg:not([class*='size-'])]:size-3.5",
         'icon-xs': "size-5 rounded-sm [&_svg:not([class*='size-'])]:size-2.5",
         'icon-sm': "size-6 [&_svg:not([class*='size-'])]:size-3",

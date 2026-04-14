@@ -19,7 +19,7 @@ function LoginGateOverlay({ onClick }: LoginGateOverlayProps) {
       {/* 버튼 — 오버레이 밖에서 sticky 사용 */}
       <div className="sticky bottom-4 z-50 px-4">
         <Button
-          className="h-auto w-full rounded-xl px-6 py-3 text-lg font-medium"
+          className="h-auto w-full rounded-full px-6 py-3 text-lg font-medium"
           onClick={onClick}
           type="button"
           variant="cta"

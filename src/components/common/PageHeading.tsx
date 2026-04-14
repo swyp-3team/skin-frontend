@@ -8,6 +8,7 @@ const pageHeadingVariants = cva('font-semibold tracking-tight text-slate-950', {
     size: {
       default: 'text-page-title leading-[1.35]',
       lg: 'text-page-title-lg leading-[1.35]',
+      md: 'text-[1.5rem] leading-[1.35]',
     },
   },
   defaultVariants: {

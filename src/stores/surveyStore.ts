@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 
 import { SKIN_TYPE_OPTIONS, VALID_CONCERNS } from '../domain/surveyConfig'
-import type { FullResult, PreviewResult } from '../api/types'
+import type { FullResult } from '../api/types'
 import { STORAGE_KEYS } from '../constants/storage'
 import type { Concern, SkinTypeSelection } from '../types/domain'
 
@@ -47,7 +47,8 @@ export interface SurveyStoreState {
   answersByQuestionId: Record<number, number>
   skinType: SkinTypeSelection | null
   concerns: Concern[]
-  lastResult: PreviewResult | FullResult | null
+  latestResultId: number | null
+  savedRoutineKey: string | null
 }
 
 export interface SurveyStoreActions {
@@ -57,11 +58,18 @@ export interface SurveyStoreActions {
   goToStep: (step: number) => void
   setSkinType: (value: SkinTypeSelection) => void
   toggleConcern: (value: Concern) => void
-  setLastResult: (result: PreviewResult | FullResult) => void
+  setLatestResultId: (id: number) => void
+  clearLatestResultId: () => void
+  markRoutineSaved: (result: FullResult) => void
+  clearSavedRoutine: () => void
   resetSurvey: () => void
 }
 
 type SurveyStore = SurveyStoreState & SurveyStoreActions
+
+export function createSavedRoutineKey(result: FullResult): string {
+  return JSON.stringify(result.routine)
+}
 
 export const useSurveyStore = create<SurveyStore>()(
   persist(
@@ -70,7 +78,8 @@ export const useSurveyStore = create<SurveyStore>()(
       answersByQuestionId: {},
       skinType: readLegacySkinType(),
       concerns: [],
-      lastResult: null,
+      latestResultId: null,
+      savedRoutineKey: null,
       setAnswer: (questionId, value) => {
         set((state) => ({
           answersByQuestionId: {
@@ -110,8 +119,17 @@ export const useSurveyStore = create<SurveyStore>()(
           }
         })
       },
-      setLastResult: (result) => {
-        set({ lastResult: result })
+      setLatestResultId: (id) => {
+        set({ latestResultId: id })
+      },
+      clearLatestResultId: () => {
+        set({ latestResultId: null })
+      },
+      markRoutineSaved: (result) => {
+        set({ savedRoutineKey: createSavedRoutineKey(result) })
+      },
+      clearSavedRoutine: () => {
+        set({ savedRoutineKey: null })
       },
       resetSurvey: () => {
         syncLegacySkinType(null)
@@ -120,7 +138,8 @@ export const useSurveyStore = create<SurveyStore>()(
           answersByQuestionId: {},
           skinType: null,
           concerns: [],
-          lastResult: null,
+          savedRoutineKey: null,
+          // latestResultId는 유지: 결과는 설문 재시작과 무관
         })
       },
     }),
@@ -132,6 +151,8 @@ export const useSurveyStore = create<SurveyStore>()(
         answersByQuestionId: state.answersByQuestionId,
         skinType: state.skinType,
         concerns: state.concerns,
+        latestResultId: state.latestResultId,
+        savedRoutineKey: state.savedRoutineKey,
       }),
     }
   )

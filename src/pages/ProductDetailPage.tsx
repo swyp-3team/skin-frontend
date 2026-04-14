@@ -1,6 +1,7 @@
 import { useParams } from 'react-router-dom'
 
 import PageHeading from '../components/common/PageHeading'
+import SectionTitle from '../components/common/SectionTitle'
 import SurfaceCard from '../components/common/SurfaceCard'
 import MobilePage from '../components/MobilePage'
 import { Button } from '../components/ui/button'
@@ -24,7 +25,7 @@ function ProductDetailPage() {
         </div>
 
         <SurfaceCard className="space-y-3">
-          <p className="text-sm font-semibold text-slate-900">주요 정보</p>
+          <SectionTitle size="sm">주요 정보</SectionTitle>
           <ul className="space-y-1 text-sm text-slate-700">
             <li>브랜드: 브랜드명</li>
             <li>카테고리: 세럼</li>

@@ -1,29 +1,25 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useShallow } from 'zustand/react/shallow'
 
-import { APP_ROUTES } from '../app/routes'
-import MobilePage from '../components/MobilePage'
-import { SURVEY_STATUS_MESSAGES, SURVEY_VALIDATION_MESSAGES } from '../constants/survey'
-import { useAuthStore } from '../stores/authStore'
-import { useSurveyStore } from '../stores/surveyStore'
-import ConcernStepSection from './survey-steps/ConcernStepSection'
-import QuestionStepSection from './survey-steps/QuestionStepSection'
-import SkinTypeStepSection from './survey-steps/SkinTypeStepSection'
-import SurveyProgressHeader from './survey-steps/SurveyProgressHeader'
-import SurveyStepActions from './survey-steps/SurveyStepActions'
-import { useSurveyQuestions } from './survey-steps/useSurveyQuestions'
-import { useSurveySubmit } from './survey-steps/useSurveySubmit'
+import { APP_ROUTES, createResultDetailPath } from '../../../app/routes'
+import AlertMessage from '../../../components/common/AlertMessage'
+import MobilePage from '../../../components/MobilePage'
+import { CloseButton } from '../../../components/MobilePageHeading'
+import { SURVEY_RESULT_COPY, SURVEY_STATUS_MESSAGES, SURVEY_VALIDATION_MESSAGES } from '../../../constants/survey'
+import { useAuthStore } from '../../../stores/authStore'
+import { useSurveyStore } from '../../../stores/surveyStore'
+import { useSurveySubmit } from '../useSurveySubmit'
+import ConcernStepSection from './ConcernStepSection'
+import QuestionStepSection from './QuestionStepSection'
+import SkinTypeStepSection from './SkinTypeStepSection'
+import SurveyStepActions from './SurveyStepActions'
+import { useSurveyQuestions } from './useSurveyQuestions'
 
 function SurveyStepsPage() {
   const navigate = useNavigate()
 
-  const { isAuthenticated, accessToken } = useAuthStore(
-    useShallow((state) => ({
-      isAuthenticated: state.isAuthenticated,
-      accessToken: state.accessToken,
-    }))
-  )
+  const accessToken = useAuthStore((state) => state.accessToken)
 
   const {
     currentStep,
@@ -48,24 +44,25 @@ function SurveyStepsPage() {
       goToStep: state.goToStep,
       setSkinType: state.setSkinType,
       toggleConcern: state.toggleConcern,
-    }))
+    })),
   )
 
   const { questions, isLoadingQuestions, questionLoadError } = useSurveyQuestions()
   const submitMutation = useSurveySubmit()
   const [validationError, setValidationError] = useState<string | null>(null)
 
-  const totalSteps = useMemo(() => Math.max(questions.length + 2, 2), [questions.length])
-  const isQuestionStep = currentStep <= questions.length
-  const isSkinTypeStep = currentStep === questions.length + 1
-  const isFinalStep = currentStep === totalSteps
-  const activeQuestion = isQuestionStep ? questions[currentStep - 1] : null
+  const totalSteps = Math.max(questions.length + 2, 2)
+  const safeCurrentStep = Math.min(currentStep, totalSteps)
+  const isQuestionStep = safeCurrentStep <= questions.length
+  const isSkinTypeStep = safeCurrentStep === questions.length + 1
+  const isFinalStep = safeCurrentStep === totalSteps
+  const activeQuestion = isQuestionStep ? questions[safeCurrentStep - 1] : null
 
   useEffect(() => {
-    if (currentStep > totalSteps) {
+    if (!isLoadingQuestions && !questionLoadError && currentStep > totalSteps) {
       goToStep(totalSteps)
     }
-  }, [currentStep, goToStep, totalSteps])
+  }, [currentStep, goToStep, isLoadingQuestions, questionLoadError, totalSteps])
 
   const clearErrors = () => {
     setValidationError(null)
@@ -88,7 +85,7 @@ function SurveyStepsPage() {
       return
     }
 
-    if (currentStep < totalSteps) {
+    if (safeCurrentStep < totalSteps) {
       nextStep()
     }
   }
@@ -112,17 +109,25 @@ function SurveyStepsPage() {
     }
 
     submitMutation.mutate(
-      { isAuthenticated, accessToken },
-      { onSuccess: () => navigate(APP_ROUTES.surveyResult) },
+      { accessToken },
+      {
+        onSuccess: (outcome) => {
+          if (outcome.kind === 'full') {
+            navigate(createResultDetailPath(outcome.result.resultId))
+          } else {
+            navigate(APP_ROUTES.surveyResult)
+          }
+        },
+      },
     )
   }
 
   if (isLoadingQuestions) {
     return (
       <MobilePage>
-        <div className="rounded-[12px] bg-card-bg px-4 py-5 text-sm text-slate-700">
+        <AlertMessage size="md" variant="info">
           {SURVEY_STATUS_MESSAGES.loadingQuestions}
-        </div>
+        </AlertMessage>
       </MobilePage>
     )
   }
@@ -130,18 +135,33 @@ function SurveyStepsPage() {
   if (questionLoadError) {
     return (
       <MobilePage>
-        <div className="rounded-[12px] border border-rose-200 bg-rose-50 px-4 py-5 text-sm text-rose-700">
+        <AlertMessage size="md" variant="error">
           {questionLoadError}
+        </AlertMessage>
+      </MobilePage>
+    )
+  }
+
+  if (submitMutation.isPending) {
+    return (
+      <MobilePage>
+        <div className="flex min-h-[60dvh] flex-col items-center justify-center gap-3">
+          <p className="text-lg font-bold text-[#1A1C18]">{SURVEY_RESULT_COPY.submittingTitle}</p>
+          <p className="text-sm text-[#3A3D3B]/60">{SURVEY_RESULT_COPY.submittingDescription}</p>
         </div>
       </MobilePage>
     )
   }
 
   return (
-    <MobilePage>
-      <section className="space-y-6">
-        <SurveyProgressHeader currentStep={currentStep} totalSteps={totalSteps} />
+    <MobilePage
+      headingLeft={null}
+      headingCenter="피부 진단받기"
+      headingRight={<CloseButton onClick={() => navigate(APP_ROUTES.home)} aria-label="설문 닫기" />}
+    >
 
+      {/* 콘텐츠 영역: 총 수평 패딩 28px (MobilePage px-4=16px + 추가 px-3=12px) */}
+      <section className="w-full px-4 pt-23 flex flex-col">
         {isQuestionStep && activeQuestion ? (
           <QuestionStepSection
             activeQuestion={activeQuestion}
@@ -155,11 +175,11 @@ function SurveyStepsPage() {
 
         {isSkinTypeStep ? (
           <SkinTypeStepSection
+            skinType={skinType}
             onSkinTypeChange={(value) => {
               setSkinType(value)
               clearErrors()
             }}
-            skinType={skinType}
           />
         ) : null}
 
@@ -174,19 +194,22 @@ function SurveyStepsPage() {
         ) : null}
 
         {validationError ? (
-          <p className="rounded-[10px] border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-            {validationError}
-          </p>
+          <div className="mt-6">
+            <AlertMessage variant="warning">{validationError}</AlertMessage>
+          </div>
         ) : null}
 
         {submitMutation.error ? (
-          <p className="rounded-[10px] border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-            {submitMutation.error.message}
-          </p>
+          <div className="mt-6">
+            <AlertMessage variant="error">{submitMutation.error.message}</AlertMessage>
+          </div>
         ) : null}
+      </section>
 
+      {/* 하단 고정 액션 바 — 모바일 카드 영역(390px)에 맞춰 고정 */}
+      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[390px] px-7 pt-4 pb-12 bg-white">
         <SurveyStepActions
-          currentStep={currentStep}
+          currentStep={safeCurrentStep}
           isFinalStep={isFinalStep}
           isSubmitting={submitMutation.isPending}
           onNext={handleNext}
@@ -196,7 +219,7 @@ function SurveyStepsPage() {
           }}
           onSubmit={handleSubmit}
         />
-      </section>
+      </div>
     </MobilePage>
   )
 }

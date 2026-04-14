@@ -1,5 +1,7 @@
 import type { FallbackProps } from 'react-error-boundary'
 
+import { Button } from '@/components/ui/button'
+
 function GlobalErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
   const message = error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.'
 
@@ -10,20 +12,24 @@ function GlobalErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
         <p className="text-sm text-slate-600">{message}</p>
       </div>
       <div className="flex gap-3">
-        <button
-          className="rounded-full border border-slate-300 bg-white px-5 py-2 text-sm text-slate-700"
+        <Button
+          className="rounded-full"
           onClick={() => window.location.assign('/')}
+          size="compact"
           type="button"
+          variant="outline"
         >
           홈으로
-        </button>
-        <button
-          className="rounded-full bg-slate-900 px-5 py-2 text-sm text-white"
+        </Button>
+        <Button
+          className="rounded-full"
           onClick={resetErrorBoundary}
+          size="compact"
           type="button"
+          variant="cta"
         >
           새로고침
-        </button>
+        </Button>
       </div>
     </div>
   )
