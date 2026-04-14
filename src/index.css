@@ -44,6 +44,7 @@
   html,
   body,
   #root {
+    background: black;
     min-height: 100%;
     margin: 0;
     box-sizing: border-box;
@@ -53,7 +54,7 @@
 
   body {
     margin: 0;
-    background: #d9d9d9;
+    background: white;
     color: #1e293b;
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;

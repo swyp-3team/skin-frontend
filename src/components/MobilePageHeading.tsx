@@ -18,10 +18,10 @@ const DEFAULT_LEFT = (
 
 function MobilePageHeading({ left = DEFAULT_LEFT, center, right, className }: MobilePageHeadingProps) {
   return (
-    <header className={cn('h-14 grid grid-cols-[1fr_auto_1fr] items-center', className)}>
-      <div className="flex items-center justify-start">{left}</div>
+    <header className={cn('w-full h-13 grid grid-cols-[1fr_auto_1fr] items-center shadow-[0_3px_10px_rgba(0,0,0,0.05)]', className)}>
+      <div className="flex items-center justify-start pl-3">{left}</div>
       <div className="flex items-center justify-center">{center}</div>
-      <div className="flex items-center justify-end">{right}</div>
+      <div className="flex items-center justify-end pr-3">{right}</div>
     </header>
   )
 }

@@ -27,7 +27,7 @@ function SurveyStepSection<TValue extends string | number>({
           {title}
         </span>
       </legend>
-      <div className="pt-6 w-full">
+      <div className="w-full pt-1 items-center justify-center self-center">
         <ul className={columns === 2 ? 'grid grid-cols-2 grid-rows-4 gap-3 h-70 auto-rows-fr' : 'flex flex-col gap-3 h-66'}>
           {options.map((option) => {
             const checked = isSelected(option.value)

@@ -4,7 +4,21 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="피부 타입 설문을 단계적으로 확장하기 위한 React 기반 설문 앱입니다." />
+    <meta id="app-theme-color" name="theme-color" content="#FFFFFF" />
+    <script>
+      (function () {
+        var normalizedPath = window.location.pathname.replace(/\/+$/, '') || '/'
+        var themeColor = normalizedPath === '/survey' ? '#CCEEED' : '#FFFFFF'
+        var themeColorMeta = document.querySelector('meta#app-theme-color[name="theme-color"]')
+
+        if (themeColorMeta) {
+          themeColorMeta.setAttribute('content', themeColor)
+        }
+
+        document.documentElement.style.backgroundColor = themeColor
+      })()
+    </script>
+    <meta name="description" content="피부 고민 설문을 단계별로 진행하는 React 기반 앱입니다." />
     <title>Skin Survey</title>
   </head>
   <body>

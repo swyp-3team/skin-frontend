@@ -177,7 +177,7 @@ function SurveyStepsPage() {
       headingRight={<CloseButton onClick={() => navigate(APP_ROUTES.home)} aria-label="설문 닫기" />}
       footer={footer}
     >
-      <section className="w-full px-4 pt-4 flex flex-col items-center">
+      <section className="w-full px-4  flex flex-col items-center">
         {isQuestionStep && activeQuestion ? (
           <SurveyStepSection<number>
             name={`question-${activeQuestion.questionId}`}
