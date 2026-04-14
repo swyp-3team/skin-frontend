@@ -26,7 +26,7 @@ function MobilePage({ children, headingClassName, className, headingLeft, headin
       <main className='flex-1 px-4'>
         {children}
       </main>
-      <footer className="sticky bottom-0 w-full bg-white">
+      <footer className="sticky bottom-0 w-full bg-white px-4">
         {footer}
       </footer>
     </section>
