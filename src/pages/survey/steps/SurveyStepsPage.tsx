@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useShallow } from 'zustand/react/shallow'
 
@@ -9,61 +9,51 @@ import { CloseButton } from '../../../components/MobilePageHeading'
 import { SURVEY_PAGE_TITLE, SURVEY_RESULT_COPY, SURVEY_STATUS_MESSAGES, SURVEY_VALIDATION_MESSAGES } from '../../../constants/survey'
 import { useAuthStore } from '../../../stores/authStore'
 import { useSurveyStore } from '../../../stores/surveyStore'
-import type { Concern, SkinTypeSelection } from '../../../types/domain'
 import { useSurveySubmit } from '../useSurveySubmit'
 import SurveyStepActions from './SurveyStepActions'
 import SurveyStepSection from './SurveyStepSection'
 import { useSurveyQuestions } from './useSurveyQuestions'
-import { useSurveyStepConfig } from './useSurveyStepConfig'
+
+// Q14, Q15는 선택지가 짧은 유형 분류 문항으로 2열 레이아웃 적용
+const TWO_COLUMN_FROM_QUESTION_ID = 14
 
 function SurveyStepsPage() {
   const navigate = useNavigate()
 
   const accessToken = useAuthStore((state) => state.accessToken)
 
-  const {
-    currentStep,
-    answersByQuestionId,
-    skinType,
-    concerns,
-    setAnswer,
-    nextStep,
-    prevStep,
-    goToStep,
-    setSkinType,
-    toggleConcern,
-  } = useSurveyStore(
+  const { currentStep, answersByQuestionId, setAnswer, nextStep, prevStep, goToStep } = useSurveyStore(
     useShallow((state) => ({
       currentStep: state.currentStep,
       answersByQuestionId: state.answersByQuestionId,
-      skinType: state.skinType,
-      concerns: state.concerns,
       setAnswer: state.setAnswer,
       nextStep: state.nextStep,
       prevStep: state.prevStep,
       goToStep: state.goToStep,
-      setSkinType: state.setSkinType,
-      toggleConcern: state.toggleConcern,
     })),
   )
 
-  const { questions, isLoadingQuestions, questionLoadError } = useSurveyQuestions()
-  const { stepConfig } = useSurveyStepConfig()
+  const { questions, isLoading, error: questionLoadError } = useSurveyQuestions()
   const submitMutation = useSurveySubmit()
   const [validationError, setValidationError] = useState<string | null>(null)
 
-  const totalSteps = Math.max(questions.length + 2, 2)
-  const safeCurrentStep = Math.min(currentStep, totalSteps)
-  const isQuestionStep = safeCurrentStep <= questions.length
-  const isSkinTypeStep = safeCurrentStep === questions.length + 1
+  // 전환 방향을 추적해 슬라이드 방향 결정 (ref: 불필요한 리렌더 방지)
+  const directionRef = useRef<'forward' | 'backward'>('forward')
+
+  const totalSteps = questions.length
+  const safeCurrentStep = Math.min(currentStep, Math.max(totalSteps, 1))
   const isFinalStep = safeCurrentStep === totalSteps
-  const activeQuestion = isQuestionStep ? questions[safeCurrentStep - 1] : null
+  const activeQuestion = questions[safeCurrentStep - 1]
+
+  const slideClass = directionRef.current === 'forward'
+    ? 'slide-in-from-right-6'
+    : 'slide-in-from-left-6'
 
   useEffect(() => {
-    if (!isLoadingQuestions && !questionLoadError && currentStep > totalSteps) {
+    if (!isLoading && !questionLoadError && totalSteps > 0 && currentStep > totalSteps) {
       goToStep(totalSteps)
     }
-  }, [currentStep, goToStep, isLoadingQuestions, questionLoadError, totalSteps])
+  }, [currentStep, goToStep, isLoading, questionLoadError, totalSteps])
 
   const clearErrors = () => {
     setValidationError(null)
@@ -73,39 +63,29 @@ function SurveyStepsPage() {
   const handleNext = () => {
     clearErrors()
 
-    if (isQuestionStep && activeQuestion) {
-      const answer = answersByQuestionId[activeQuestion.questionId]
-      if (answer === undefined) {
-        setValidationError(SURVEY_VALIDATION_MESSAGES.questionRequired)
-        return
-      }
-    }
-
-    if (isSkinTypeStep && !skinType) {
-      setValidationError(SURVEY_VALIDATION_MESSAGES.skinTypeRequiredForStep)
+    if (activeQuestion && answersByQuestionId[activeQuestion.questionId] === undefined) {
+      setValidationError(SURVEY_VALIDATION_MESSAGES.questionRequired)
       return
     }
 
-    if (safeCurrentStep < totalSteps) {
-      nextStep()
-    }
+    directionRef.current = 'forward'
+    nextStep()
+  }
+
+  const handlePrev = () => {
+    clearErrors()
+    directionRef.current = 'backward'
+    prevStep()
   }
 
   const handleSubmit = () => {
     clearErrors()
 
-    const firstMissingQuestion = questions.find((question) => answersByQuestionId[question.questionId] === undefined)
-
-    if (firstMissingQuestion) {
-      const missingStep = questions.findIndex((question) => question.questionId === firstMissingQuestion.questionId)
-      goToStep(missingStep + 1)
+    const firstUnanswered = questions.find((q) => answersByQuestionId[q.questionId] === undefined)
+    if (firstUnanswered) {
+      directionRef.current = 'backward'
+      goToStep(questions.indexOf(firstUnanswered) + 1)
       setValidationError(SURVEY_VALIDATION_MESSAGES.missingAnswers)
-      return
-    }
-
-    if (!skinType) {
-      goToStep(questions.length + 1)
-      setValidationError(SURVEY_VALIDATION_MESSAGES.skinTypeRequiredForSubmit)
       return
     }
 
@@ -123,7 +103,7 @@ function SurveyStepsPage() {
     )
   }
 
-  if (isLoadingQuestions) {
+  if (isLoading) {
     return (
       <MobilePage>
         <AlertMessage size="md" variant="info">
@@ -161,10 +141,7 @@ function SurveyStepsPage() {
         isFinalStep={isFinalStep}
         isSubmitting={submitMutation.isPending}
         onNext={handleNext}
-        onPrev={() => {
-          clearErrors()
-          prevStep()
-        }}
+        onPrev={handlePrev}
         onSubmit={handleSubmit}
       />
     </div>
@@ -176,47 +153,21 @@ function SurveyStepsPage() {
       headingRight={<CloseButton onClick={() => navigate(APP_ROUTES.home)} aria-label="설문 닫기" />}
       footer={footer}
     >
-      <section className="w-full px-4  flex flex-col items-center">
-        {isQuestionStep && activeQuestion ? (
-          <SurveyStepSection<number>
-            name={`question-${activeQuestion.questionId}`}
-            options={activeQuestion.options}
-            title={activeQuestion.text}
-            isSelected={(value) => answersByQuestionId[activeQuestion.questionId] === value}
-            onChange={(value) => {
-              setAnswer(activeQuestion.questionId, value)
-              clearErrors()
-            }}
-          />
-        ) : null}
-
-        {isSkinTypeStep && stepConfig ? (
-          <SurveyStepSection<string>
-            columns={2}
-            name="skinType"
-            options={stepConfig.skinTypeStep.options}
-            title={stepConfig.skinTypeStep.title}
-            isSelected={(value) => skinType === value}
-            onChange={(value) => {
-              setSkinType(value as SkinTypeSelection)
-              clearErrors()
-            }}
-          />
-        ) : null}
-
-        {isFinalStep && stepConfig ? (
-          <SurveyStepSection<string>
-            columns={2}
-            inputType="checkbox"
-            name="concerns"
-            options={stepConfig.concernStep.options}
-            title={stepConfig.concernStep.title}
-            isSelected={(value) => concerns.includes(value as Concern)}
-            onChange={(value) => {
-              toggleConcern(value as Concern)
-              clearErrors()
-            }}
-          />
+      <section className="w-full px-4 flex flex-col h-full items-center overflow-hidden">
+        {activeQuestion ? (
+          <div key={activeQuestion.questionId} className={`w-full animate-in ${slideClass} duration-200`}>
+            <SurveyStepSection
+              columns={activeQuestion.questionId >= TWO_COLUMN_FROM_QUESTION_ID ? 2 : 1}
+              name={`question-${activeQuestion.questionId}`}
+              options={activeQuestion.options}
+              title={activeQuestion.text}
+              isSelected={(value) => answersByQuestionId[activeQuestion.questionId] === value}
+              onChange={(value) => {
+                setAnswer(activeQuestion.questionId, value)
+                clearErrors()
+              }}
+            />
+          </div>
         ) : null}
 
         {validationError ? (
@@ -231,7 +182,6 @@ function SurveyStepsPage() {
           </div>
         ) : null}
       </section>
-
     </MobilePage>
   )
 }

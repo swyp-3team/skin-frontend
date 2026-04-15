@@ -1,7 +1,7 @@
 import type { AuthState } from '../types/auth'
 import { ApiError } from './errors'
 import type { ApiClient } from './client'
-import type { FullResult, PreviewResult, SurveyQuestionsResponse, SurveyResultPayload, SurveyStepConfig, SurveySubmitPayload } from './types'
+import type { FullResult, PreviewResult, SurveyQuestion, SurveySubmitPayload } from './types'
 
 async function readBody(response: Response): Promise<unknown> {
   const contentType = response.headers.get('content-type')
@@ -49,13 +49,8 @@ async function requestJson<T>(url: string, init: RequestInit, token?: string): P
 
 export function createLiveApiClient(baseUrl: string): ApiClient {
   return {
-    async getSurveyQuestions(step: number) {
-      const data = await requestJson<SurveyQuestionsResponse>(`${baseUrl}/surveys?step=${step}`, { method: 'GET' })
-      return data.questions
-    },
-
-    async getSurveyStepConfig() {
-      return requestJson<SurveyStepConfig>(`${baseUrl}/surveys/step-config`, { method: 'GET' })
+    async getSurveyQuestions() {
+      return requestJson<SurveyQuestion[]>(`${baseUrl}/surveys`, { method: 'GET' })
     },
 
     async submitSurveyPreview(payload: SurveySubmitPayload) {
@@ -65,7 +60,7 @@ export function createLiveApiClient(baseUrl: string): ApiClient {
       })
     },
 
-    async submitSurveyResult(payload: SurveyResultPayload, authState: AuthState) {
+    async submitSurveyResult(payload: SurveySubmitPayload, authState: AuthState) {
       return requestJson<FullResult>(
         `${baseUrl}/results`,
         {

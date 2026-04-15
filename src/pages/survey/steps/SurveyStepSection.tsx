@@ -1,25 +1,23 @@
 import type { SurveyOption } from '../../../api/types'
 import { surveyOptionCardVariants } from './surveyStepVariants'
 
-interface SurveyStepSectionProps<TValue extends string | number> {
+interface SurveyStepSectionProps {
   title: string
   name: string
-  options: readonly SurveyOption<TValue>[]
-  isSelected: (value: TValue) => boolean
-  onChange: (value: TValue) => void
+  options: readonly SurveyOption[]
+  isSelected: (value: number) => boolean
+  onChange: (value: number) => void
   columns?: 1 | 2
-  inputType?: 'radio' | 'checkbox'
 }
 
-function SurveyStepSection<TValue extends string | number>({
+function SurveyStepSection({
   title,
   name,
   options,
   isSelected,
   onChange,
   columns = 1,
-  inputType = 'radio',
-}: SurveyStepSectionProps<TValue>) {
+}: SurveyStepSectionProps) {
   return (
     <fieldset className="m-0 w-full border-0 p-0 flex flex-col">
       <legend className="w-full">
@@ -27,20 +25,20 @@ function SurveyStepSection<TValue extends string | number>({
           {title}
         </span>
       </legend>
-      <div className="w-full pt-1 items-center justify-center self-center">
-        <ul className={columns === 2 ? 'grid grid-cols-2 grid-rows-4 gap-3 h-70 auto-rows-fr' : 'flex flex-col gap-3 h-66'}>
+      <div className="w-full pt-1 items-center flex-1 justify-center self-center">
+        <ul className={columns === 2 ? 'grid h-[42dvh] grid-cols-2 gap-3 grid-rows-4' : 'flex flex-col gap-3'}>
           {options.map((option) => {
             const checked = isSelected(option.value)
             return (
-              <li key={String(option.value)} className='h-full'>
+              <li key={option.value} className="h-full">
                 <label className="block cursor-pointer h-full">
                   <input
                     checked={checked}
                     className="sr-only"
                     name={name}
                     onChange={() => onChange(option.value)}
-                    type={inputType}
-                    value={String(option.value)}
+                    type="radio"
+                    value={option.value}
                   />
                   <span className={surveyOptionCardVariants({ selected: checked }) + ' h-full'}>
                     {option.label}

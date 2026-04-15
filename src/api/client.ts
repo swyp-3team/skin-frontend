@@ -1,10 +1,9 @@
 import type { AuthState } from '../types/auth'
-import type { FullResult, PreviewResult, SurveyQuestion, SurveyResultPayload, SurveyStepConfig, SurveySubmitPayload } from './types'
+import type { FullResult, PreviewResult, SurveyQuestion, SurveySubmitPayload } from './types'
 
 export interface ApiClient {
-  getSurveyQuestions(step: number): Promise<SurveyQuestion[]>
-  getSurveyStepConfig(): Promise<SurveyStepConfig>
+  getSurveyQuestions(): Promise<SurveyQuestion[]>
   submitSurveyPreview(payload: SurveySubmitPayload): Promise<PreviewResult>
-  submitSurveyResult(payload: SurveyResultPayload, authState: AuthState): Promise<FullResult>
+  submitSurveyResult(payload: SurveySubmitPayload, authState: AuthState): Promise<FullResult>
   getResult(resultId: number, authState: AuthState): Promise<FullResult>
 }

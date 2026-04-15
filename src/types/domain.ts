@@ -1,9 +1,5 @@
 export type SkinType = 'DRY' | 'OILY' | 'COMBINATION' | 'SENSITIVE'
 
-export type SkinTypeSelection = 'dry' | 'oily' | 'combination' | 'sensitive'
-
-export type Concern = 'DRY' | 'SEBUM' | 'ACNE' | 'SENSITIVE' | 'PIGMENTATION' | 'AGING'
-
 export type IngredientGroup =
   | 'HYDRATION'
   | 'BARRIER'

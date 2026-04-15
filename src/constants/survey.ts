@@ -1,25 +1,53 @@
-export const SURVEY_QUESTION_STEP_COUNT = 4
-
-/** 설문 문항에 공통으로 사용되는 5점 척도 선택지 (임시 더미 — 추후 API로 대체) */
-export const MOCK_QUESTION_OPTIONS = [
-  { value: 85, label: '매우 그렇다' },
-  { value: 70, label: '그렇다' },
-  { value: 55, label: '보통이다' },
-  { value: 40, label: '아니다' },
-  { value: 25, label: '전혀 아니다' },
+/** Q1~Q13에 공통으로 사용되는 5점 척도 선택지 */
+const SCALE_OPTIONS = [
+  { value: 1, label: '항상 그래요' },
+  { value: 2, label: '자주 그런 편이에요' },
+  { value: 3, label: '가끔 그래요' },
+  { value: 4, label: '거의 없어요' },
+  { value: 5, label: '전혀 없어요' },
 ] as const
 
-/** 설문 질문 목록 더미 데이터 (임시 — 추후 API로 대체) */
+/** 설문 전체 더미 데이터 (15개) — API 연동 전 목업용 */
 export const MOCK_SURVEY_QUESTIONS = [
-  { questionId: 1, text: '세안 직후 피부가 당기나요?', options: [...MOCK_QUESTION_OPTIONS] },
-  { questionId: 2, text: '오후가 되면 번들거림이 느껴지나요?', options: [...MOCK_QUESTION_OPTIONS] },
-  { questionId: 3, text: '트러블이 자주 올라오나요?', options: [...MOCK_QUESTION_OPTIONS] },
-  { questionId: 4, text: '피부가 쉽게 붉어지거나 자극을 받나요?', options: [...MOCK_QUESTION_OPTIONS] },
+  { questionId: 1,  text: '세안 직후 피부가 당기나요?',                   options: [...SCALE_OPTIONS] },
+  { questionId: 2,  text: '오후가 되면 번들거림이 느껴지나요?',           options: [...SCALE_OPTIONS] },
+  { questionId: 3,  text: '트러블이 자주 올라오나요?',                    options: [...SCALE_OPTIONS] },
+  { questionId: 4,  text: '피부가 쉽게 붉어지거나 자극을 받나요?',        options: [...SCALE_OPTIONS] },
+  { questionId: 5,  text: '모공이 눈에 띄게 보이나요?',                   options: [...SCALE_OPTIONS] },
+  { questionId: 6,  text: '피부 결이 거칠거나 각질이 일어나나요?',        options: [...SCALE_OPTIONS] },
+  { questionId: 7,  text: '스킨케어 후에도 피부 당김이 느껴지나요?',      options: [...SCALE_OPTIONS] },
+  { questionId: 8,  text: '자외선에 노출된 후 피부가 빠르게 자극받나요?', options: [...SCALE_OPTIONS] },
+  { questionId: 9,  text: '피지 분비가 과도하게 느껴지나요?',             options: [...SCALE_OPTIONS] },
+  { questionId: 10, text: '눈가나 이마에 잔주름이 보이나요?',             options: [...SCALE_OPTIONS] },
+  { questionId: 11, text: '피부 톤이 칙칙하거나 잡티가 신경 쓰이나요?',  options: [...SCALE_OPTIONS] },
+  { questionId: 12, text: '세안 후 보습 없이 피부가 당기나요?',           options: [...SCALE_OPTIONS] },
+  { questionId: 13, text: '외출 후 피부가 민감하거나 따가운 느낌이 드나요?', options: [...SCALE_OPTIONS] },
+  {
+    questionId: 14,
+    text: '피부 타입을 선택해주세요',
+    options: [
+      { value: 1, label: '건성' },
+      { value: 2, label: '지성' },
+      { value: 3, label: '복합성' },
+      { value: 4, label: '민감성' },
+    ],
+  },
+  {
+    questionId: 15,
+    text: '주요 피부 고민을 선택해주세요',
+    options: [
+      { value: 1, label: '건조' },
+      { value: 2, label: '피지' },
+      { value: 3, label: '트러블' },
+      { value: 4, label: '민감' },
+      { value: 5, label: '색소' },
+      { value: 6, label: '노화' },
+    ],
+  },
 ] as const
 
 export const SURVEY_QUERY_KEYS = {
-  questions: (step: number) => ['surveyQuestions', step],
-  stepConfig: ['surveyStepConfig'],
+  questions: ['surveyQuestions'],
 } as const
 
 export const SURVEY_STEP_TEXT = {
@@ -31,10 +59,7 @@ export const SURVEY_STEP_TEXT = {
 
 export const SURVEY_VALIDATION_MESSAGES = {
   questionRequired: '해당 문항의 응답을 선택해주세요.',
-  skinTypeRequiredForStep: '피부 타입을 선택해주세요.',
   missingAnswers: '응답하지 않은 문항이 있습니다. 먼저 응답을 완료해주세요.',
-  skinTypeRequiredForSubmit: '피부 타입 선택이 필요합니다.',
-  skinTypeRequiredBeforeSubmit: '피부 타입을 먼저 선택해주세요.',
 } as const
 
 export const SURVEY_PAGE_TITLE = '피부 진단받기'

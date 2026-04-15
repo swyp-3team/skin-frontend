@@ -1,19 +1,25 @@
 import { MOCK_SURVEY_QUESTIONS } from '../constants/survey'
-import { CONCERN_OPTIONS, SKIN_TYPE_OPTIONS } from '../domain/surveyConfig'
 import type { AuthState } from '../types/auth'
-import type { Concern, IngredientGroup, ProductCategory, SkinType } from '../types/domain'
+import type { IngredientGroup, ProductCategory, SkinType } from '../types/domain'
 import type { ApiClient } from './client'
-import type { FullResult, PreviewResult, SurveyQuestion, SurveyResultPayload, SurveySubmitPayload, TopIngredientGroup } from './types'
+import type { FullResult, PreviewResult, SurveyAnswer, SurveySubmitPayload, TopIngredientGroup } from './types'
 
-const mockSurveyQuestions: SurveyQuestion[] = MOCK_SURVEY_QUESTIONS.map((q) => ({ ...q, options: [...q.options] }))
+// Q14 선택지 value → SkinType 매핑 (mock 결과 생성용)
+const SKIN_TYPE_FROM_ANSWER: Record<number, SkinType> = {
+  1: 'DRY',
+  2: 'OILY',
+  3: 'COMBINATION',
+  4: 'SENSITIVE',
+}
 
-const concernToGroup: Record<Concern, IngredientGroup> = {
-  DRY: 'HYDRATION',
-  SEBUM: 'SEBUM_CONTROL',
-  ACNE: 'ACNE',
-  SENSITIVE: 'SOOTHING',
-  PIGMENTATION: 'BRIGHTENING',
-  AGING: 'ANTI_AGING',
+// Q15 선택지 value → IngredientGroup 매핑 (mock 결과 생성용)
+const CONCERN_GROUP_FROM_ANSWER: Record<number, IngredientGroup> = {
+  1: 'HYDRATION',
+  2: 'SEBUM_CONTROL',
+  3: 'ACNE',
+  4: 'SOOTHING',
+  5: 'BRIGHTENING',
+  6: 'ANTI_AGING',
 }
 
 const groupIngredientMap: Record<IngredientGroup, string[]> = {
@@ -45,24 +51,20 @@ const skinTypeSummaryMap: Record<SkinType, string> = {
   SENSITIVE: '민감형 피부로 보이며 저자극 진정 루틴을 권장합니다.',
 }
 
-const skinTypeFallbackGroups: Record<SkinType, IngredientGroup[]> = {
-  DRY: ['HYDRATION', 'BARRIER', 'SOOTHING'],
-  OILY: ['SEBUM_CONTROL', 'ACNE', 'SOOTHING'],
-  COMBINATION: ['HYDRATION', 'SEBUM_CONTROL', 'SOOTHING'],
-  SENSITIVE: ['SOOTHING', 'BARRIER', 'HYDRATION'],
+const skinTypeFallbackGroups: Record<SkinType, [IngredientGroup, IngredientGroup]> = {
+  DRY: ['HYDRATION', 'BARRIER'],
+  OILY: ['SEBUM_CONTROL', 'ACNE'],
+  COMBINATION: ['HYDRATION', 'SEBUM_CONTROL'],
+  SENSITIVE: ['SOOTHING', 'BARRIER'],
 }
 
-function dedupeGroups(payload: SurveySubmitPayload): IngredientGroup[] {
-  const groupsFromConcerns = payload.concerns.map((concern) => concernToGroup[concern])
-  const fallbackGroups = skinTypeFallbackGroups[payload.skinType]
-  const defaultGroups: IngredientGroup[] = ['HYDRATION', 'SOOTHING', 'BARRIER']
-
-  const merged = [...groupsFromConcerns, ...fallbackGroups, ...defaultGroups]
-  return [...new Set(merged)].slice(0, 3)
+function getAnswerValue(answers: SurveyAnswer[], questionId: number): number | undefined {
+  return answers.find((a) => a.questionId === questionId)?.value
 }
 
-function buildTop3(payload: SurveySubmitPayload): TopIngredientGroup[] {
-  const groups = dedupeGroups(payload)
+function buildTop3(skinType: SkinType, primaryGroup: IngredientGroup): TopIngredientGroup[] {
+  const [fallback1, fallback2] = skinTypeFallbackGroups[skinType]
+  const groups = [...new Set([primaryGroup, fallback1, fallback2])].slice(0, 3)
 
   return groups.map((group, index) => ({
     group,
@@ -73,11 +75,14 @@ function buildTop3(payload: SurveySubmitPayload): TopIngredientGroup[] {
   }))
 }
 
-function createPreviewResult(payload: SurveySubmitPayload): PreviewResult {
+function createPreviewResult(answers: SurveyAnswer[]): PreviewResult {
+  const skinType = SKIN_TYPE_FROM_ANSWER[getAnswerValue(answers, 14) ?? 1] ?? 'COMBINATION'
+  const primaryGroup = CONCERN_GROUP_FROM_ANSWER[getAnswerValue(answers, 15) ?? 1] ?? 'HYDRATION'
+
   return {
-    skinType: payload.skinType,
-    summary: skinTypeSummaryMap[payload.skinType],
-    top3: buildTop3(payload),
+    skinType,
+    summary: skinTypeSummaryMap[skinType],
+    top3: buildTop3(skinType, primaryGroup),
   }
 }
 
@@ -93,8 +98,8 @@ function createRoutine(top3: TopIngredientGroup[]): FullResult['routine'] {
   })
 }
 
-function createFullResult(payload: SurveySubmitPayload): FullResult {
-  const preview = createPreviewResult(payload)
+function createFullResult(answers: SurveyAnswer[]): FullResult {
+  const preview = createPreviewResult(answers)
 
   return {
     ...preview,
@@ -128,38 +133,20 @@ function withDelay<T>(value: T, ms = 350): Promise<T> {
 const mockResultsDb = new Map<number, FullResult>()
 
 export const mockApiClient: ApiClient = {
-  async getSurveyQuestions(step: number) {
-    const question = mockSurveyQuestions[step - 1]
-    return withDelay(question ? [question] : [])
+  async getSurveyQuestions() {
+    return withDelay([...MOCK_SURVEY_QUESTIONS])
   },
 
-  async getSurveyStepConfig() {
-    return withDelay({
-      skinTypeStep: {
-        title: '피부 타입을 선택해주세요',
-        options: [...SKIN_TYPE_OPTIONS],
-      },
-      concernStep: {
-        title: '고민을 선택해주세요',
-        options: [...CONCERN_OPTIONS],
-      },
-    })
+  async submitSurveyPreview(payload: SurveySubmitPayload) {
+    return withDelay(createPreviewResult(payload.answers))
   },
 
-  async submitSurveyPreview(payload) {
-    return withDelay(createPreviewResult(payload))
-  },
-
-  async submitSurveyResult(payload: SurveyResultPayload, authState: AuthState) {
+  async submitSurveyResult(payload: SurveySubmitPayload, authState: AuthState) {
     if (!authState.accessToken) {
       throw new Error('로그인된 사용자만 전체 결과를 조회할 수 있습니다.')
     }
 
-    if ('resultId' in payload) {
-      throw new Error('Mock 클라이언트는 resultId 기반 조회를 지원하지 않습니다.')
-    }
-
-    const result = createFullResult(payload)
+    const result = createFullResult(payload.answers)
     mockResultsDb.set(result.resultId, result)
     return withDelay(result)
   },

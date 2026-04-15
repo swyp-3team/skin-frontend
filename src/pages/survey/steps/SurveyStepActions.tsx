@@ -21,15 +21,17 @@ function SurveyStepActions({
   onSubmit,
 }: SurveyStepActionsProps) {
   return (
-    <div className="flex items-center justify-between gap-4">
-      <button
-        className={`${pillBase} shrink-0`}
-        disabled={currentStep === 1 || isSubmitting}
-        onClick={onPrev}
-        type="button"
-      >
-        {SURVEY_STEP_TEXT.previous}
-      </button>
+    <div className={`flex items-center gap-4 ${currentStep > 1 ? 'justify-between' : 'justify-end'}`}>
+      {currentStep > 1 && (
+        <button
+          className={`${pillBase} shrink-0`}
+          disabled={isSubmitting}
+          onClick={onPrev}
+          type="button"
+        >
+          {SURVEY_STEP_TEXT.previous}
+        </button>
+      )}
 
       {isFinalStep ? (
         <button
