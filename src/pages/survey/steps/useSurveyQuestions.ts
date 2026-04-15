@@ -15,7 +15,7 @@ export function useSurveyQuestions(): UseSurveyQuestionsResult {
     queries: Array.from({ length: SURVEY_QUESTION_STEP_COUNT }, (_, i) => ({
       queryKey: SURVEY_QUERY_KEYS.questions(i + 1),
       queryFn: () => apiClient.getSurveyQuestions(i + 1),
-      staleTime: Infinity,
+      staleTime: 10 * 60 * 1000, // 10분
     })),
   })
 

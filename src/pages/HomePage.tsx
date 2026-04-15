@@ -22,7 +22,7 @@ function HomePage() {
 
   return (
     <MobilePage>
-      <div className="flex min-h-[70dvh] flex-col justify-between">
+      <div className="h-full flex flex-col justify-between">
         <div className='pt-20 '>
           <PageHeading className="whitespace-pre-line tracking-wide leading-[1.4]">{LANDING_COPY.heroHeadline}</PageHeading>
 
@@ -33,6 +33,8 @@ function HomePage() {
             </AlertMessage>
           ) : null}
         </div>
+
+        <div className="h-[40dvh]"/>
 
         <div className="space-y-3">
           <Link

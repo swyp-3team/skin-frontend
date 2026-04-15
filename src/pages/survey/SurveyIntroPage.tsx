@@ -17,7 +17,6 @@ function SurveyIntroPage() {
   return (
     <MobilePage
       headingClassName="w-full"
-      headingLeft={null}
       headingCenter={SURVEY_PAGE_TITLE}
       headingRight={<CloseButton onClick={() => navigate(APP_ROUTES.home)} aria-label="설문 닫기" />}
       className="bg-[#CCEEED]"
