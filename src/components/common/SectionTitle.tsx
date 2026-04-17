@@ -22,7 +22,7 @@ const sizeClass = {
  */
 function SectionTitle({ children, size = 'md', as: Tag = 'p', className }: SectionTitleProps) {
   return (
-    <Tag className={cn(sizeClass[size], 'font-semibold text-slate-900', className)}>
+    <Tag className={cn(sizeClass[size], 'font-semibold text-neutral-800', className)}>
       {children}
     </Tag>
   )

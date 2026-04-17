@@ -21,8 +21,8 @@ function RoutineDetailPage() {
         <PageHeading>나의 루틴</PageHeading>
 
         <SurfaceCard className="space-y-3">
-          <p className="text-xs text-slate-500">루틴 그룹 #{id ?? '-'}</p>
-          <p className="text-sm leading-6 text-slate-700">
+          <p className="text-xs text-neutral-400">루틴 그룹 #{id ?? '-'}</p>
+          <p className="text-sm leading-6 text-neutral-600">
             아침과 저녁 루틴을 나눠 현재 피부 컨디션에 맞게 관리해 보세요.
           </p>
         </SurfaceCard>

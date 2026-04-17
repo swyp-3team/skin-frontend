@@ -3,7 +3,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 
 import { cn } from '@/lib/utils'
 
-const pageHeadingVariants = cva('font-semibold tracking-tight text-slate-950', {
+const pageHeadingVariants = cva('font-semibold tracking-tight text-neutral-900', {
   variants: {
     size: {
       default: 'text-page-title leading-[1.35]',

@@ -1,36 +1,56 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
-@import '@fontsource-variable/inter';
-
-@custom-variant dark (&:is(.dark *));
+@import 'pretendard/dist/web/variable/pretendardvariable.css';
 
 @theme {
-  --color-surface: #fbfeff;
-  --color-page-bg: #efefef;
-  --color-card-bg: #f3f3f3;
-  --color-chip-bg: #c7c7c7;
-  --color-card-border: #d9d9d9;
-  --color-cta: #121212;
-  --color-option-border: #cccccc;
-  --color-option-selected: #e7f1ff;
-  --color-login-surface: #ffffff;
-  --color-login-muted: #f7f7f8;
-  --color-login-border: #e3e5e8;
-  --color-login-emphasis: #111827;
-  --color-social-kakao: #fee500;
-  --color-social-kakao-foreground: #1c1c1c;
-  --shadow-menu: 0 1px 7px rgba(0, 0, 0, 0.08);
+  --color-common-0: #FFFFFF;
+  --color-common-1000: #121212;
+  /* ── Primary (teal) ── */
+  --color-primary-50:  #EAF8F7;
+  --color-primary-100: #CCEEED;
+  --color-primary-150: #B3E5E3;
+  --color-primary-200: #9ADEDA;
+  --color-primary-300: #6CD1CC;
+  --color-primary-400: #3DC1BB;
+  --color-primary-500: #2AA39D;
+  --color-primary-600: #1F7E79;
+  --color-primary-700: #185E5A;
+  --color-primary-800: #103D3A;
+  --color-primary-900: #082422;
+
+  /* ── Neutral ── */
+  --color-neutral-0:   #ffffff;
+  --color-neutral-50:  #F8F9F7;
+  --color-neutral-100: #EDEEED;
+  --color-neutral-150: #E0E2E0;
+  --color-neutral-200: #C8CECA;
+  --color-neutral-300: #A4AAA6;
+  --color-neutral-400: #7A807C;
+  --color-neutral-500: #5A5F5D;
+  --color-neutral-600: #3A3D3B;
+  --color-neutral-700: #272A28;
+  --color-neutral-800: #1A1C18;
+  --color-neutral-900: #0D0F0C;
+
+  /* ── Brand (서드파티, raw HEX 예외 허용) ── */
+  --color-social-kakao:     #fee500;
+  --color-social-kakao-fg:  #1A1C18;
+  --color-social-google-bg: #F2F2F2;
+  --color-social-google-fg: #1F1F1F;
+
+  /* ── Shadow ── */
+  --shadow-menu:   0 1px 7px rgba(0, 0, 0, 0.08);
   --shadow-option: 0 4px 12px rgba(0, 0, 0, 0.08);
   --shadow-option-hover: 0 8px 20px rgba(0, 0, 0, 0.12);
-  --shadow-cta: 0 4px 10px rgba(0, 0, 0, 0.3);
+  --shadow-cta:    0 4px 10px rgba(0, 0, 0, 0.3);
   --shadow-dialog: 0 24px 48px rgba(15, 23, 42, 0.16);
 
-  /* Fluid typography tokens for improved readability across viewport sizes */
-  --text-app-title: clamp(1.25rem, 0.1rem + 5.7vw, 1.5rem);
-  --text-page-title: clamp(1.5rem, 0.36rem + 5.7vw, 1.75rem);
+  /* ── Fluid typography ── */
+  --text-app-title:    clamp(1.25rem, 0.1rem + 5.7vw, 1.5rem);
+  --text-page-title:   clamp(1.5rem, 0.36rem + 5.7vw, 1.75rem);
   --text-page-title-lg: clamp(1.75rem, 0.61rem + 5.7vw, 2rem);
-  --text-cta: clamp(1rem, 0.43rem + 2.86vw, 1.125rem);
+  --text-cta:  clamp(1rem, 0.43rem + 2.86vw, 1.125rem);
   --text-meta: clamp(0.625rem, 0.05rem + 2.86vw, 0.75rem);
 }
 
@@ -44,31 +64,28 @@
   html,
   body,
   #root {
-    background: black;
+    background: var(--color-neutral-0);
     min-height: 100%;
     margin: 0;
     box-sizing: border-box;
   }
 
-
-
   body {
-    margin: 0;
-    background: white;
-    color: #1e293b;
+    @apply bg-neutral-0 text-neutral-800;
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    @apply bg-background text-foreground;
   }
 
   button {
     cursor: pointer;
     font: inherit;
   }
+
   * {
     @apply border-border outline-ring/50;
   }
+
   html {
     @apply font-sans;
   }
@@ -76,7 +93,22 @@
 
 @theme inline {
   --font-heading: var(--font-sans);
-  --font-sans: 'Inter Variable', sans-serif;
+  --font-sans:
+    'Pretendard Variable',
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    Roboto,
+    'Helvetica Neue',
+    'Segoe UI',
+    'Apple SD Gothic Neo',
+    'Noto Sans KR',
+    'Malgun Gothic',
+    'Apple Color Emoji',
+    'Segoe UI Emoji',
+    'Segoe UI Symbol',
+    sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -117,6 +149,28 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* ── Sonner 토스트 위치·너비 보정 ──
+   sonner의 @media (max-width: 600px) 내장 규칙이
+   [data-x-position='center']에서 transform: none 을 강제 적용하고
+   width: 100% 로 뷰포트 전체를 점유하는 문제를 보정.
+   - max-width: sonner가 설정하지 않는 속성이므로 !important 없이 안전하게 제한
+   - 위치(left/transform)는 !important 로 모바일 내장 규칙을 오버라이드 */
+[data-sonner-toaster][data-x-position='center'] {
+  max-width: 358px;
+}
+
+@media (max-width: 600px) {
+  [data-sonner-toaster][data-x-position='center'] {
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+  }
+
+  [data-sonner-toaster][data-x-position='center'] [data-sonner-toast] {
+    width: 100% !important;
+  }
+}
+
 :root {
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -136,11 +190,6 @@
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
   --radius: 0.625rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
@@ -150,38 +199,4 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
-}
-
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
 }

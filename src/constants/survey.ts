@@ -57,6 +57,19 @@ export const SURVEY_STEP_TEXT = {
   submitPending: '제출 중...',
 } as const
 
+export interface SurveyStepMilestoneToast {
+  questionId: number
+  message: string
+  toastId: string
+}
+
+export const SURVEY_STEP_MILESTONE_TOASTS: SurveyStepMilestoneToast[] = [
+  { questionId: 4, message: '잘 하고 있어요!', toastId: 'survey-milestone-q4' },
+  { questionId: 7, message: '벌써 절반이에요!', toastId: 'survey-milestone-q7' },
+  { questionId: 11, message: '거의 다 왔어요!', toastId: 'survey-milestone-q11' },
+  { questionId: 15, message: '마지막 질문이에요!', toastId: 'survey-milestone-q15' },
+]
+
 export const SURVEY_VALIDATION_MESSAGES = {
   questionRequired: '해당 문항의 응답을 선택해주세요.',
   missingAnswers: '응답하지 않은 문항이 있습니다. 먼저 응답을 완료해주세요.',

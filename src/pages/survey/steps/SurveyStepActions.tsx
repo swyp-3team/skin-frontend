@@ -1,7 +1,9 @@
+import { Button } from '../../../components/ui/button'
 import { SURVEY_STEP_TEXT } from '../../../constants/survey'
 
 interface SurveyStepActionsProps {
   currentStep: number
+  isNextHighlighted: boolean
   isSubmitting: boolean
   isFinalStep: boolean
   onPrev: () => void
@@ -9,11 +11,9 @@ interface SurveyStepActionsProps {
   onSubmit: () => void
 }
 
-const pillBase =
-  'h-12 w-18 rounded-full bg-[#EDEEED] text-base font-medium text-[#A4AAA6] transition-colors disabled:bg-[#EDEEED] disabled:text-[#A4AAA6] disabled:cursor-not-allowed'
-
 function SurveyStepActions({
   currentStep,
+  isNextHighlighted,
   isSubmitting,
   isFinalStep,
   onPrev,
@@ -23,33 +23,39 @@ function SurveyStepActions({
   return (
     <div className={`flex items-center gap-4 ${currentStep > 1 ? 'justify-between' : 'justify-end'}`}>
       {currentStep > 1 && (
-        <button
-          className={`${pillBase} shrink-0`}
+        <Button
+          className="h-12 w-18 shrink-0 rounded-full text-base font-medium text-neutral-300"
           disabled={isSubmitting}
           onClick={onPrev}
+          size="page"
           type="button"
+          variant="tertiary"
         >
           {SURVEY_STEP_TEXT.previous}
-        </button>
+        </Button>
       )}
 
       {isFinalStep ? (
-        <button
-          className="flex-1 h-12 rounded-full bg-[#1A1C18] text-base font-semibold text-white transition-opacity disabled:opacity-60"
+        <Button
+          className="flex-1 h-12 rounded-full text-base font-semibold"
           disabled={isSubmitting}
           onClick={onSubmit}
+          size="page"
           type="button"
+          variant="dark"
         >
           {isSubmitting ? SURVEY_STEP_TEXT.submitPending : SURVEY_STEP_TEXT.submit}
-        </button>
+        </Button>
       ) : (
-        <button
-          className={`${pillBase} shrink-0`}
+        <Button
+          className={`h-12 w-19 shrink-0 rounded-full text-base font-medium text-neutral-300 ${isNextHighlighted ? 'bg-neutral-150' : ''}`}
           onClick={onNext}
+          size="page"
           type="button"
+          variant="tertiary"
         >
           {SURVEY_STEP_TEXT.next}
-        </button>
+        </Button>
       )}
     </div>
   )

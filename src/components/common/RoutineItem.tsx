@@ -16,7 +16,7 @@ function RoutineItem({ badge, guide, className }: RoutineItemProps) {
   return (
     <div className={cn('flex items-start gap-3', className)}>
       <Chip>{badge}</Chip>
-      <p className="pt-0.5 text-xs leading-5 text-slate-700">{guide}</p>
+      <p className="pt-0.5 text-xs leading-5 text-neutral-600">{guide}</p>
     </div>
   )
 }

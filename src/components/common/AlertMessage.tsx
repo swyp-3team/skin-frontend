@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 type AlertVariant = 'info' | 'warning' | 'error'
 
 const variantStyles: Record<AlertVariant, string> = {
-  info: 'border-transparent bg-card-bg text-slate-700',
+  info: 'border-transparent bg-neutral-100 text-neutral-600',
   warning: 'border-amber-200 bg-amber-50 text-amber-800',
   error: 'border-rose-200 bg-rose-50 text-rose-700',
 }

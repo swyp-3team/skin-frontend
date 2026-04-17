@@ -19,5 +19,24 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'sonner',
+              message: "Use '@/lib/notify' instead of importing directly from 'sonner'.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ['src/lib/notify.ts', 'src/components/ui/sonner.tsx'],
+    rules: {
+      'no-restricted-imports': 'off',
+    },
   },
 ])

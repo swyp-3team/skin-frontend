@@ -22,7 +22,7 @@ function LoginGateOverlay({ onClick }: LoginGateOverlayProps) {
           className="h-auto w-full rounded-full px-6 py-3 text-lg font-medium"
           onClick={onClick}
           type="button"
-          variant="cta"
+          variant="dark"
         >
           {AUTH_UI_TEXT.gatedResultCta}
         </Button>

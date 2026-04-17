@@ -3,7 +3,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 
 import { cn } from '@/lib/utils'
 
-const surfaceCardVariants = cva('bg-card-bg p-4', {
+const surfaceCardVariants = cva('bg-neutral-100 p-4', {
   variants: {
     density: {
       default: 'rounded-[12px]',

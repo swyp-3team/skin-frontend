@@ -1,14 +1,22 @@
 import { IconX } from '@tabler/icons-react'
 
+import { cn } from '@/lib/utils'
+
 interface CloseButtonProps {
   onClick: () => void
   'aria-label'?: string
+  className?: string
 }
 
-function CloseButton({ onClick, 'aria-label': ariaLabel = '닫기' }: CloseButtonProps) {
+function CloseButton({ onClick, 'aria-label': ariaLabel = '닫기', className }: CloseButtonProps) {
   return (
-    <button onClick={onClick} type="button" aria-label={ariaLabel}>
-      <IconX size={20} stroke={1.9} color="#1A1C18" />
+    <button
+      onClick={onClick}
+      type="button"
+      aria-label={ariaLabel}
+      className={cn('inline-flex shrink-0 items-center justify-center rounded transition-colors', className)}
+    >
+      <IconX size={28} strokeWidth={1.9} className="text-neutral-800" />
     </button>
   )
 }

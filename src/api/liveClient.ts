@@ -1,7 +1,7 @@
 import type { AuthState } from '../types/auth'
 import { ApiError } from './errors'
 import type { ApiClient } from './client'
-import type { FullResult, PreviewResult, SurveyQuestion, SurveySubmitPayload } from './types'
+import type { FullResult, PreviewResult, ProductDetail, SurveyQuestion, SurveySubmitPayload } from './types'
 
 async function readBody(response: Response): Promise<unknown> {
   const contentType = response.headers.get('content-type')
@@ -77,6 +77,10 @@ export function createLiveApiClient(baseUrl: string): ApiClient {
         { method: 'GET' },
         authState.accessToken
       )
+    },
+
+    async getProductDetail(productId: number) {
+      return requestJson<ProductDetail>(`${baseUrl}/products/${productId}`, { method: 'GET' })
     },
   }
 }

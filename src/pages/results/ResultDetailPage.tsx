@@ -74,7 +74,7 @@ function ResultDetailPage() {
   return (
     <MobilePage>
       <section className="space-y-7 pb-10">
-        <div className="space-y-0.5 text-page-title font-semibold tracking-tight text-slate-950 leading-[1.4]">
+        <div className="space-y-0.5 text-page-title font-semibold tracking-tight text-neutral-900 leading-[1.4]">
           <div>
             {top1 && <Chip variant="white-rounded">{top1Label}</Chip>}
             {top2 ? <span> {headingConnector}</span> : null}
@@ -93,8 +93,8 @@ function ResultDetailPage() {
               </Chip>
             ))}
           </div>
-          <p className="text-xs leading-5 text-slate-500">{result.summary}</p>
-          <p className="text-xs text-slate-700">
+          <p className="text-xs leading-5 text-neutral-400">{result.summary}</p>
+          <p className="text-xs text-neutral-600">
             {result.top3.map((item) => item.ingredients.slice(0, 2).join(', ')).join(' · ')}
           </p>
         </SurfaceCard>
@@ -107,12 +107,12 @@ function ResultDetailPage() {
               <Button
                 className={cn(
                   'h-auto rounded-full px-3 py-1.5 text-xs font-medium',
-                  activeTabIndex !== idx && 'bg-chip-bg text-slate-700 hover:bg-chip-bg hover:opacity-80',
+                  activeTabIndex !== idx && 'bg-neutral-100 text-neutral-600 hover:bg-neutral-100 hover:opacity-80',
                 )}
                 key={item.group}
                 onClick={() => setActiveTab(idx)}
                 type="button"
-                variant={activeTabIndex === idx ? 'cta' : 'ghost'}
+                variant={activeTabIndex === idx ? 'dark' : 'ghost'}
               >
                 {INGREDIENT_GROUP_LABELS[item.group]}
               </Button>
@@ -122,13 +122,13 @@ function ResultDetailPage() {
           {result.routine[activeTabIndex] ? (
             <SurfaceCard className="space-y-2" density="compact">
               <Chip>{PRODUCT_CATEGORY_LABELS[result.routine[activeTabIndex].category]}</Chip>
-              <p className="text-xs leading-5 text-slate-700">{result.routine[activeTabIndex].guide}</p>
+              <p className="text-xs leading-5 text-neutral-600">{result.routine[activeTabIndex].guide}</p>
             </SurfaceCard>
           ) : null}
 
           <Link
             className={cn(
-              buttonVariants({ variant: 'surface' }),
+              buttonVariants({ variant: 'tertiary' }),
               'h-auto w-full rounded-[10px] px-4 py-3 text-center text-sm',
             )}
             to={createResultRoutinePath(resultId)}
@@ -141,14 +141,14 @@ function ResultDetailPage() {
               className="h-auto w-full rounded-full px-6 py-3 text-sm"
               onClick={() => markRoutineSaved(result)}
               type="button"
-              variant="cta"
+              variant="dark"
             >
               {SURVEY_RESULT_COPY.saveRoutineCta}
             </Button>
           ) : (
             <Link
               className={cn(
-                buttonVariants({ variant: 'cta' }),
+                buttonVariants({ variant: 'dark' }),
                 'h-auto w-full rounded-full px-6 py-3 text-center text-sm',
               )}
               to="/mypage"
@@ -163,7 +163,7 @@ function ResultDetailPage() {
           <RecommendedProductsList products={result.recommendedProducts} />
           <Link
             className={cn(
-              buttonVariants({ variant: 'surface' }),
+              buttonVariants({ variant: 'tertiary' }),
               'h-auto w-full rounded-[10px] px-4 py-3 text-center text-sm',
             )}
             to={createResultProductsPath(resultId)}

@@ -6,6 +6,7 @@ import { APP_ROUTES, createResultDetailPath } from '../../../app/routes'
 import Chip from '../../../components/common/Chip'
 import SectionTitle from '../../../components/common/SectionTitle'
 import SurfaceCard from '../../../components/common/SurfaceCard'
+import BrandLogoHeader from '../../../components/mobile-page/BrandLogoHeader'
 import MobilePage from '../../../components/MobilePage'
 import LoginDialog from '../../../components/survey/LoginDialog'
 import LoginGateOverlay from '../../../components/survey/LoginGateOverlay'
@@ -41,13 +42,9 @@ function SurveyResultPage() {
   const headingConnector = top1Label ? getParticle(top1Label, '와/과') : ''
 
   return (
-    <MobilePage
-      headingLeft={"Layerd"}
-      headingCenter={null}
-      headingRight={null}
-    >
+    <MobilePage header={<BrandLogoHeader />}>
       <section className="space-y-7 pb-10">
-        <div className="items-center text-page-title font-semibold tracking-tight text-slate-950 leading-[1.4] space-y-0.5">
+        <div className="items-center text-page-title font-semibold tracking-tight text-neutral-900 leading-[1.4] space-y-0.5">
           <div>
             {top1 && <Chip variant="white-rounded">{top1Label}</Chip>}
             {top2 ? <span> {headingConnector}</span> : null}
@@ -66,8 +63,8 @@ function SurveyResultPage() {
               </Chip>
             ))}
           </div>
-          <p className="text-xs leading-5 text-slate-500">{previewResult.summary}</p>
-          <p className="text-xs text-slate-700">
+          <p className="text-xs leading-5 text-neutral-400">{previewResult.summary}</p>
+          <p className="text-xs text-neutral-600">
             {previewResult.top3.map((item) => item.ingredients.slice(0, 2).join(', ')).join(' · ')}
           </p>
         </SurfaceCard>
@@ -79,7 +76,7 @@ function SurveyResultPage() {
               {previewResult.top3.map((item, idx) => (
                 <SurfaceCard className="space-y-1.5" density="compact" key={item.group}>
                   <Chip>STEP {idx + 1}</Chip>
-                  <p className="text-xs leading-5 text-slate-700">{item.reason}</p>
+                  <p className="text-xs leading-5 text-neutral-600">{item.reason}</p>
                 </SurfaceCard>
               ))}
             </div>
@@ -93,6 +90,7 @@ function SurveyResultPage() {
         onLogin={promoteToFullResult}
         onOpenChange={setIsLoginModalOpen}
         open={isLoginModalOpen}
+        variant="result"
       />
     </MobilePage>
   )

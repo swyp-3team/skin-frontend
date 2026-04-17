@@ -60,14 +60,14 @@ function ResultRoutinePage() {
             className="h-auto w-full rounded-full px-6 py-3 text-sm"
             onClick={() => markRoutineSaved(result)}
             type="button"
-            variant="cta"
+            variant="dark"
           >
             {SURVEY_RESULT_COPY.saveRoutineCta}
           </Button>
         ) : (
           <Link
             className={cn(
-              buttonVariants({ variant: 'cta' }),
+              buttonVariants({ variant: 'dark' }),
               'h-auto w-full rounded-full px-6 py-3 text-center text-sm',
             )}
             to={APP_ROUTES.myPage}

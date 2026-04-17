@@ -1,3 +1,23 @@
+// 로그인 다이얼로그의 표시 맥락을 나타내는 variant 타입입니다.
+export type LoginDialogVariant = 'default' | 'result'
+
+// subtitleSub가 있으면 subtitle은 헤딩(Neutral-800), subtitleSub는 서브텍스트(Neutral-400)로 렌더링됩니다.
+export type LoginDialogCopy = {
+  subtitle: string
+  subtitleSub?: string
+}
+
+// variant별 UI 문구 맵 — Record 타입으로 명시해 subtitleSub를 공통 구조로 유지합니다.
+export const LOGIN_DIALOG_COPY: Record<LoginDialogVariant, LoginDialogCopy> = {
+  default: {
+    subtitle: '간편 로그인으로 나에게 맞는 스킨케어 루틴을 시작해 보세요.',
+  },
+  result: {
+    subtitle: '로그인하고 결과를 저장해 보세요.',
+    subtitleSub: '소셜 계정으로 간편하게 시작할 수 있어요.',
+  },
+}
+
 // Mock 로그인 흐름에서 실제 서버 토큰 대신 재사용하는 고정 access token 값입니다.
 export const MOCK_ACCESS_TOKEN = 'mock-access-token' as const
 
@@ -8,11 +28,11 @@ export const AUTH_REDIRECT_REASON = 'AUTH_REQUIRED' as const
 export const AUTH_PROVIDERS = {
   google: {
     label: 'Google',
-    continueLabel: 'Google로 계속하기',
+    continueLabel: '구글 계정으로 시작하기',
   },
   kakao: {
     label: 'Kakao',
-    continueLabel: 'Kakao로 계속하기',
+    continueLabel: '카카오 계정으로 시작하기',
   },
 } as const
 
@@ -29,6 +49,12 @@ export const AUTH_UI_TEXT = {
   mockLogout: '모의 로그아웃',
   protectedPageFallback: '보호 페이지',
   protectedPageHintSuffix: '는 로그인 후 접근할 수 있습니다.',
+  termsPrefix: '로그인하면',
+  termsOfService: '이용약관',
+  termsSeparator: '및',
+  privacyPolicy: '개인정보 처리방침',
+  termsSuffixPt1: '에',
+  termsSuffixPt2: '동의한 것으로 간주합니다.',
 } as const
 
 // 로그인 후 원래 보려던 화면을 안내하거나 복귀시키기 위한 라우터 state 형태입니다.

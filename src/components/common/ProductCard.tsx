@@ -23,18 +23,18 @@ function ProductCard({ label, name, description, href, className }: ProductCardP
   return (
     <article
       className={cn(
-        'flex items-center gap-3 rounded-[8px] border border-card-border bg-white p-2',
+        'flex items-center gap-3 rounded-[8px] border border-neutral-200 bg-neutral-0 p-2',
         className,
       )}
     >
       <ProductThumbnail />
       <div className="min-w-0 flex-1">
-        <p className="text-meta text-slate-500">[{label}]</p>
-        <p className="truncate text-sm font-medium text-slate-900">{name}</p>
-        <p className="text-xs text-slate-500">{description}</p>
+        <p className="text-meta text-neutral-400">[{label}]</p>
+        <p className="truncate text-sm font-medium text-neutral-800">{name}</p>
+        <p className="text-xs text-neutral-400">{description}</p>
       </div>
       <Link
-        className={buttonVariants({ variant: 'surface', size: 'xs' })}
+        className={buttonVariants({ variant: 'tertiary', size: 'xs' })}
         to={href}
       >
         상세보기

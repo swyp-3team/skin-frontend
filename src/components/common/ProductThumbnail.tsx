@@ -5,7 +5,7 @@ interface ProductThumbnailProps {
 }
 
 function ProductThumbnail({ className }: ProductThumbnailProps) {
-  return <div className={cn('size-16 rounded-[8px] bg-[#d9d9d9]', className)} />
+  return <div className={cn('size-16 rounded-[8px] bg-neutral-200', className)} />
 }
 
 export default ProductThumbnail

@@ -38,8 +38,17 @@ export interface RecommendedProduct {
   productId: number
   name: string
   category: ProductCategory
-  imageUrl: string
+  imageUrl: string | null
   reason: string
+}
+
+export interface ProductDetail extends RecommendedProduct {
+  brandName: string
+  price: number
+  priceAsOf: string
+  featureTags: [string, string, string]
+  description: string
+  purchaseUrl: string
 }
 
 export interface RoutineGuide {

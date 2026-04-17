@@ -14,7 +14,14 @@
       "WebFetch(domain:3.37.26.4)",
       "Bash(ls -la /c/Users/dayou/skin-web/*.config.*)",
       "Read(//tmp/**)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(del:*)",
+      "WebFetch(domain:gist.github.com)",
+      "WebFetch(domain:medium.com)",
+      "WebFetch(domain:m3.material.io)",
+      "WebFetch(domain:m2.material.io)",
+      "Bash(python3:*)",
+      "Bash(git add:*)"
     ]
   }
 }

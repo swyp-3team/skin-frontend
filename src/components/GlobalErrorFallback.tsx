@@ -6,10 +6,10 @@ function GlobalErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
   const message = error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.'
 
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center gap-6 bg-[#d9d9d9] px-6 text-center">
+    <div className="flex min-h-dvh flex-col items-center justify-center gap-6 bg-neutral-200 px-6 text-center">
       <div className="space-y-2">
-        <p className="text-lg font-semibold text-slate-900">오류가 발생했습니다</p>
-        <p className="text-sm text-slate-600">{message}</p>
+        <p className="text-lg font-semibold text-neutral-800">오류가 발생했습니다</p>
+        <p className="text-sm text-neutral-500">{message}</p>
       </div>
       <div className="flex gap-3">
         <Button
@@ -26,7 +26,7 @@ function GlobalErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
           onClick={resetErrorBoundary}
           size="compact"
           type="button"
-          variant="cta"
+          variant="dark"
         >
           새로고침
         </Button>

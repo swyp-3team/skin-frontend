@@ -39,7 +39,7 @@ function HomePage() {
         <div className="space-y-3">
           <Link
             className={cn(
-              buttonVariants({ variant: 'cta' }),
+              buttonVariants({ variant: 'dark' }),
               'h-auto w-full rounded-full px-6 py-4 text-center text-xl font-medium shadow-[var(--shadow-cta)]',
             )}
             to={APP_ROUTES.survey}
@@ -57,7 +57,7 @@ function HomePage() {
               loginMock()
             }}
             type="button"
-            variant="surface"
+            variant="tertiary"
           >
             {isAuthenticated ? AUTH_UI_TEXT.mockLogout : AUTH_UI_TEXT.mockLogin}
           </Button>
