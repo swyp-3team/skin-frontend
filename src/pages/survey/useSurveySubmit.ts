@@ -17,13 +17,16 @@ function buildPayload(answersByQuestionId: Record<number, number>): SurveySubmit
 
 export function useSurveySubmit() {
   const queryClient = useQueryClient()
-  const { answersByQuestionId, setLatestResultId, clearSavedRoutine } = useSurveyStore(
-    useShallow((state) => ({
-      answersByQuestionId: state.answersByQuestionId,
-      setLatestResultId: state.setLatestResultId,
-      clearSavedRoutine: state.clearSavedRoutine,
-    })),
-  )
+  const { answersByQuestionId, setPreviewResult, clearPreviewResult, setLatestResultId, clearSavedRoutine } =
+    useSurveyStore(
+      useShallow((state) => ({
+        answersByQuestionId: state.answersByQuestionId,
+        setPreviewResult: state.setPreviewResult,
+        clearPreviewResult: state.clearPreviewResult,
+        setLatestResultId: state.setLatestResultId,
+        clearSavedRoutine: state.clearSavedRoutine,
+      })),
+    )
 
   return useMutation<SubmitOutcome, Error, AuthState>({
     mutationFn: async (authState) => {
@@ -39,10 +42,10 @@ export function useSurveySubmit() {
     },
     onSuccess: (outcome) => {
       if (outcome.kind === 'preview') {
-        queryClient.setQueryData(queryKeys.surveyPreview(), outcome.result)
+        setPreviewResult(outcome.result)
       } else {
         queryClient.setQueryData(queryKeys.result(outcome.result.resultId), outcome.result)
-        queryClient.removeQueries({ queryKey: queryKeys.surveyPreview() })
+        clearPreviewResult()
         setLatestResultId(outcome.result.resultId)
         clearSavedRoutine()
       }

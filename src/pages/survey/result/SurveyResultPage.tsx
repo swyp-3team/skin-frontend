@@ -1,6 +1,5 @@
 import { josa } from 'es-hangul'
 import { Navigate } from 'react-router-dom'
-import { useQueryClient } from '@tanstack/react-query'
 
 import { APP_ROUTES, createResultDetailPath } from '../../../app/routes'
 import Chip from '../../../components/common/Chip'
@@ -12,17 +11,14 @@ import LoginDialog from '../../../components/survey/LoginDialog'
 import LoginGateOverlay from '../../../components/survey/LoginGateOverlay'
 import { SURVEY_RESULT_COPY } from '../../../constants/survey'
 import { INGREDIENT_GROUP_LABELS } from '../../../domain/surveyConfig'
-import { queryKeys } from '../../../lib/queryKeys'
 import { selectIsAuthenticated, useAuthStore } from '../../../stores/authStore'
 import { useSurveyStore } from '../../../stores/surveyStore'
-import type { PreviewResult } from '../../../api/types'
 import { useLoginAndPromote } from './useLoginAndPromote'
 
 const getParticle = josa.pick
 
 function SurveyResultPage() {
-  const queryClient = useQueryClient()
-  const previewResult = queryClient.getQueryData<PreviewResult>(queryKeys.surveyPreview())
+  const previewResult = useSurveyStore((state) => state.previewResult)
   const isAuthenticated = useAuthStore(selectIsAuthenticated)
   const latestResultId = useSurveyStore((state) => state.latestResultId)
   const { isLoginModalOpen, setIsLoginModalOpen, isPromoting, promoteToFullResult } = useLoginAndPromote()

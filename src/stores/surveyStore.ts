@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 
-import type { FullResult } from '../api/types'
+import type { FullResult, PreviewResult } from '../api/types'
 import { STORAGE_KEYS } from '../constants/storage'
 
 const SESSION_STORAGE_KEY = STORAGE_KEYS.surveySession
@@ -9,6 +9,7 @@ const SESSION_STORAGE_KEY = STORAGE_KEYS.surveySession
 export interface SurveyStoreState {
   currentStep: number
   answersByQuestionId: Record<number, number>
+  previewResult: PreviewResult | null
   latestResultId: number | null
   savedRoutineKey: string | null
   savedRoutineName: string | null
@@ -19,6 +20,8 @@ export interface SurveyStoreActions {
   nextStep: () => void
   prevStep: () => void
   goToStep: (step: number) => void
+  setPreviewResult: (result: PreviewResult) => void
+  clearPreviewResult: () => void
   setLatestResultId: (id: number) => void
   clearLatestResultId: () => void
   markRoutineSaved: (result: FullResult, routineName?: string) => void
@@ -37,6 +40,7 @@ export const useSurveyStore = create<SurveyStore>()(
     (set) => ({
       currentStep: 1,
       answersByQuestionId: {},
+      previewResult: null,
       latestResultId: null,
       savedRoutineKey: null,
       savedRoutineName: null,
@@ -56,6 +60,12 @@ export const useSurveyStore = create<SurveyStore>()(
       },
       goToStep: (step) => {
         set({ currentStep: Math.max(1, step) })
+      },
+      setPreviewResult: (result) => {
+        set({ previewResult: result })
+      },
+      clearPreviewResult: () => {
+        set({ previewResult: null })
       },
       setLatestResultId: (id) => {
         set({ latestResultId: id })
@@ -79,6 +89,7 @@ export const useSurveyStore = create<SurveyStore>()(
         set({
           currentStep: 1,
           answersByQuestionId: {},
+          previewResult: null,
           savedRoutineKey: null,
           savedRoutineName: null,
           // latestResultId는 유지: 결과는 설문 재시작과 무관
@@ -91,6 +102,7 @@ export const useSurveyStore = create<SurveyStore>()(
       partialize: (state) => ({
         currentStep: state.currentStep,
         answersByQuestionId: state.answersByQuestionId,
+        previewResult: state.previewResult,
         latestResultId: state.latestResultId,
         savedRoutineKey: state.savedRoutineKey,
         savedRoutineName: state.savedRoutineName,
