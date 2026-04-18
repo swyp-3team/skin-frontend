@@ -1,7 +1,6 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 
 import AppLayout from './AppLayout'
-import PageTracker from './PageTracker'
 import ProtectedRoute from './ProtectedRoute'
 import { APP_ROUTES } from './routes'
 import HomePage from '../pages/HomePage'
@@ -19,7 +18,6 @@ import SurveyStepsPage from '../pages/survey/steps/SurveyStepsPage'
 function AppRouter() {
   return (
     <BrowserRouter>
-      <PageTracker />
       <Routes>
         <Route element={<AppLayout />} path={APP_ROUTES.home}>
           {/* 공개 라우트 */}
