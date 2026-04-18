@@ -5,17 +5,17 @@ interface AppLogoProps {
   className?: string
 }
 
-function AppLogo({ variant = 'muted', className }: AppLogoProps) {
+function AppLogo({ variant = 'bold', className }: AppLogoProps) {
   return (
     <span
       className={cn(
-        'font-bold leading-none',
+        'font-bold',
         variant === 'muted' && 'text-lg tracking-tighter text-neutral-400/30',
-        variant === 'bold' && 'text-[1.75rem] text-neutral-800',
+        variant === 'bold' && 'text-[24px] leading-[32.4px] text-neutral-800',
         className,
       )}
     >
-      Layer&apos;d
+      Layerd
     </span>
   )
 }

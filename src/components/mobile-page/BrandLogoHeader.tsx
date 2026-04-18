@@ -6,7 +6,7 @@ function BrandLogoHeader() {
   return (
     <header className={ROOT}>
       <div className="flex items-center">
-        <AppLogo variant="muted" />
+        <AppLogo variant="bold" />
       </div>
     </header>
   )

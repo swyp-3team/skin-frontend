@@ -7,7 +7,7 @@ function BrandMenuHeader() {
   return (
     <header className={ROOT}>
       <div className="flex items-center">
-        <AppLogo variant="muted" />
+        <AppLogo variant="bold" />
       </div>
       <div />
       <div className="flex items-center justify-end">

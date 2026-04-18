@@ -11,6 +11,7 @@ export interface SurveyStoreState {
   answersByQuestionId: Record<number, number>
   latestResultId: number | null
   savedRoutineKey: string | null
+  savedRoutineName: string | null
 }
 
 export interface SurveyStoreActions {
@@ -20,7 +21,7 @@ export interface SurveyStoreActions {
   goToStep: (step: number) => void
   setLatestResultId: (id: number) => void
   clearLatestResultId: () => void
-  markRoutineSaved: (result: FullResult) => void
+  markRoutineSaved: (result: FullResult, routineName?: string) => void
   clearSavedRoutine: () => void
   resetSurvey: () => void
 }
@@ -38,6 +39,7 @@ export const useSurveyStore = create<SurveyStore>()(
       answersByQuestionId: {},
       latestResultId: null,
       savedRoutineKey: null,
+      savedRoutineName: null,
       setAnswer: (questionId, value) => {
         set((state) => ({
           answersByQuestionId: {
@@ -61,17 +63,24 @@ export const useSurveyStore = create<SurveyStore>()(
       clearLatestResultId: () => {
         set({ latestResultId: null })
       },
-      markRoutineSaved: (result) => {
-        set({ savedRoutineKey: createSavedRoutineKey(result) })
+      markRoutineSaved: (result, routineName) => {
+        set({
+          savedRoutineKey: createSavedRoutineKey(result),
+          savedRoutineName: routineName ?? null,
+        })
       },
       clearSavedRoutine: () => {
-        set({ savedRoutineKey: null })
+        set({
+          savedRoutineKey: null,
+          savedRoutineName: null,
+        })
       },
       resetSurvey: () => {
         set({
           currentStep: 1,
           answersByQuestionId: {},
           savedRoutineKey: null,
+          savedRoutineName: null,
           // latestResultId는 유지: 결과는 설문 재시작과 무관
         })
       },
@@ -84,6 +93,7 @@ export const useSurveyStore = create<SurveyStore>()(
         answersByQuestionId: state.answersByQuestionId,
         latestResultId: state.latestResultId,
         savedRoutineKey: state.savedRoutineKey,
+        savedRoutineName: state.savedRoutineName,
       }),
     }
   )

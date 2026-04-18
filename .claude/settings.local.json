@@ -21,7 +21,9 @@
       "WebFetch(domain:m3.material.io)",
       "WebFetch(domain:m2.material.io)",
       "Bash(python3:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ]
   }
 }

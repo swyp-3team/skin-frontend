@@ -11,7 +11,7 @@ function TitleCloseHeader({ title, onClose }: TitleCloseHeaderProps) {
   return (
     <header className={ROOT}>
       <span aria-hidden className="size-7 shrink-0" />
-      <div className="flex items-center justify-center text-base font-medium text-neutral-800">
+      <div className="flex items-center justify-center text-[18px] leading-[25.56px] font-medium text-neutral-800">
         {title}
       </div>
       <div className="flex items-center justify-end">
