@@ -13,13 +13,13 @@ import { SURVEY_STATUS_MESSAGES } from '../constants/survey'
 import { queryKeys } from '../lib/queryKeys'
 import { cn } from '../lib/utils'
 import { selectIsAuthenticated, useAuthStore } from '../stores/authStore'
-import { useSurveyStore } from '../stores/surveyStore'
+import { useSurveyResultStore } from '../stores/surveyResultStore'
 
 function MyPage() {
   const isAuthenticated = useAuthStore(selectIsAuthenticated)
   const accessToken = useAuthStore((state) => state.accessToken)
   const nickname = useAuthStore((state) => state.nickname)
-  const latestResultId = useSurveyStore((state) => state.latestResultId)
+  const latestResultId = useSurveyResultStore((state) => state.latestResultId)
 
   const { data: result } = useQuery({
     queryKey: queryKeys.result(latestResultId!),

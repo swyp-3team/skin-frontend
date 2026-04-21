@@ -8,11 +8,11 @@ import { Button, buttonVariants } from '../../components/ui/button'
 import { LANDING_COPY } from '../../constants/landing'
 import { SURVEY_PAGE_TITLE } from '../../constants/survey'
 import { cn } from '../../lib/utils'
-import { useSurveyStore } from '../../stores/surveyStore'
+import { useSurveyProgressStore } from '../../stores/surveyProgressStore'
 
 function SurveyIntroPage() {
   const navigate = useNavigate()
-  const resetSurvey = useSurveyStore((state) => state.resetSurvey)
+  const resetSurvey = useSurveyProgressStore((state) => state.resetSurvey)
 
   return (
     <MobilePage

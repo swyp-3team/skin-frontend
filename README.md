@@ -35,6 +35,8 @@ npm run dev
 
 - `VITE_API_MODE`: `mock`(기본) | `live`
 - `VITE_API_BASE_URL`: live 모드 API base (기본 `/api/v1`)
+  - 개발 서버(`npm run dev`)에서는 `/api/*` 요청이 Vite proxy를 통해 `https://api.layerd.co.kr`로 전달됩니다.
+  - 따라서 로컬 개발에서 Layerd API를 사용하려면 `VITE_API_MODE=live`, `VITE_API_BASE_URL=/api/v1` 조합을 사용하세요.
   - 프런트/백엔드가 다른 도메인인 배포 환경에서는 반드시 전체 URL(예: `https://api.example.com/v1`)로 지정하세요.
 
 ## 설문 상태 저장 규칙

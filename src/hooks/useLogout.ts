@@ -1,11 +1,11 @@
 import { queryClient } from '../lib/queryClient'
 import { useAuthStore } from '../stores/authStore'
-import { useSurveyStore } from '../stores/surveyStore'
+import { useSurveyResultStore } from '../stores/surveyResultStore'
 
 export function useLogout() {
   const logoutMock = useAuthStore((state) => state.logoutMock)
-  const clearLatestResultId = useSurveyStore((state) => state.clearLatestResultId)
-  const clearSavedRoutine = useSurveyStore((state) => state.clearSavedRoutine)
+  const clearLatestResultId = useSurveyResultStore((state) => state.clearLatestResultId)
+  const clearSavedRoutine = useSurveyResultStore((state) => state.clearSavedRoutine)
 
   return () => {
     logoutMock()

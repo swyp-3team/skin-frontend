@@ -2,48 +2,128 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useShallow } from 'zustand/react/shallow'
 
 import { apiClient } from '../../api'
-import type { SubmitOutcome, SurveyAnswer, SurveySubmitPayload } from '../../api/types'
+import { ApiError } from '../../api/errors'
+import type { SubmitOutcome, SurveyAnswer, SurveyQuestion, SurveySubmitPayload } from '../../api/types'
+import { SURVEY_QUERY_KEYS } from '../../constants/survey'
+import { CONCERN_STEP, SKIN_TYPE_STEP, isConcernCode, isSkinTypeCode } from '../../domain/surveyCodes'
 import { queryKeys } from '../../lib/queryKeys'
-import { useSurveyStore } from '../../stores/surveyStore'
+import { useSurveyProgressStore } from '../../stores/surveyProgressStore'
+import { useSurveyResultStore } from '../../stores/surveyResultStore'
 import type { AuthState } from '../../types/auth'
 
-function buildPayload(answersByQuestionId: Record<number, number>): SurveySubmitPayload {
-  const answers: SurveyAnswer[] = Object.entries(answersByQuestionId)
-    .map(([questionId, value]) => ({ questionId: Number(questionId), value }))
-    .sort((a, b) => a.questionId - b.questionId)
+interface BuildSurveySubmitPayloadInput {
+  answersByStep: Record<number, number>
+  questions: SurveyQuestion[]
+}
 
-  return { answers }
+function buildAnswers(answersByStep: Record<number, number>): SurveyAnswer[] {
+  return Object.entries(answersByStep)
+    .filter(([step]) => {
+      const id = Number(step)
+      return id !== SKIN_TYPE_STEP && id !== CONCERN_STEP
+    })
+    .map(([step, optionNumber]) => ({ step: Number(step), answer: optionNumber }))
+    .sort((a, b) => a.step - b.step)
+}
+
+function getSelectedCode(questions: SurveyQuestion[], step: number, optionNumber: number) {
+  const surveyStep = questions.find((item) => item.step === step)
+  if (!surveyStep) {
+    throw new ApiError(`Survey step not found. (step: ${step})`, 400, 'INVALID_SURVEY_STEP')
+  }
+
+  const option = surveyStep.options.find((item) => item.optionNumber === optionNumber)
+  if (!option) {
+    throw new ApiError(`Survey option not found. (step: ${step}, optionNumber: ${optionNumber})`, 400, 'INVALID_SURVEY_OPTION')
+  }
+
+  return option.code
+}
+
+function getRequiredSkinType(questions: SurveyQuestion[], answersByStep: Record<number, number>) {
+  const optionNumber = answersByStep[SKIN_TYPE_STEP]
+  if (optionNumber === undefined) {
+    throw new ApiError('Skin type answer is missing.', 400, 'MISSING_SKIN_TYPE_ANSWER')
+  }
+
+  const code = getSelectedCode(questions, SKIN_TYPE_STEP, optionNumber)
+  if (!isSkinTypeCode(code)) {
+    throw new ApiError('Skin type code is invalid.', 400, 'INVALID_SKIN_TYPE_CODE')
+  }
+
+  return code
+}
+
+function getRequiredConcern(questions: SurveyQuestion[], answersByStep: Record<number, number>) {
+  const optionNumber = answersByStep[CONCERN_STEP]
+  if (optionNumber === undefined) {
+    throw new ApiError('Concern answer is missing.', 400, 'MISSING_CONCERN_ANSWER')
+  }
+
+  const code = getSelectedCode(questions, CONCERN_STEP, optionNumber)
+  if (!isConcernCode(code)) {
+    throw new ApiError('Concern code is invalid.', 400, 'INVALID_CONCERN_CODE')
+  }
+
+  return code
+}
+
+function buildSurveySubmitPayload({ answersByStep, questions }: BuildSurveySubmitPayloadInput): SurveySubmitPayload {
+  const answers = buildAnswers(answersByStep)
+  const skinType = getRequiredSkinType(questions, answersByStep)
+  const concern = getRequiredConcern(questions, answersByStep)
+
+  return {
+    answers,
+    skinType,
+    concerns: [concern],
+  }
 }
 
 export function useSurveySubmit() {
   const queryClient = useQueryClient()
-  const { answersByQuestionId, setPreviewResult, clearPreviewResult, setLatestResultId, clearSavedRoutine } =
-    useSurveyStore(
-      useShallow((state) => ({
-        answersByQuestionId: state.answersByQuestionId,
-        setPreviewResult: state.setPreviewResult,
-        clearPreviewResult: state.clearPreviewResult,
-        setLatestResultId: state.setLatestResultId,
-        clearSavedRoutine: state.clearSavedRoutine,
-      })),
-    )
+  const { answersByStep, setPreviewResult, setPreviewToken, clearPreviewResult, clearProgress } = useSurveyProgressStore(
+    useShallow((state) => ({
+      answersByStep: state.answersByStep,
+      setPreviewResult: state.setPreviewResult,
+      setPreviewToken: state.setPreviewToken,
+      clearPreviewResult: state.clearPreviewResult,
+      clearProgress: state.clearProgress,
+    })),
+  )
+  const { setLatestResultId, clearSavedRoutine } = useSurveyResultStore(
+    useShallow((state) => ({
+      setLatestResultId: state.setLatestResultId,
+      clearSavedRoutine: state.clearSavedRoutine,
+    })),
+  )
 
-  return useMutation<SubmitOutcome, Error, AuthState>({
+  return useMutation<SubmitOutcome, ApiError, AuthState>({
     mutationFn: async (authState) => {
-      const payload = buildPayload(answersByQuestionId)
+      const questions = await queryClient.ensureQueryData({
+        queryKey: SURVEY_QUERY_KEYS.questions,
+        queryFn: () => apiClient.getSurveyQuestions(),
+        staleTime: Infinity,
+      })
+
+      const payload = buildSurveySubmitPayload({ answersByStep, questions })
 
       if (authState.accessToken) {
         const result = await apiClient.submitSurveyResult(payload, authState)
         return { kind: 'full', result }
-      } else {
-        const result = await apiClient.submitSurveyPreview(payload)
-        return { kind: 'preview', result }
       }
+
+      const { preview, previewToken } = await apiClient.submitSurveyPreview(payload)
+      return { kind: 'preview', result: preview, previewToken }
     },
     onSuccess: (outcome) => {
       if (outcome.kind === 'preview') {
         setPreviewResult(outcome.result)
+        setPreviewToken(outcome.previewToken)
+        clearProgress()
       } else {
+        // 로그인 결과: 완전히 완료됐으므로 진행 상태 초기화
+        clearProgress()
         queryClient.setQueryData(queryKeys.result(outcome.result.resultId), outcome.result)
         clearPreviewResult()
         setLatestResultId(outcome.result.resultId)

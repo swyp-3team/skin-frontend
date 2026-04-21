@@ -15,28 +15,24 @@ import {
 } from '../../../constants/survey'
 import { notify } from '../../../lib/notify'
 import { useAuthStore } from '../../../stores/authStore'
-import { useSurveyStore } from '../../../stores/surveyStore'
+import { useSurveyProgressStore } from '../../../stores/surveyProgressStore'
 import { useSurveySubmit } from '../useSurveySubmit'
 import SurveyStepActions from './SurveyStepActions'
 import SurveyStepSection from './SurveyStepSection'
 import { useSurveyQuestions } from './useSurveyQuestions'
 
-// Q14, Q15는 선택지가 짧은 유형 분류 문항으로 2열 레이아웃 적용
-const TWO_COLUMN_FROM_QUESTION_ID = 14
-const MILESTONE_TOAST_BY_QUESTION_ID = new Map(
-  SURVEY_STEP_MILESTONE_TOASTS.map((item) => [item.questionId, item] as const),
-)
+const TWO_COLUMN_FROM_STEP = 14
+const MILESTONE_TOAST_BY_STEP = new Map(SURVEY_STEP_MILESTONE_TOASTS.map((item) => [item.step, item] as const))
 
 function SurveyStepsPage() {
   const navigate = useNavigate()
-
   const accessToken = useAuthStore((state) => state.accessToken)
 
-  const { currentStep, answersByQuestionId, setAnswer, nextStep, prevStep, goToStep } = useSurveyStore(
+  const { currentStep, answersByStep, setStepAnswer, nextStep, prevStep, goToStep } = useSurveyProgressStore(
     useShallow((state) => ({
       currentStep: state.currentStep,
-      answersByQuestionId: state.answersByQuestionId,
-      setAnswer: state.setAnswer,
+      answersByStep: state.answersByStep,
+      setStepAnswer: state.setStepAnswer,
       nextStep: state.nextStep,
       prevStep: state.prevStep,
       goToStep: state.goToStep,
@@ -48,12 +44,12 @@ function SurveyStepsPage() {
   const [validationError, setValidationError] = useState<string | null>(null)
   const [isOptionPressed, setIsOptionPressed] = useState(false)
   const [transitionDirection, setTransitionDirection] = useState<'forward' | 'backward'>('forward')
-
-  // 전환 방향을 추적해 슬라이드 방향 결정 (ref: 불필요한 리렌더 방지)
   const shownMilestoneToastIdsRef = useRef<Set<string>>(new Set())
 
   useEffect(() => {
-    return () => { notify.dismiss() }
+    return () => {
+      notify.dismiss()
+    }
   }, [])
 
   const totalSteps = questions.length
@@ -61,9 +57,10 @@ function SurveyStepsPage() {
   const isFinalStep = safeCurrentStep === totalSteps
   const activeQuestion = questions[safeCurrentStep - 1]
 
-  const enterClass = transitionDirection === 'forward'
-    ? 'animate-in fade-in-75 slide-in-from-right-4 duration-350 ease-out'
-    : 'animate-in fade-in-75 slide-in-from-left-4 duration-350 ease-out'
+  const enterClass =
+    transitionDirection === 'forward'
+      ? 'animate-in fade-in-75 slide-in-from-right-4 duration-350 ease-out'
+      : 'animate-in fade-in-75 slide-in-from-left-4 duration-350 ease-out'
 
   useEffect(() => {
     if (!isLoading && !questionLoadError && totalSteps > 0 && currentStep > totalSteps) {
@@ -76,8 +73,8 @@ function SurveyStepsPage() {
     submitMutation.reset()
   }
 
-  const showMilestoneToast = (questionId: number) => {
-    const milestoneToast = MILESTONE_TOAST_BY_QUESTION_ID.get(questionId)
+  const showMilestoneToast = (step: number) => {
+    const milestoneToast = MILESTONE_TOAST_BY_STEP.get(step)
 
     if (!milestoneToast || shownMilestoneToastIdsRef.current.has(milestoneToast.toastId)) {
       return
@@ -94,7 +91,7 @@ function SurveyStepsPage() {
   const advanceStep = () => {
     const nextQuestion = questions[safeCurrentStep]
     if (nextQuestion) {
-      showMilestoneToast(nextQuestion.questionId)
+      showMilestoneToast(nextQuestion.step)
     }
     setTransitionDirection('forward')
     nextStep()
@@ -102,7 +99,7 @@ function SurveyStepsPage() {
 
   const handleNext = () => {
     clearErrors()
-    if (activeQuestion && answersByQuestionId[activeQuestion.questionId] === undefined) {
+    if (activeQuestion && answersByStep[activeQuestion.step] === undefined) {
       setValidationError(SURVEY_VALIDATION_MESSAGES.questionRequired)
       return
     }
@@ -115,13 +112,12 @@ function SurveyStepsPage() {
     prevStep()
   }
 
-  // setAnswer를 advanceStep보다 먼저 호출해야 함
-  // Zustand(useSyncExternalStore)는 set 즉시 스토어를 업데이트하므로
-  // nextStep 전에 answer가 저장되어 있어야 다음 질문 렌더링이 올바름
-  const handlePointerSelect = (value: number) => {
+  const handlePointerSelect = (optionNumber: number) => {
     if (!activeQuestion) return
-    const alreadySelected = answersByQuestionId[activeQuestion.questionId] === value
-    setAnswer(activeQuestion.questionId, value)
+
+    const alreadySelected = answersByStep[activeQuestion.step] === optionNumber
+    setStepAnswer(activeQuestion.step, optionNumber)
+
     if (!isFinalStep && !alreadySelected) {
       advanceStep()
     }
@@ -130,7 +126,7 @@ function SurveyStepsPage() {
   const handleSubmit = () => {
     clearErrors()
 
-    const firstUnanswered = questions.find((q) => answersByQuestionId[q.questionId] === undefined)
+    const firstUnanswered = questions.find((item) => answersByStep[item.step] === undefined)
     if (firstUnanswered) {
       setTransitionDirection('backward')
       goToStep(questions.indexOf(firstUnanswered) + 1)
@@ -204,20 +200,20 @@ function SurveyStepsPage() {
     >
       <section className="w-full text-neutral-800 px-4 flex flex-col h-full items-center overflow-hidden">
         {activeQuestion ? (
-          <div key={activeQuestion.questionId} className={`w-full fill-mode-both ${enterClass}`}>
+          <div key={activeQuestion.step} className={`w-full fill-mode-both ${enterClass}`}>
             <SurveyStepSection
-              columns={activeQuestion.questionId >= TWO_COLUMN_FROM_QUESTION_ID ? 2 : 1}
-              name={`question-${activeQuestion.questionId}`}
-              options={activeQuestion.options}
-              title={activeQuestion.text}
-              isSelected={(value) => answersByQuestionId[activeQuestion.questionId] === value}
-              onSelect={(value) => {
-                setAnswer(activeQuestion.questionId, value)
-                clearErrors()
-              }}
-              onPointerSelect={handlePointerSelect}
+              columns={activeQuestion.step >= TWO_COLUMN_FROM_STEP ? 2 : 1}
+              isSelected={(optionNumber) => answersByStep[activeQuestion.step] === optionNumber}
+              name={`step-${activeQuestion.step}`}
               onOptionPointerDown={() => setIsOptionPressed(true)}
               onOptionPointerUp={() => setIsOptionPressed(false)}
+              onPointerSelect={handlePointerSelect}
+              onSelect={(optionNumber) => {
+                setStepAnswer(activeQuestion.step, optionNumber)
+                clearErrors()
+              }}
+              options={activeQuestion.options}
+              title={activeQuestion.question}
             />
           </div>
         ) : null}

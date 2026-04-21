@@ -12,15 +12,16 @@ import LoginGateOverlay from '../../../components/survey/LoginGateOverlay'
 import { SURVEY_RESULT_COPY } from '../../../constants/survey'
 import { INGREDIENT_GROUP_LABELS } from '../../../domain/surveyConfig'
 import { selectIsAuthenticated, useAuthStore } from '../../../stores/authStore'
-import { useSurveyStore } from '../../../stores/surveyStore'
+import { useSurveyProgressStore } from '../../../stores/surveyProgressStore'
+import { useSurveyResultStore } from '../../../stores/surveyResultStore'
 import { useLoginAndPromote } from './useLoginAndPromote'
 
 const getParticle = josa.pick
 
 function SurveyResultPage() {
-  const previewResult = useSurveyStore((state) => state.previewResult)
+  const previewResult = useSurveyProgressStore((state) => state.previewResult)
   const isAuthenticated = useAuthStore(selectIsAuthenticated)
-  const latestResultId = useSurveyStore((state) => state.latestResultId)
+  const latestResultId = useSurveyResultStore((state) => state.latestResultId)
   const { isLoginModalOpen, setIsLoginModalOpen, isPromoting, promoteToFullResult } = useLoginAndPromote()
 
   if (isAuthenticated && latestResultId != null) {

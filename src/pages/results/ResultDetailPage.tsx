@@ -15,7 +15,7 @@ import { Button, buttonVariants } from '../../components/ui/button'
 import { SURVEY_RESULT_COPY } from '../../constants/survey'
 import { INGREDIENT_GROUP_LABELS, PRODUCT_CATEGORY_LABELS } from '../../domain/surveyConfig'
 import { cn } from '../../lib/utils'
-import { createSavedRoutineKey, useSurveyStore } from '../../stores/surveyStore'
+import { createSavedRoutineKey, useSurveyResultStore } from '../../stores/surveyResultStore'
 import { useResultDetail } from './useResultDetail'
 
 const getParticle = josa.pick
@@ -23,7 +23,7 @@ const getParticle = josa.pick
 function ResultDetailPage() {
   const navigate = useNavigate()
   const { resultId, data: result, isLoading, error } = useResultDetail()
-  const { savedRoutineKey, markRoutineSaved, clearLatestResultId } = useSurveyStore(
+  const { savedRoutineKey, markRoutineSaved, clearLatestResultId } = useSurveyResultStore(
     useShallow((state) => ({
       savedRoutineKey: state.savedRoutineKey,
       markRoutineSaved: state.markRoutineSaved,

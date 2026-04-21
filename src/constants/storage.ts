@@ -1,5 +1,6 @@
 export const STORAGE_KEYS = {
   authSession: 'auth.mockSession',
-  surveySession: 'survey.session',
+  surveyProgress: 'survey.progress',
+  surveyResult: 'survey.result',
   legacySurveySkinType: 'survey.selectedSkinType',
 } as const

@@ -5,11 +5,9 @@ interface SurveyStepSectionProps {
   title: string
   name: string
   options: readonly SurveyOption[]
-  isSelected: (value: number) => boolean
-  /** 키보드/접근성 등 모든 입력 방식의 선택 변경 시 호출 */
-  onSelect: (value: number) => void
-  /** 포인터(마우스·터치) 클릭 시에만 호출 — 자동 진행 등 포인터 전용 동작에 사용 */
-  onPointerSelect?: (value: number) => void
+  isSelected: (optionNumber: number) => boolean
+  onSelect: (optionNumber: number) => void
+  onPointerSelect?: (optionNumber: number) => void
   onOptionPointerDown?: () => void
   onOptionPointerUp?: () => void
   columns?: 1 | 2
@@ -36,12 +34,12 @@ function SurveyStepSection({
       <div className="w-full pt-1 items-center flex-1 justify-center self-center text-neutral-600">
         <ul className={columns === 2 ? 'grid grid-cols-2 gap-3 grid-rows-4 min-h-[288px]' : 'flex flex-col gap-3'}>
           {options.map((option) => {
-            const checked = isSelected(option.value)
+            const checked = isSelected(option.optionNumber)
             return (
-              <li key={option.value} className="h-full">
+              <li key={option.optionNumber} className="h-full">
                 <label
                   className="block cursor-pointer h-full"
-                  onClick={() => onPointerSelect?.(option.value)}
+                  onClick={() => onPointerSelect?.(option.optionNumber)}
                   onPointerDown={onOptionPointerDown}
                   onPointerUp={onOptionPointerUp}
                   onPointerLeave={onOptionPointerUp}
@@ -50,12 +48,14 @@ function SurveyStepSection({
                     checked={checked}
                     className="sr-only"
                     name={name}
-                    onChange={() => onSelect(option.value)}
+                    onChange={() => onSelect(option.optionNumber)}
                     type="radio"
-                    value={option.value}
+                    value={option.optionNumber}
                   />
-                  <span className={surveyOptionCardVariants({ selected: checked, layout: columns === 2 ? 'grid' : 'default' }) + ' h-full'}>
-                    {option.label}
+                  <span
+                    className={surveyOptionCardVariants({ selected: checked, layout: columns === 2 ? 'grid' : 'default' }) + ' h-full'}
+                  >
+                    {option.content}
                   </span>
                 </label>
               </li>

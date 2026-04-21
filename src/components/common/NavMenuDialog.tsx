@@ -2,18 +2,17 @@ import { useState } from 'react'
 import { X } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
-import { APP_ROUTES, createResultDetailPath, createResultProductsPath, createResultRoutinePath } from '@/app/routes'
+import { APP_ROUTES, createResultProductsPath, createResultRoutinePath } from '@/app/routes'
 import menuIcon from '@/assets/icons/mobile-page/menu.svg'
 import AlertMessage from '@/components/common/AlertMessage'
 import LoginDialog from '@/components/survey/LoginDialog'
 import { Button } from '@/components/ui/button'
 import { DrawerClose, DrawerContent, DrawerRoot, DrawerTrigger } from '@/components/ui/drawer'
-import { MOCK_ACCESS_TOKEN } from '@/constants/auth'
 import { useLogout } from '@/hooks/useLogout'
 import { cn } from '@/lib/utils'
-import { useSurveySubmit } from '@/pages/survey/useSurveySubmit'
+import { usePromotePreview } from '@/pages/survey/result/usePromotePreview'
 import { selectIsAuthenticated, useAuthStore } from '@/stores/authStore'
-import { useSurveyStore } from '@/stores/surveyStore'
+import { useSurveyResultStore } from '@/stores/surveyResultStore'
 
 type MenuAction =
   | { type: 'navigate'; path: string }
@@ -78,9 +77,9 @@ function NavMenuDialog({ triggerClassName }: NavMenuDialogProps) {
   const isAuthenticated = useAuthStore(selectIsAuthenticated)
   const nickname = useAuthStore((s) => s.nickname)
   const loginMock = useAuthStore((s) => s.loginMock)
-  const latestResultId = useSurveyStore((s) => s.latestResultId)
+  const latestResultId = useSurveyResultStore((s) => s.latestResultId)
   const logout = useLogout()
-  const promoteMutation = useSurveySubmit()
+  const promoteMutation = usePromotePreview()
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -109,17 +108,9 @@ function NavMenuDialog({ triggerClassName }: NavMenuDialogProps) {
     loginMock(providerLabel)
 
     if (location.pathname === APP_ROUTES.surveyResult) {
-      promoteMutation.mutate(
-        { accessToken: MOCK_ACCESS_TOKEN },
-        {
-          onSuccess: (outcome) => {
-            if (outcome.kind === 'full') {
-              navigate(createResultDetailPath(outcome.result.resultId))
-            }
-            setLoginDialogOpen(false)
-          },
-        },
-      )
+      promoteMutation.mutate(undefined, {
+        onSuccess: () => setLoginDialogOpen(false),
+      })
       return
     }
 

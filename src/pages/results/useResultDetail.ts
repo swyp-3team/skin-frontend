@@ -2,6 +2,8 @@ import { useQuery } from '@tanstack/react-query'
 import { useParams } from 'react-router-dom'
 
 import { apiClient } from '../../api'
+import { ApiError } from '../../api/errors'
+import type { FullResult } from '../../api/types'
 import { queryKeys } from '../../lib/queryKeys'
 import { useAuthStore } from '../../stores/authStore'
 
@@ -13,7 +15,7 @@ export function useResultDetail() {
 
   return {
     resultId,
-    ...useQuery({
+    ...useQuery<FullResult, ApiError>({
       queryKey: queryKeys.result(resultId),
       queryFn: () => apiClient.getResult(resultId, { accessToken }),
       enabled: !!id && !isNaN(resultId),
