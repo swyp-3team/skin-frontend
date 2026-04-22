@@ -10,9 +10,9 @@ import ResultPageHeader from '../../components/results/ResultPageHeader'
 import ResultTabBar from '../../components/results/ResultTabBar'
 import ResultTopSection from '../../components/results/ResultTopSection'
 import type { ResultProductTabId } from '../../components/results/types'
-import { isProductVisibleInTab, RESULT_PRODUCT_TABS, createResultHeaderViewModel } from './resultViewModel'
+import { isProductVisibleInTab, RESULT_PRODUCT_TABS, createResultHeaderViewModelFromSummary } from './resultViewModel'
+import { useResultDetail } from './useResultDetail'
 import { useResultProductsInfinite } from './useResultProductsInfinite'
-import { useResultRoutine } from './useResultRoutine'
 
 const PRODUCTS_PAGE_COPY = {
   title: '제품 추천받기',
@@ -58,7 +58,7 @@ function ResultProductsPage() {
   const [activeTabId, setActiveTabId] = useState<ResultProductTabId>('ALL')
   const sentinelRef = useRef<HTMLDivElement | null>(null)
 
-  const { data: routineGroup, isLoading: isRoutineLoading, error: routineError } = useResultRoutine(skinResultId)
+  const { data: detail, isLoading: isDetailLoading, error: detailError } = useResultDetail()
   const {
     data: productsPages,
     isLoading: isProductsLoading,
@@ -102,7 +102,7 @@ function ResultProductsPage() {
     )
   }
 
-  if (isRoutineLoading || isProductsLoading) {
+  if (isDetailLoading || isProductsLoading) {
     return (
       <MobilePage>
         <AlertMessage size="md" variant="info">
@@ -112,18 +112,17 @@ function ResultProductsPage() {
     )
   }
 
-  if (routineError || productsError || !routineGroup || !productsPages) {
+  if (detailError || productsError || !detail || !productsPages) {
     return (
       <MobilePage>
         <AlertMessage size="md" variant="error">
-          {routineError?.message ?? productsError?.message ?? '추천 제품을 불러오지 못했습니다.'}
+          {detailError?.message ?? productsError?.message ?? '추천 제품을 불러오지 못했습니다.'}
         </AlertMessage>
       </MobilePage>
     )
   }
 
-  const firstProductsPage = productsPages.pages[0]
-  const header = createResultHeaderViewModel(routineGroup, firstProductsPage?.tags)
+  const header = createResultHeaderViewModelFromSummary(detail.resultSummary)
   const allProducts = productsPages.pages.flatMap((page) => page.products)
   const visibleProducts = allProducts.filter((product) => isProductVisibleInTab(product.category, activeTabId))
 
@@ -133,7 +132,7 @@ function ResultProductsPage() {
         <ResultTopSection header={header} intro={PRODUCTS_PAGE_COPY.intro} skinResultId={skinResultId} />
 
         <div className="space-y-5 py-5">
-          <div className="px-5">
+          <div className="px-0">
             <div className="inline-flex w-full items-center gap-2 rounded-lg border border-neutral-150 bg-neutral-50/50 px-3 py-3 text-sm leading-[20.44px] text-neutral-300">
               <span aria-hidden className="text-base">⌕</span>
               <span>{PRODUCTS_PAGE_COPY.searchPlaceholder}</span>
@@ -147,7 +146,7 @@ function ResultProductsPage() {
             onChange={(tabId) => setActiveTabId(tabId as ResultProductTabId)}
           />
 
-          <section className="px-5">
+          <section className="px-0">
             {visibleProducts.length > 0 ? (
               <div className="grid grid-cols-2 gap-x-4 gap-y-6">
                 {visibleProducts.map((product) => (

@@ -1,6 +1,6 @@
-import { useState, type FormEvent } from 'react'
-import { X } from 'lucide-react'
-import { Link, useParams } from 'react-router-dom'
+import { useEffect, useState, type FormEvent } from 'react'
+import { ChevronRight, X } from 'lucide-react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useShallow } from 'zustand/react/shallow'
 
 import { APP_ROUTES, createProductDetailPath } from '../../app/routes'
@@ -13,10 +13,12 @@ import ResultTopSection from '../../components/results/ResultTopSection'
 import { DrawerContentBottom, DrawerRoot } from '../../components/ui/drawer'
 import { Input } from '../../components/ui/input'
 import { PRODUCT_CATEGORY_LABELS } from '../../domain/surveyConfig'
+import { notify } from '../../lib/notify'
 import { cn } from '../../lib/utils'
 import { createSavedRoutineGroupKey, useSurveyResultStore } from '../../stores/surveyResultStore'
-import { createResultHeaderViewModel } from './resultViewModel'
+import { createResultHeaderViewModelFromSummary } from './resultViewModel'
 import { getRoutineStepPreset, type RoutineTabId } from './routineStepPresets'
+import { useResultDetail } from './useResultDetail'
 import { useResultRoutine } from './useResultRoutine'
 
 type RoutineNameFieldState = 'placeholder' | 'focus' | 'typed'
@@ -24,9 +26,9 @@ type RoutineNameFieldState = 'placeholder' | 'focus' | 'typed'
 const ROUTINE_NAME_MAX_LENGTH = 10
 const ROUTINE_CARD_CLASS = 'flex flex-col gap-[15px] rounded-lg border border-neutral-100 bg-common-0 p-4'
 const STEP_BADGE_CLASS =
-  'inline-flex min-w-6 items-center justify-center rounded-[20px] bg-neutral-300 px-2 py-1 text-xs font-bold leading-[16.32px] text-neutral-500'
+  'inline-flex min-w-6 items-center justify-center rounded-[20px] bg-neutral-800 px-2 py-1 text-xs font-bold leading-[16.32px] text-neutral-50'
 const INGREDIENT_CHIP_CLASS =
-  'inline-flex items-center justify-center rounded bg-primary-50 px-1.5 py-0.5 text-[11px] font-medium leading-[14.3px] text-primary-500'
+  'inline-flex items-center justify-center rounded bg-primary-50 px-1.5 py-0.5 text-[12px] font-medium leading-[14.3px] text-primary-500'
 const STEP_ACTION_LINK_CLASS =
   'inline-flex h-8 w-full items-center justify-center rounded-lg border border-neutral-100 bg-common-0 px-4 text-sm font-semibold leading-[20.44px] text-neutral-600'
 const SAVE_ROUTINE_BUTTON_CLASS =
@@ -35,6 +37,9 @@ const GO_MYPAGE_LINK_CLASS =
   'inline-flex w-full items-center justify-center rounded-lg bg-neutral-800 px-6 py-3 text-base font-semibold leading-[23.68px] text-common-0'
 const SAVE_SHEET_CLOSE_BUTTON_CLASS =
   'inline-flex items-center justify-center rounded-full bg-[#1212121A] p-1 outline outline-[0.5px] -outline-offset-[0.5px] outline-neutral-100 backdrop-blur-[2px]'
+const ROUTINE_SAVED_TOASTER_ID = 'result-routine-saved'
+const ROUTINE_SAVED_TOAST_ID = 'result-routine-saved-toast'
+const ROUTINE_SAVED_TOAST_WRAPPER_CLASS = 'w-full border-0 bg-transparent p-0 shadow-none'
 
 const ROUTINE_PAGE_COPY = {
   title: '루틴 추천받기',
@@ -45,6 +50,9 @@ const ROUTINE_PAGE_COPY = {
   saveSheetTitle: '루틴 저장',
   saveSheetPlaceholder: '루틴 이름을 입력하세요. (예: 여름 아침 루틴)',
   saveSheetSubmit: '완료',
+  savedToastTitle: '루틴을 저장했어요!',
+  savedToastDescription: '저장한 루틴은 마이페이지에서 확인할 수 있어요.',
+  savedToastAction: '마이페이지 바로가기',
 } as const
 
 const ROUTINE_TAB_ITEMS = [
@@ -86,7 +94,31 @@ function RoutineStepCard({ stepNumber, stepIndex, tabId, product }: RoutineStepC
   )
 }
 
+interface RoutineSavedToastProps {
+  onMoveToMyPage: () => void
+}
+
+function RoutineSavedToast({ onMoveToMyPage }: RoutineSavedToastProps) {
+  return (
+    <div className="flex w-full max-w-[350px] flex-col items-start gap-2.5 rounded-[8px] bg-[rgba(13, 15, 12, 0.90)] p-3 shadow-[0px_2px_4px_rgba(13,15,12,0.05),0px_2px_20px_rgba(13,15,12,0.05)]">
+      <div className="flex w-full flex-col items-start gap-0.5">
+        <p className="text-[15px] font-medium leading-[22.2px] text-common-0">{ROUTINE_PAGE_COPY.savedToastTitle}</p>
+        <p className="text-xs font-medium leading-[16.32px] text-neutral-150">{ROUTINE_PAGE_COPY.savedToastDescription}</p>
+      </div>
+      <button
+        className="inline-flex w-full items-center justify-center gap-0.5 px-2 py-1 text-xs font-medium leading-[16.32px] text-primary-400"
+        onClick={onMoveToMyPage}
+        type="button"
+      >
+        <span>{ROUTINE_PAGE_COPY.savedToastAction}</span>
+        <ChevronRight className="size-4" strokeWidth={1.8} />
+      </button>
+    </div>
+  )
+}
+
 function ResultRoutinePage() {
+  const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
   const skinResultId = Number(id)
   const [activeTabId, setActiveTabId] = useState<RoutineTabId>('am')
@@ -100,7 +132,17 @@ function ResultRoutinePage() {
       markRoutineSavedByKey: state.markRoutineSavedByKey,
     })),
   )
-  const { data: routineGroup, isLoading, error } = useResultRoutine(skinResultId)
+  const { data: detail, isLoading: isDetailLoading, error: detailError } = useResultDetail()
+  const { data: routineGroup, isLoading: isRoutineLoading, error: routineError } = useResultRoutine(skinResultId)
+
+  const isLoading = isDetailLoading || isRoutineLoading
+  const error = detailError ?? routineError
+
+  useEffect(() => {
+    return () => {
+      notify.dismiss(ROUTINE_SAVED_TOAST_ID)
+    }
+  }, [])
 
   if (!id || Number.isNaN(skinResultId)) {
     return (
@@ -122,7 +164,7 @@ function ResultRoutinePage() {
     )
   }
 
-  if (error || !routineGroup) {
+  if (error || !routineGroup || !detail) {
     return (
       <MobilePage>
         <AlertMessage size="md" variant="error">
@@ -132,7 +174,7 @@ function ResultRoutinePage() {
     )
   }
 
-  const header = createResultHeaderViewModel(routineGroup)
+  const header = createResultHeaderViewModelFromSummary(detail.resultSummary)
   const selectedRoutine = activeTabId === 'am' ? routineGroup.amRoutine : routineGroup.pmRoutine
   const savedKey = createSavedRoutineGroupKey(routineGroup.routineGroupId)
   const isRoutineSaved = savedRoutineKey === savedKey
@@ -142,6 +184,24 @@ function ResultRoutinePage() {
   const canSubmitRoutineName = trimmedRoutineName.length > 0
   const routineNameFieldState: RoutineNameFieldState =
     routineNameLength > 0 ? 'typed' : isRoutineNameFocused ? 'focus' : 'placeholder'
+
+  function handleMoveToMyPage() {
+    notify.dismiss(ROUTINE_SAVED_TOAST_ID)
+    navigate(APP_ROUTES.myPage)
+  }
+
+  function showRoutineSavedToast() {
+    notify.custom(() => <RoutineSavedToast onMoveToMyPage={handleMoveToMyPage} />, {
+      id: ROUTINE_SAVED_TOAST_ID,
+      toasterId: ROUTINE_SAVED_TOASTER_ID,
+      duration: 5000,
+      position: 'top-center',
+      unstyled: true,
+      classNames: {
+        toast: ROUTINE_SAVED_TOAST_WRAPPER_CLASS,
+      },
+    })
+  }
 
   function handleSaveSheetOpenChange(nextOpen: boolean) {
     setIsSaveSheetOpen(nextOpen)
@@ -166,6 +226,7 @@ function ResultRoutinePage() {
     setRoutineNameDraft(trimmedRoutineName)
     setIsRoutineNameFocused(false)
     setIsSaveSheetOpen(false)
+    showRoutineSavedToast()
   }
 
   return (

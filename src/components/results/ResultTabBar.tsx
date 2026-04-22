@@ -16,7 +16,7 @@ interface ResultTabBarProps {
 function ResultTabBar({ items, activeTabId, onChange, mode, className }: ResultTabBarProps) {
   if (mode === 'equal') {
     return (
-      <nav className={cn('border-b border-neutral-100 px-5 pt-5', className)}>
+      <nav className={cn('border-b border-neutral-100 px-0 pt-5', className)}>
         <div className="grid w-full grid-cols-2 items-center gap-2">
           {items.map((item) => {
             const isActive = activeTabId === item.id
@@ -43,7 +43,7 @@ function ResultTabBar({ items, activeTabId, onChange, mode, className }: ResultT
 
   return (
     <nav className={cn('overflow-x-auto border-b border-neutral-100', className)}>
-      <div className="flex min-w-max items-center gap-2 px-5">
+      <div className="flex min-w-max items-center gap-2 px-0">
         {items.map((item) => {
           const isActive = activeTabId === item.id
           return (

@@ -11,7 +11,8 @@ import GlobalErrorFallback from './components/GlobalErrorFallback'
 import { Toaster } from './components/ui/sonner'
 import { queryClient } from './lib/queryClient'
 
-const toasterOffset = { bottom: 140 }
+const bottomToasterOffset = { bottom: 140 }
+const resultRoutineToasterOffset = { top: 28, left: 20, right: 20 }
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -20,12 +21,21 @@ createRoot(document.getElementById('root')!).render(
         <AppRouter />
         <Toaster
           position="bottom-center"
-          offset={toasterOffset}
-          mobileOffset={toasterOffset}
+          offset={bottomToasterOffset}
+          mobileOffset={bottomToasterOffset}
           visibleToasts={1}
           closeButton={false}
           expand
           containerAriaLabel="Notifications"
+        />
+        <Toaster
+          id="result-routine-saved"
+          position="top-center"
+          offset={resultRoutineToasterOffset}
+          mobileOffset={resultRoutineToasterOffset}
+          visibleToasts={1}
+          closeButton={false}
+          containerAriaLabel="Result routine notifications"
         />
         {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
       </QueryClientProvider>

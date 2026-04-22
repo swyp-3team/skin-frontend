@@ -47,6 +47,10 @@ function info(message: string, options?: ExternalToast) {
   return toast.info(message, { duration: DEFAULT_TOAST_DURATION, ...options, position: 'bottom-center' })
 }
 
+function custom(...args: Parameters<typeof toast.custom>) {
+  return toast.custom(...args)
+}
+
 function dismiss(id?: string | number) {
   toast.dismiss(id)
 }
@@ -56,5 +60,6 @@ export const notify = {
   success,
   error,
   info,
+  custom,
   dismiss,
 }

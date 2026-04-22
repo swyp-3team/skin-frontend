@@ -11,7 +11,7 @@ function ResultMiniTag({ children, className }: ResultMiniTagProps) {
   return (
     <span
       className={cn(
-        'inline-flex items-center justify-center rounded-[20px] bg-neutral-600 px-2 py-1 text-[11px] font-normal leading-[14.3px] text-neutral-200',
+        'inline-flex items-center justify-center rounded-[4px] bg-primary-100 px-2 py-1 text-[10px] font-normal leading-[14.3px] text-primary-500',
         className,
       )}
     >

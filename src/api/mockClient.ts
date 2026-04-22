@@ -10,8 +10,10 @@ import type {
   PreviewResult,
   ProductDetail,
   RecommendedProduct,
+  ResultDetail,
   ResultProductsPageData,
   ResultProductsQuery,
+  ResultSummary,
   RoutineGroup,
   SurveyQuestion,
   SurveyResultInput,
@@ -401,14 +403,16 @@ function createRoutine(top3: TopIngredientGroup[]): FullResult['routine'] {
   })
 }
 
-function createFullResult(payload: SurveySubmitPayload): FullResult {
+function createFullResult(payload: SurveySubmitPayload): ResultDetail {
   const preview = createPreviewResult(payload)
+  const resultId = Date.now()
 
   return {
     ...preview,
-    resultId: Date.now(),
+    resultId,
     recommendedProducts: MOCK_PRODUCT_DETAILS.map(toRecommendedProduct),
     routine: createRoutine(preview.top3),
+    resultSummary: createMockResultSummary(resultId),
   }
 }
 
@@ -416,6 +420,16 @@ function withDelay<T>(value: T, ms = 350): Promise<T> {
   return new Promise((resolve) => {
     window.setTimeout(() => resolve(value), ms)
   })
+}
+
+function createMockResultSummary(resultId: number): ResultSummary {
+  return {
+    resultId: String(resultId),
+    title: '민감 피부 데일리 루틴',
+    badge: { label: '진정 케어가 필요한 상태예요', type: 'warning' },
+    summaryShort: '민감도가 높아 진정과 장벽 회복 중심의 케어가 필요합니다.',
+    createdAt: '2026-04-05T14:30:00+09:00',
+  }
 }
 
 function createMockRoutineGroup(skinResultId: number): RoutineGroup {
@@ -468,11 +482,13 @@ export const mockApiClient: ApiClient = {
         throw new ApiError('Preview result not found.', 404, 'PREVIEW_NOT_FOUND')
       }
 
-      const result: FullResult = {
+      const resultId = Date.now()
+      const result: ResultDetail = {
         ...preview,
-        resultId: Date.now(),
+        resultId,
         recommendedProducts: MOCK_PRODUCT_DETAILS.map(toRecommendedProduct),
         routine: createRoutine(preview.top3),
+        resultSummary: createMockResultSummary(resultId),
       }
       mockResultsDb.set(result.resultId, result)
       return withDelay(result)
@@ -483,12 +499,12 @@ export const mockApiClient: ApiClient = {
     return withDelay(result)
   },
 
-  async getResult(resultId: number, authState: AuthState) {
+  async getResult(resultId: number, authState: AuthState): Promise<ResultDetail> {
     if (!authState.accessToken) {
       throw new ApiError('Only authenticated users can fetch full results.', 401, 'UNAUTHORIZED')
     }
 
-    const result = mockResultsDb.get(resultId)
+    const result = mockResultsDb.get(resultId) as ResultDetail | undefined
     if (!result) {
       throw new ApiError(`Result not found. (ID: ${resultId})`, 404, 'RESULT_NOT_FOUND')
     }

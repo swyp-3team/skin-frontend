@@ -121,6 +121,23 @@ export interface FullResult extends PreviewResult {
   routine: RoutineGuide[]
 }
 
+export interface ResultSummaryBadge {
+  label: string
+  type: string
+}
+
+export interface ResultSummary {
+  resultId: string
+  title: string
+  badge: ResultSummaryBadge
+  summaryShort: string
+  createdAt: string
+}
+
+export interface ResultDetail extends FullResult {
+  resultSummary: ResultSummary
+}
+
 export type SurveyResultInput = SurveySubmitPayload | { previewToken: string }
 
 export type SubmitOutcome =

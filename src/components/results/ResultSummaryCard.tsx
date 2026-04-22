@@ -9,6 +9,7 @@ interface ResultSummaryCardProps {
   summary: string
   diagnosedAt: string
   resultDetailPath: string
+  isCollapsed?: boolean
   className?: string
 }
 
@@ -41,6 +42,7 @@ function ResultSummaryCard({
   summary,
   diagnosedAt,
   resultDetailPath,
+  isCollapsed = false,
   className,
 }: ResultSummaryCardProps) {
   const diagnosedAtDisplay = toDiagnosedAtDisplay(diagnosedAt)
@@ -48,7 +50,7 @@ function ResultSummaryCard({
   return (
     <article className={cn('flex w-full flex-col gap-3 rounded-2xl bg-common-0 p-4', className)}>
       <div className="flex items-start justify-between gap-2">
-        <h3 className="text-[18px] font-bold leading-[25.56px] text-primary-400">{diagnosisTitle}</h3>
+        <h3 className="text-[18px] font-bold leading-[25.56px] text-neutral-800">{diagnosisTitle}</h3>
         <div className="flex flex-wrap justify-end gap-1">
           {tags.map((tag) => (
             <ResultMiniTag key={tag}>{tag}</ResultMiniTag>
@@ -56,10 +58,17 @@ function ResultSummaryCard({
         </div>
       </div>
 
-      <p className="text-[15px] font-normal leading-[22.2px] text-neutral-800">{summary}</p>
+      <p
+        className={cn(
+          'overflow-hidden text-[15px] font-normal leading-[22.2px] text-neutral-800 transition-all duration-500 motion-reduce:transition-none',
+          isCollapsed ? 'max-h-0 opacity-0' : 'max-h-200 opacity-100',
+        )}
+      >
+        {summary}
+      </p>
 
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1 text-sm font-normal leading-[20.44px] text-neutral-400">
+        <div className="text-[14px] flex items-center gap-1 font-light leading-[20.44px] text-neutral-400">
           <span>{diagnosedAtDisplay.date}</span>
           <span>{diagnosedAtDisplay.time}</span>
         </div>

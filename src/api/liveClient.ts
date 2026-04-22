@@ -8,8 +8,10 @@ import type {
   FullResult,
   PreviewApiData,
   ProductDetail,
+  ResultDetail,
   ResultProductsPageData,
   ResultProductsQuery,
+  ResultSummary,
   RoutineDetail,
   RoutineGroup,
   RoutineProduct,
@@ -341,6 +343,39 @@ function normalizeRoutineDetail(raw: unknown, slot: 'amRoutine' | 'pmRoutine'): 
   }
 }
 
+function normalizeResultSummary(payload: unknown): ResultSummary {
+  const raw = Array.isArray(payload) ? payload[0] : undefined
+  if (!isRecord(raw)) {
+    throw new ApiError('resultSummary is missing or invalid.', 500, 'INVALID_RESULT_SUMMARY', payload)
+  }
+
+  const { resultId, title, badge, summaryShort, createdAt } = raw
+
+  if (typeof resultId !== 'string') {
+    throw new ApiError('resultSummary.resultId is invalid.', 500, 'INVALID_RESULT_SUMMARY_ID', raw)
+  }
+  if (typeof title !== 'string') {
+    throw new ApiError('resultSummary.title is invalid.', 500, 'INVALID_RESULT_SUMMARY_TITLE', raw)
+  }
+  if (typeof summaryShort !== 'string') {
+    throw new ApiError('resultSummary.summaryShort is invalid.', 500, 'INVALID_RESULT_SUMMARY_SHORT', raw)
+  }
+  if (typeof createdAt !== 'string') {
+    throw new ApiError('resultSummary.createdAt is invalid.', 500, 'INVALID_RESULT_SUMMARY_CREATED_AT', raw)
+  }
+  if (!isRecord(badge) || typeof badge.label !== 'string' || typeof badge.type !== 'string') {
+    throw new ApiError('resultSummary.badge is invalid.', 500, 'INVALID_RESULT_SUMMARY_BADGE', raw)
+  }
+
+  return {
+    resultId,
+    title,
+    badge: { label: badge.label, type: badge.type },
+    summaryShort,
+    createdAt,
+  }
+}
+
 function normalizeRoutineGroup(payload: unknown): RoutineGroup {
   if (!isRecord(payload)) {
     throw new ApiError('Routine group response is invalid.', 500, 'INVALID_ROUTINE_GROUP_FORMAT', payload)
@@ -472,13 +507,17 @@ export function createLiveApiClient(baseUrl: string): ApiClient {
       )
     },
 
-    async getResult(resultId: number, authState: AuthState) {
-      return requestApi<FullResult>(`${baseUrl}/results/${resultId}`, { method: 'GET' }, authState.accessToken)
+    async getResult(resultId: number, authState: AuthState): Promise<ResultDetail> {
+      const payload = await requestApi<unknown>(`${baseUrl}/results/${resultId}`, { method: 'GET' }, authState.accessToken)
+      if (!isRecord(payload)) {
+        throw new ApiError('Result response is invalid.', 500, 'INVALID_RESULT_FORMAT', payload)
+      }
+      const resultSummary = normalizeResultSummary(payload.resultSummary)
+      return { ...(payload as unknown as FullResult), resultSummary }
     },
 
     async getRoutineGroup(skinResultId: number, authState: AuthState) {
-      const params = new URLSearchParams({ skinResultId: String(skinResultId) })
-      const payload = await requestApi<unknown>(`${baseUrl}/routines?${params.toString()}`, { method: 'GET' }, authState.accessToken)
+      const payload = await requestApi<unknown>(`${baseUrl}/routines/${skinResultId}`, { method: 'GET' }, authState.accessToken)
       return normalizeRoutineGroup(payload)
     },
 
@@ -487,7 +526,7 @@ export function createLiveApiClient(baseUrl: string): ApiClient {
         skinResultId: String(query.skinResultId),
         page: String(query.page),
       })
-      const payload = await requestApi<unknown>(`${baseUrl}/products?${params.toString()}`, { method: 'GET' }, authState.accessToken)
+      const payload = await requestApi<unknown>(`${baseUrl}/products/recommend?${params.toString()}`, { method: 'GET' }, authState.accessToken)
       return normalizeResultProductsPage(payload)
     },
 
