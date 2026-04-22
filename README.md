@@ -9,13 +9,29 @@
   - `/survey`
   - `/survey/steps`
   - `/survey/result`
+  - `/results/:id` (보호)
+  - `/results/:id/routine` (보호)
+  - `/results/:id/products` (보호)
   - `/mypage` (보호)
-  - `/routines/:id` (보호)
-  - `/routines/:id/products` (보호)
+  - `/mypage/routines/:id` (보호)
   - `/products/:id`
 - `zustand` 기반 설문 상태 관리 + `persist`
 - 단계별 응답 저장 후 마지막 단계에서 1회 제출
 - API 클라이언트 `mock/live` 전환 구조
+
+## 마이페이지 상태 규칙
+
+- 마이페이지는 아래 3가지 상태로 렌더링됩니다.
+  - `diagnosis_routine`: 진단 결과 O + 루틴 저장 O
+  - `diagnosis_only`: 진단 결과 O + 루틴 저장 X
+  - `empty`: 진단 결과 X + 루틴 저장 X
+- 상태 기준 데이터:
+  - 진단 결과: `surveyResult.latestResultId` + 결과 조회 성공
+  - 루틴 저장: `surveyResult.savedRoutineKey`
+- 오류 복구 정책:
+  - 결과 조회 `401/404`: `latestResultId`/`savedRoutineKey` 초기화
+  - 루틴 조회 `401/404`: `savedRoutineKey` 초기화
+- 진단 이력은 결과 목록 API 도입 전까지 고정 3행(실데이터 1행 + 플레이스홀더 2행) 정책을 사용합니다.
 
 ## 실행
 

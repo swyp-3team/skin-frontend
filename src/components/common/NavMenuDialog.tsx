@@ -38,10 +38,21 @@ function createAuthGuardedAction(getPath: (id: number) => string): MenuItemConfi
   }
 }
 
+function createLoginRequiredAction(path: string): MenuItemConfig['resolveAction'] {
+  return (isAuthenticated) => {
+    if (!isAuthenticated) return { type: 'alert', message: ALERT_MESSAGES.loginRequired }
+    return { type: 'navigate', path }
+  }
+}
+
 const MENU_ITEMS: MenuItemConfig[] = [
   {
     label: '피부 진단하기',
     resolveAction: () => ({ type: 'navigate', path: APP_ROUTES.survey }),
+  },
+  {
+    label: '마이페이지',
+    resolveAction: createLoginRequiredAction(APP_ROUTES.myPage),
   },
   {
     label: '루틴 추천받기',
@@ -134,7 +145,7 @@ function NavMenuDialog({ triggerClassName }: NavMenuDialogProps) {
 
         <DrawerContent
           aria-label="네비게이션 메뉴"
-          className="h-[80dvh] px-5 border-none shadow-[0_7px_10px_rgba(0,0,0,0.07)]"
+          className="h-[80dvh] overflow-hidden border-none px-5 shadow-[0_7px_10px_rgba(0,0,0,0.07)]"
         >
           <div className="flex h-13 shrink-0 items-center justify-end">
             <DrawerClose
@@ -176,7 +187,7 @@ function NavMenuDialog({ triggerClassName }: NavMenuDialogProps) {
             )}
           </div>
 
-          <div className="flex min-h-0 flex-1 flex-col mr-3">
+          <div className="mr-3 flex min-h-0 flex-1 flex-col overflow-y-auto">
             <p className="mb-2 text-sm font-medium text-neutral-500">메뉴</p>
             <div className="border-t border-neutral-500" />
             <ul className="flex flex-col pt-5 gap-3">

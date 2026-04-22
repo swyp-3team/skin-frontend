@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useState, type CSSProperties, type FormEvent } from 'react'
 import { ChevronRight, X } from 'lucide-react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useShallow } from 'zustand/react/shallow'
@@ -18,6 +18,7 @@ import { cn } from '../../lib/utils'
 import { createSavedRoutineGroupKey, useSurveyResultStore } from '../../stores/surveyResultStore'
 import { createResultHeaderViewModelFromSummary } from './resultViewModel'
 import { getRoutineStepPreset, type RoutineTabId } from './routineStepPresets'
+import { useRoutineStackLayout } from './useRoutineStackLayout'
 import { useResultDetail } from './useResultDetail'
 import { useResultRoutine } from './useResultRoutine'
 
@@ -39,7 +40,7 @@ const SAVE_SHEET_CLOSE_BUTTON_CLASS =
   'inline-flex items-center justify-center rounded-full bg-[#1212121A] p-1 outline outline-[0.5px] -outline-offset-[0.5px] outline-neutral-100 backdrop-blur-[2px]'
 const ROUTINE_SAVED_TOASTER_ID = 'result-routine-saved'
 const ROUTINE_SAVED_TOAST_ID = 'result-routine-saved-toast'
-const ROUTINE_SAVED_TOAST_WRAPPER_CLASS = 'w-full border-0 bg-transparent p-0 shadow-none'
+const ROUTINE_SAVED_TOAST_WRAPPER_CLASS = 'w-full border-0 bg-[#0D0F0CE5]/90 rounded-[8px] p-0 shadow-none'
 
 const ROUTINE_PAGE_COPY = {
   title: '루틴 추천받기',
@@ -59,6 +60,11 @@ const ROUTINE_TAB_ITEMS = [
   { id: 'am', label: '아침 루틴' },
   { id: 'pm', label: '저녁 루틴' },
 ] as const
+
+const HEADER_HEIGHT_PX = 48
+const CARD_PEEK_HEIGHT_PX = 84
+const STACK_CARD_FLOW_GAP_PX = 20
+const STACK_CTA_GAP_PX = 20
 
 interface RoutineStepCardProps {
   stepNumber: number
@@ -137,6 +143,18 @@ function ResultRoutinePage() {
 
   const isLoading = isDetailLoading || isRoutineLoading
   const error = detailError ?? routineError
+  const selectedRoutine = routineGroup ? (activeTabId === 'am' ? routineGroup.amRoutine : routineGroup.pmRoutine) : null
+  const sortedProducts = selectedRoutine ? [...selectedRoutine.products].sort((a, b) => a.sortOrder - b.sortOrder) : []
+  const cardCount = sortedProducts.length
+  const stackLayoutKey = `${skinResultId}:${activeTabId}:${cardCount}`
+  const { trackRef, ctaRef, registerCardRef, metrics, progress, phase, cardOffsets, ctaOffset } = useRoutineStackLayout({
+    cardCount,
+    headerHeight: HEADER_HEIGHT_PX,
+    cardPeekHeight: CARD_PEEK_HEIGHT_PX,
+    cardFlowGap: STACK_CARD_FLOW_GAP_PX,
+    ctaGap: STACK_CTA_GAP_PX,
+    resetKey: stackLayoutKey,
+  })
 
   useEffect(() => {
     return () => {
@@ -148,7 +166,7 @@ function ResultRoutinePage() {
     return (
       <MobilePage>
         <AlertMessage size="md" variant="error">
-          올바른 결과 ID가 아닙니다.
+          ?щ컮瑜?寃곌낵 ID媛 ?꾨떃?덈떎.
         </AlertMessage>
       </MobilePage>
     )
@@ -158,7 +176,7 @@ function ResultRoutinePage() {
     return (
       <MobilePage>
         <AlertMessage size="md" variant="info">
-          루틴을 불러오는 중입니다...
+          猷⑦떞??遺덈윭?ㅻ뒗 以묒엯?덈떎...
         </AlertMessage>
       </MobilePage>
     )
@@ -168,22 +186,21 @@ function ResultRoutinePage() {
     return (
       <MobilePage>
         <AlertMessage size="md" variant="error">
-          {error?.message ?? '루틴을 불러오지 못했습니다.'}
+          {error?.message ?? '猷⑦떞??遺덈윭?ㅼ? 紐삵뻽?듬땲??'}
         </AlertMessage>
       </MobilePage>
     )
   }
 
   const header = createResultHeaderViewModelFromSummary(detail.resultSummary)
-  const selectedRoutine = activeTabId === 'am' ? routineGroup.amRoutine : routineGroup.pmRoutine
   const savedKey = createSavedRoutineGroupKey(routineGroup.routineGroupId)
   const isRoutineSaved = savedRoutineKey === savedKey
-  const sortedProducts = [...selectedRoutine.products].sort((a, b) => a.sortOrder - b.sortOrder)
   const routineNameLength = routineNameDraft.length
   const trimmedRoutineName = routineNameDraft.trim()
   const canSubmitRoutineName = trimmedRoutineName.length > 0
   const routineNameFieldState: RoutineNameFieldState =
     routineNameLength > 0 ? 'typed' : isRoutineNameFocused ? 'focus' : 'placeholder'
+  const isStackReady = metrics.isReady
 
   function handleMoveToMyPage() {
     notify.dismiss(ROUTINE_SAVED_TOAST_ID)
@@ -229,6 +246,32 @@ function ResultRoutinePage() {
     showRoutineSavedToast()
   }
 
+  function getAnimatedCardStyle(index: number): CSSProperties {
+    return {
+      top: metrics.collapsedTops[index] ?? 0,
+      transform: `translateY(${(cardOffsets[index] ?? 0) * (1 - progress)}px)`,
+      zIndex: index + 1,
+    }
+  }
+
+  function getAnimatedCtaStyle(): CSSProperties {
+    return {
+      top: metrics.collapsedCtaTop,
+      transform: `translateY(${ctaOffset * (1 - progress)}px)`,
+      zIndex: cardCount + 2,
+    }
+  }
+
+  const routineAction = !isRoutineSaved ? (
+    <button className={SAVE_ROUTINE_BUTTON_CLASS} onClick={handleOpenSaveSheet} type="button">
+      {ROUTINE_PAGE_COPY.saveRoutine}
+    </button>
+  ) : (
+    <Link className={GO_MYPAGE_LINK_CLASS} to={APP_ROUTES.myPage}>
+      {ROUTINE_PAGE_COPY.goMyPage}
+    </Link>
+  )
+
   return (
     <>
       <MobilePage header={<ResultPageHeader title={ROUTINE_PAGE_COPY.title} />}>
@@ -243,26 +286,58 @@ function ResultRoutinePage() {
               onChange={(tabId) => setActiveTabId(tabId as RoutineTabId)}
             />
 
-            <section className="space-y-5 px-0">
-              {sortedProducts.map((product, index) => (
-                <RoutineStepCard
-                  key={`${product.productId}-${product.sortOrder}`}
-                  product={product}
-                  stepIndex={index}
-                  stepNumber={index + 1}
-                  tabId={activeTabId}
-                />
-              ))}
+            <section className="px-0">
+              <div
+                className="relative isolate z-0"
+                data-stack-phase={isStackReady ? phase : 'stacking'}
+                ref={trackRef}
+                style={isStackReady ? { height: metrics.trackHeight } : undefined}
+              >
+                {isStackReady ? (
+                  <div className="sticky isolate z-0 overflow-visible" style={{ top: HEADER_HEIGHT_PX, height: metrics.stickyHeight }}>
+                    <div className="relative overflow-visible" style={{ height: metrics.stickyHeight }}>
+                      {sortedProducts.map((product, index) => (
+                        <div
+                          className="absolute inset-x-0 will-change-transform"
+                          key={`${product.productId}-${product.sortOrder}`}
+                          ref={registerCardRef(index)}
+                          style={getAnimatedCardStyle(index)}
+                        >
+                          <RoutineStepCard
+                            product={product}
+                            stepIndex={index}
+                            stepNumber={index + 1}
+                            tabId={activeTabId}
+                          />
+                        </div>
+                      ))}
 
-              {!isRoutineSaved ? (
-                <button className={SAVE_ROUTINE_BUTTON_CLASS} onClick={handleOpenSaveSheet} type="button">
-                  {ROUTINE_PAGE_COPY.saveRoutine}
-                </button>
-              ) : (
-                <Link className={GO_MYPAGE_LINK_CLASS} to={APP_ROUTES.myPage}>
-                  {ROUTINE_PAGE_COPY.goMyPage}
-                </Link>
-              )}
+                      <div
+                        className="absolute inset-x-0 bg-common-0 will-change-transform"
+                        ref={ctaRef}
+                        style={getAnimatedCtaStyle()}
+                      >
+                        {routineAction}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-5">
+                    {sortedProducts.map((product, index) => (
+                      <div key={`${product.productId}-${product.sortOrder}`} ref={registerCardRef(index)}>
+                        <RoutineStepCard
+                          product={product}
+                          stepIndex={index}
+                          stepNumber={index + 1}
+                          tabId={activeTabId}
+                        />
+                      </div>
+                    ))}
+
+                    <div ref={ctaRef}>{routineAction}</div>
+                  </div>
+                )}
+              </div>
             </section>
           </div>
         </section>
@@ -276,7 +351,7 @@ function ResultRoutinePage() {
                 <h2 className="text-base font-medium leading-[23.68px] text-neutral-800">{ROUTINE_PAGE_COPY.saveSheetTitle}</h2>
               </div>
               <button
-                aria-label="루틴 저장 시트 닫기"
+                aria-label="猷⑦떞 ????쒗듃 ?リ린"
                 className={SAVE_SHEET_CLOSE_BUTTON_CLASS}
                 onClick={() => handleSaveSheetOpenChange(false)}
                 type="button"
@@ -298,7 +373,7 @@ function ResultRoutinePage() {
               >
                 <div className="inline-flex w-full items-center gap-2.5 px-1">
                   <Input
-                    aria-label="루틴 이름"
+                    aria-label="루틴 이름을 입력하세요"
                     className={cn(
                       'h-auto border-0 bg-transparent p-0 text-[15px] font-normal leading-[22.2px] shadow-none focus-visible:border-0 focus-visible:ring-0 placeholder:text-neutral-200',
                       routineNameFieldState === 'typed' ? 'text-neutral-800' : 'text-neutral-200',

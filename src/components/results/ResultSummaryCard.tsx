@@ -48,7 +48,8 @@ function ResultSummaryCard({
   const diagnosedAtDisplay = toDiagnosedAtDisplay(diagnosedAt)
 
   return (
-    <article className={cn('flex w-full flex-col gap-3 rounded-2xl bg-common-0 p-4', className)}>
+    // gap 대신 mt를 summary에 직접 부여 — summary 접힐 때 mt도 함께 사라져 date가 자연스럽게 올라옴
+    <article className={cn('gap-2 flex w-full flex-col rounded-2xl bg-common-0 p-4', className)}>
       <div className="flex items-start justify-between gap-2">
         <h3 className="text-[18px] font-bold leading-[25.56px] text-neutral-800">{diagnosisTitle}</h3>
         <div className="flex flex-wrap justify-end gap-1">
@@ -60,14 +61,15 @@ function ResultSummaryCard({
 
       <p
         className={cn(
-          'overflow-hidden text-[15px] font-normal leading-[22.2px] text-neutral-800 transition-all duration-500 motion-reduce:transition-none',
-          isCollapsed ? 'max-h-0 opacity-0' : 'max-h-200 opacity-100',
+          'overflow-hidden text-[15px] font-normal leading-[22.2px] text-neutral-800',
+          'transition-all duration-500 motion-reduce:transition-none',
+          isCollapsed ? 'mt-0 max-h-0 opacity-0' : 'mt-3 max-h-[300px] opacity-100',
         )}
       >
         {summary}
       </p>
 
-      <div className="flex items-center justify-between">
+      <div className="mt-3 flex items-center justify-between">
         <div className="text-[14px] flex items-center gap-1 font-light leading-[20.44px] text-neutral-400">
           <span>{diagnosedAtDisplay.date}</span>
           <span>{diagnosedAtDisplay.time}</span>
