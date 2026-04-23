@@ -52,7 +52,7 @@ function ResultDetailPage() {
   const viewModel = fromResultDetail(result)
 
   return (
-    <MobilePage header={<ResultPageHeader title={PAGE_TITLE} />} mainClassName="overflow-x-hidden p-0">
+    <MobilePage className="bg-neutral-800" header={<ResultPageHeader title={PAGE_TITLE} tone="dark" hideTitle={true} />} mainClassName="overflow-x-hidden p-0">
       <ResultOverviewScreen
         mode="full"
         onProductsCtaClick={() => navigate(createResultProductsPath(resultId))}

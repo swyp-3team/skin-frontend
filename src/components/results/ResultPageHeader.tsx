@@ -26,7 +26,7 @@ function ResultPageHeader({
     <header
       className={cn(
         ROOT_CLASS,
-        isDarkTone ? 'bg-neutral-800' : isScrolled ? 'bg-common-0' : 'bg-primary-150',
+        isDarkTone ? 'bg-gradient-to-b  from-neutral-800/90 via-neutral-800/60 via-40% to-neutral-800/15' : isScrolled ? 'bg-common-0' : 'bg-primary-150',
         className,
       )}
     >
