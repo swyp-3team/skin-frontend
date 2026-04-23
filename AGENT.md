@@ -33,6 +33,9 @@
   - `api/client.ts` 인터페이스
   - `api/mockClient.ts`, `api/liveClient.ts`
   - `api/index.ts`에서 `VITE_API_MODE` 기반 선택
+- 설문 결과 페이지(`/survey/result`)와 전체 결과 페이지(`/results/:id`)는 공통 화면 컴포넌트(`ResultOverviewScreen`)를 사용합니다.
+  - 미리보기는 상단 데이터만 실제값을 사용하고, 하단 섹션은 블러 게이트를 통해 로그인 전 노출을 제한합니다.
+  - 결과/미리보기 화면은 `MobilePage`의 `max-w-[390px]` 기준 폭을 따릅니다.
 - 마이페이지는 상태 기반 렌더링을 사용합니다.
   - `diagnosis_routine`: 진단 결과 O + 루틴 저장 O
   - `diagnosis_only`: 진단 결과 O + 루틴 저장 X

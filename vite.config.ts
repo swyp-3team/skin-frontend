@@ -12,6 +12,12 @@ export default defineConfig({
       '/api': {
         target: 'https://api.layerd.co.kr',
         changeOrigin: true,
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            proxyReq.removeHeader('origin')
+            proxyReq.setHeader('origin', 'https://api.layerd.co.kr')
+          })
+        },
       },
     },
   },

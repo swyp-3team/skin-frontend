@@ -10,6 +10,7 @@ import ResultPageHeader from '../../components/results/ResultPageHeader'
 import ResultTabBar from '../../components/results/ResultTabBar'
 import ResultTopSection from '../../components/results/ResultTopSection'
 import type { ResultProductTabId } from '../../components/results/types'
+import { useScrollCollapse } from '../../hooks/useScrollCollapse'
 import { isProductVisibleInTab, RESULT_PRODUCT_TABS, createResultHeaderViewModelFromSummary } from './resultViewModel'
 import { useResultDetail } from './useResultDetail'
 import { useResultProductsInfinite } from './useResultProductsInfinite'
@@ -57,6 +58,9 @@ function ResultProductsPage() {
   const skinResultId = Number(id)
   const [activeTabId, setActiveTabId] = useState<ResultProductTabId>('ALL')
   const sentinelRef = useRef<HTMLDivElement | null>(null)
+  const { ref: whiteBoxSentinelRef, isCollapsed: isHeaderScrolled } = useScrollCollapse<HTMLDivElement>(
+    '-48px 0px 0px 0px',
+  )
 
   const { data: detail, isLoading: isDetailLoading, error: detailError } = useResultDetail()
   const {
@@ -127,26 +131,27 @@ function ResultProductsPage() {
   const visibleProducts = allProducts.filter((product) => isProductVisibleInTab(product.category, activeTabId))
 
   return (
-    <MobilePage header={<ResultPageHeader title={PRODUCTS_PAGE_COPY.title} />}>
-      <section className="space-y-0 pb-10">
+    <MobilePage header={<ResultPageHeader isScrolled={isHeaderScrolled} title={PRODUCTS_PAGE_COPY.title} />}>
+      <section className="space-y-0">
         <ResultTopSection header={header} intro={PRODUCTS_PAGE_COPY.intro} skinResultId={skinResultId} />
+        <div ref={whiteBoxSentinelRef} aria-hidden className="h-0" />
 
-        <div className="space-y-5 py-5">
-          <div className="px-0">
+        <div className="-mx-4 sticky top-12 h-[calc(100dvh-48px)] overflow-y-auto bg-common-0">
+          <div className="sticky top-0 z-[9] space-y-5 bg-common-0 px-4 pt-5">
             <div className="inline-flex w-full items-center gap-2 rounded-lg border border-neutral-150 bg-neutral-50/50 px-3 py-3 text-sm leading-[20.44px] text-neutral-300">
               <span aria-hidden className="text-base">⌕</span>
               <span>{PRODUCTS_PAGE_COPY.searchPlaceholder}</span>
             </div>
+
+            <ResultTabBar
+              activeTabId={activeTabId}
+              items={RESULT_PRODUCT_TABS}
+              mode="scroll"
+              onChange={(tabId) => setActiveTabId(tabId as ResultProductTabId)}
+            />
           </div>
 
-          <ResultTabBar
-            activeTabId={activeTabId}
-            items={RESULT_PRODUCT_TABS}
-            mode="scroll"
-            onChange={(tabId) => setActiveTabId(tabId as ResultProductTabId)}
-          />
-
-          <section className="px-0">
+          <section className="mt-5 px-4 pb-10">
             {visibleProducts.length > 0 ? (
               <div className="grid grid-cols-2 gap-x-4 gap-y-6">
                 {visibleProducts.map((product) => (

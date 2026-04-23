@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from 'react'
 
 type StackPhase = 'stacking' | 'released'
 
@@ -21,6 +21,7 @@ interface UseRoutineStackLayoutParams {
   cardFlowGap: number
   ctaGap: number
   resetKey: string
+  scrollContainerRef?: RefObject<HTMLDivElement | null>
 }
 
 const EMPTY_METRICS: RoutineStackMetrics = {
@@ -46,6 +47,7 @@ export function useRoutineStackLayout({
   cardFlowGap,
   ctaGap,
   resetKey,
+  scrollContainerRef,
 }: UseRoutineStackLayoutParams) {
   const trackRef = useRef<HTMLDivElement | null>(null)
   const ctaRef = useRef<HTMLDivElement | null>(null)
@@ -184,18 +186,19 @@ export function useRoutineStackLayout({
 
     scheduleUpdate()
 
-    window.addEventListener('scroll', scheduleUpdate, { passive: true })
+    const scrollTarget: EventTarget = scrollContainerRef?.current ?? window
+    scrollTarget.addEventListener('scroll', scheduleUpdate, { passive: true })
     window.addEventListener('resize', scheduleUpdate)
 
     return () => {
-      window.removeEventListener('scroll', scheduleUpdate)
+      scrollTarget.removeEventListener('scroll', scheduleUpdate)
       window.removeEventListener('resize', scheduleUpdate)
 
       if (frameId !== 0) {
         window.cancelAnimationFrame(frameId)
       }
     }
-  }, [headerHeight, metrics.collapseDistance, metrics.isReady, resetKey])
+  }, [headerHeight, metrics.collapseDistance, metrics.isReady, resetKey, scrollContainerRef])
 
   const cardOffsets = useMemo(
     () => metrics.naturalTops.map((naturalTop, index) => naturalTop - metrics.collapsedTops[index]),

@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties, type FormEvent } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react'
 import { ChevronRight, X } from 'lucide-react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useShallow } from 'zustand/react/shallow'
@@ -19,6 +19,7 @@ import { createSavedRoutineGroupKey, useSurveyResultStore } from '../../stores/s
 import { createResultHeaderViewModelFromSummary } from './resultViewModel'
 import { getRoutineStepPreset, type RoutineTabId } from './routineStepPresets'
 import { useRoutineStackLayout } from './useRoutineStackLayout'
+import { useScrollCollapse } from '../../hooks/useScrollCollapse'
 import { useResultDetail } from './useResultDetail'
 import { useResultRoutine } from './useResultRoutine'
 
@@ -147,19 +148,40 @@ function ResultRoutinePage() {
   const sortedProducts = selectedRoutine ? [...selectedRoutine.products].sort((a, b) => a.sortOrder - b.sortOrder) : []
   const cardCount = sortedProducts.length
   const stackLayoutKey = `${skinResultId}:${activeTabId}:${cardCount}`
+
+  const tabBarContainerRef = useRef<HTMLDivElement>(null)
+  const whiteContainerRef = useRef<HTMLDivElement>(null)
+  const [tabBarHeight, setTabBarHeight] = useState(0)
+  const { ref: whiteBoxSentinelRef, isCollapsed: isHeaderScrolled } = useScrollCollapse<HTMLDivElement>(
+    '-48px 0px 0px 0px',
+  )
+  const effectiveHeaderHeight = HEADER_HEIGHT_PX + tabBarHeight
+
   const { trackRef, ctaRef, registerCardRef, metrics, progress, phase, cardOffsets, ctaOffset } = useRoutineStackLayout({
     cardCount,
-    headerHeight: HEADER_HEIGHT_PX,
+    headerHeight: effectiveHeaderHeight,
     cardPeekHeight: CARD_PEEK_HEIGHT_PX,
     cardFlowGap: STACK_CARD_FLOW_GAP_PX,
     ctaGap: STACK_CTA_GAP_PX,
     resetKey: stackLayoutKey,
+    scrollContainerRef: whiteContainerRef,
   })
 
   useEffect(() => {
     return () => {
       notify.dismiss(ROUTINE_SAVED_TOAST_ID)
     }
+  }, [])
+
+  useLayoutEffect(() => {
+    const el = tabBarContainerRef.current
+    if (!el) return
+    setTabBarHeight(el.getBoundingClientRect().height)
+    const observer = new ResizeObserver(() => {
+      setTabBarHeight(el.getBoundingClientRect().height)
+    })
+    observer.observe(el)
+    return () => observer.disconnect()
   }, [])
 
   if (!id || Number.isNaN(skinResultId)) {
@@ -274,19 +296,25 @@ function ResultRoutinePage() {
 
   return (
     <>
-      <MobilePage header={<ResultPageHeader title={ROUTINE_PAGE_COPY.title} />}>
-        <section className="space-y-0 pb-10">
+      <MobilePage header={<ResultPageHeader isScrolled={isHeaderScrolled} title={ROUTINE_PAGE_COPY.title} />}>
+        <section className="space-y-0">
           <ResultTopSection header={header} intro={ROUTINE_PAGE_COPY.intro} skinResultId={skinResultId} />
+          <div ref={whiteBoxSentinelRef} aria-hidden className="h-0" />
 
-          <div className="space-y-5">
-            <ResultTabBar
-              activeTabId={activeTabId}
-              items={ROUTINE_TAB_ITEMS}
-              mode="equal"
-              onChange={(tabId) => setActiveTabId(tabId as RoutineTabId)}
-            />
+          <div
+            ref={whiteContainerRef}
+            className="-mx-4 sticky top-12 h-[calc(100dvh-48px)] overflow-y-auto bg-common-0"
+          >
+            <div ref={tabBarContainerRef} className="sticky top-0 z-[9] bg-common-0 px-4">
+              <ResultTabBar
+                activeTabId={activeTabId}
+                items={ROUTINE_TAB_ITEMS}
+                mode="equal"
+                onChange={(tabId) => setActiveTabId(tabId as RoutineTabId)}
+              />
+            </div>
 
-            <section className="px-0">
+            <section className="mt-5 px-4 pb-10">
               <div
                 className="relative isolate z-0"
                 data-stack-phase={isStackReady ? phase : 'stacking'}
@@ -294,7 +322,7 @@ function ResultRoutinePage() {
                 style={isStackReady ? { height: metrics.trackHeight } : undefined}
               >
                 {isStackReady ? (
-                  <div className="sticky isolate z-0 overflow-visible" style={{ top: HEADER_HEIGHT_PX, height: metrics.stickyHeight }}>
+                  <div className="sticky isolate z-0 overflow-visible" style={{ top: tabBarHeight, height: metrics.stickyHeight }}>
                     <div className="relative overflow-visible" style={{ height: metrics.stickyHeight }}>
                       {sortedProducts.map((product, index) => (
                         <div

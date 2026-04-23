@@ -121,19 +121,19 @@ function toApiError(status: number, body: unknown): ApiError {
 }
 
 function unwrapEnvelope<T>(body: unknown, status: number): T {
-  if (isRecord(body) && typeof body.success === 'boolean') {
-    if (!body.success) {
-      throw toApiError(status, body)
-    }
-
-    if (!('data' in body)) {
-      throw new ApiError('Response data is missing.', status, 'MISSING_RESPONSE_DATA', body)
-    }
-
-    return body.data as T
+  if (!isRecord(body) || typeof body.success !== 'boolean') {
+    throw new ApiError('Response envelope is invalid. `success` field is required.', status, 'INVALID_RESPONSE_ENVELOPE', body)
   }
 
-  return body as T
+  if (!body.success) {
+    throw toApiError(status, body)
+  }
+
+  if (!('data' in body)) {
+    throw new ApiError('Response data is missing.', status, 'MISSING_RESPONSE_DATA', body)
+  }
+
+  return body.data as T
 }
 
 async function requestApi<T>(url: string, init: RequestInit, token?: string): Promise<T> {
