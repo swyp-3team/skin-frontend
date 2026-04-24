@@ -85,8 +85,9 @@ export function useRoutineStackLayout({
       0,
     )
     const stickyHeight = collapsedStackHeight
-    const trackHeight = naturalStackHeight
-    const collapseDistance = Math.max(trackHeight - stickyHeight, 0)
+    const naturalCollapseDistance = Math.max(naturalStackHeight - stickyHeight, 0)
+    const collapseDistance = naturalCollapseDistance * 1.6
+    const trackHeight = stickyHeight + collapseDistance
 
     setMetrics({
       cardHeights,

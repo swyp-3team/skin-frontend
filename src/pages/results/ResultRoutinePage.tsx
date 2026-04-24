@@ -131,6 +131,7 @@ function ResultRoutinePage() {
   const { id } = useParams<{ id: string }>()
   const skinResultId = Number(id)
   const [activeTabId, setActiveTabId] = useState<RoutineTabId>('am')
+  const [isResetting, setIsResetting] = useState(false)
   const [isSaveSheetOpen, setIsSaveSheetOpen] = useState(false)
   const [routineNameDraft, setRoutineNameDraft] = useState('')
   const [isRoutineNameFocused, setIsRoutineNameFocused] = useState(false)
@@ -154,7 +155,9 @@ function ResultRoutinePage() {
   const tabBarContainerRef = useRef<HTMLDivElement>(null)
   const whiteShellRef = useRef<HTMLDivElement>(null)
   const whiteContainerRef = useRef<HTMLDivElement>(null)
+  const footerRef = useRef<HTMLDivElement>(null)
   const [tabBarHeight, setTabBarHeight] = useState(0)
+  const [footerHeight, setFooterHeight] = useState(0)
   const { ref: whiteBoxSentinelRef, isCollapsed: isHeaderScrolled } = useScrollCollapse<HTMLDivElement>(
     '-49px 0px 0px 0px',
   )
@@ -183,7 +186,10 @@ function ResultRoutinePage() {
 
   useEffect(() => {
     if (!isHeaderScrolled && whiteContainerRef.current) {
+      setIsResetting(true)
       whiteContainerRef.current.scrollTop = 0
+    } else if (isHeaderScrolled) {
+      setIsResetting(false)
     }
   }, [isHeaderScrolled])
 
@@ -195,6 +201,19 @@ function ResultRoutinePage() {
       setTabBarHeight(el.getBoundingClientRect().height)
     })
     observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
+  useLayoutEffect(() => {
+    const el = footerRef.current
+    if (!el) return
+
+    setFooterHeight(el.getBoundingClientRect().height)
+    const observer = new ResizeObserver(() => {
+      setFooterHeight(el.getBoundingClientRect().height)
+    })
+    observer.observe(el)
+
     return () => observer.disconnect()
   }, [])
 
@@ -237,6 +256,7 @@ function ResultRoutinePage() {
   const routineNameFieldState: RoutineNameFieldState =
     routineNameLength > 0 ? 'typed' : isRoutineNameFocused ? 'focus' : 'placeholder'
   const isStackReady = metrics.isReady
+  const bodyBottomPadding = isHeaderScrolled ? footerHeight + 40 : 40
 
   function handleMoveToMyPage() {
     notify.dismiss(ROUTINE_SAVED_TOAST_ID)
@@ -283,10 +303,16 @@ function ResultRoutinePage() {
   }
 
   function getAnimatedCardStyle(index: number): CSSProperties {
+    const staggerOffset = index * 0.08
+    const span = 1 - staggerOffset
+    const localProgress = span > 0 ? Math.min(1, Math.max(0, (progress - staggerOffset) / span)) : 1
+    const easedProgress = localProgress * localProgress * (3 - 2 * localProgress)
+
     return {
       top: metrics.collapsedTops[index] ?? 0,
-      transform: `translateY(${(cardOffsets[index] ?? 0) * (1 - progress)}px)`,
+      transform: `translateY(${(cardOffsets[index] ?? 0) * (1 - easedProgress)}px)`,
       zIndex: index + 1,
+      transition: `transform ${isResetting ? 350 + index * 60 : 100 + index * 30}ms cubic-bezier(0.2, 0, 0, 1)`,
     }
   }
 
@@ -313,7 +339,7 @@ function ResultRoutinePage() {
             ref={whiteShellRef}
             className="-mx-4 sticky top-12 h-[calc(100dvh-48px)] bg-common-0"
           >
-            <div className="flex h-full min-h-0 flex-col">
+            <div className="relative flex h-full min-h-0 flex-col">
               <div ref={tabBarContainerRef} className="shrink-0 bg-common-0 px-4">
                 <ResultTabBar
                   activeTabId={activeTabId}
@@ -330,12 +356,12 @@ function ResultRoutinePage() {
                   isHeaderScrolled ? 'overflow-y-auto' : 'overflow-y-hidden',
                 )}
               >
-                <section className="px-4 pb-10 pt-5">
+                <section className="px-4 pt-5" style={{ paddingBottom: bodyBottomPadding }}>
                   <div
                     className="relative isolate z-0"
                     data-stack-phase={isStackReady ? phase : 'stacking'}
                     ref={trackRef}
-                    style={isStackReady ? { height: metrics.trackHeight + 200 } : undefined}
+                    style={isStackReady ? { height: metrics.trackHeight + 270 } : undefined}
                   >
                     {isStackReady ? (
                       <div className="sticky isolate z-0 overflow-visible" style={{ top: 20, height: metrics.stickyHeight }}>
@@ -375,14 +401,16 @@ function ResultRoutinePage() {
                 </section>
               </div>
 
-              {isHeaderScrolled ? (
-                <div
-                  className="shrink-0 border-t border-neutral-100 bg-common-0 px-4 pt-3"
-                  style={{ paddingBottom: FOOTER_SAFE_AREA_PADDING }}
-                >
-                  {routineAction}
-                </div>
-              ) : null}
+              <div
+                ref={footerRef}
+                className={cn(
+                  'absolute inset-x-0 bottom-0 z-10 border-t border-neutral-100 bg-common-0 px-4 pt-3 will-change-transform transition-transform transition-opacity duration-200 ease-out',
+                  isHeaderScrolled ? 'translate-y-0 opacity-100 transition-transform duration-500' : 'pointer-events-none translate-y-full opacity-0',
+                )}
+                style={{ paddingBottom: FOOTER_SAFE_AREA_PADDING }}
+              >
+                {routineAction}
+              </div>
             </div>
           </div>
         </section>
