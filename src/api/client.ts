@@ -1,6 +1,5 @@
 import type { AuthState } from '../types/auth'
 import type {
-  FullResult,
   PreviewApiData,
   ProductDetail,
   ResultDetail,
@@ -15,9 +14,9 @@ import type {
 export interface ApiClient {
   getSurveyQuestions(): Promise<SurveyQuestion[]>
   submitSurveyPreview(payload: SurveySubmitPayload): Promise<PreviewApiData>
-  submitSurveyResult(input: SurveyResultInput, authState: AuthState): Promise<FullResult>
+  submitSurveyResult(input: SurveyResultInput, authState: AuthState): Promise<ResultDetail>
   getResult(resultId: number, authState: AuthState): Promise<ResultDetail>
-  getRoutineGroup(skinResultId: number, authState: AuthState): Promise<RoutineGroup>
+  getRoutineGroup(resultId: number, authState: AuthState): Promise<RoutineGroup>
   getRecommendedProducts(query: ResultProductsQuery, authState: AuthState): Promise<ResultProductsPageData>
   getProductDetail(productId: number): Promise<ProductDetail>
 }

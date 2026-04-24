@@ -6,17 +6,17 @@ import type { RoutineGroup } from '../../api/types'
 import { queryKeys } from '../../lib/queryKeys'
 import { useAuthStore } from '../../stores/authStore'
 
-function isValidSkinResultId(skinResultId: number): boolean {
-  return Number.isFinite(skinResultId) && skinResultId > 0
+function isValidResultId(resultId: number): boolean {
+  return Number.isFinite(resultId) && resultId > 0
 }
 
-export function useResultRoutine(skinResultId: number) {
+export function useResultRoutine(resultId: number) {
   const accessToken = useAuthStore((state) => state.accessToken)
 
   return useQuery<RoutineGroup, ApiError>({
-    queryKey: queryKeys.routineGroup(skinResultId),
-    queryFn: () => apiClient.getRoutineGroup(skinResultId, { accessToken }),
-    enabled: isValidSkinResultId(skinResultId),
+    queryKey: queryKeys.resultRoutine(resultId),
+    queryFn: () => apiClient.getRoutineGroup(resultId, { accessToken }),
+    enabled: isValidResultId(resultId),
     retry: false,
   })
 }

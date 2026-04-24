@@ -6,33 +6,32 @@ import { useShallow } from 'zustand/react/shallow'
 import { APP_ROUTES, createProductDetailPath } from '../../app/routes'
 import type { RoutineProduct } from '../../api/types'
 import AlertMessage from '../../components/common/AlertMessage'
+import SafeImage from '../../components/common/SafeImage'
 import MobilePage from '../../components/MobilePage'
-import ResultPageHeader from '../../components/results/ResultPageHeader'
+import PageHeader from '../../components/common/PageHeader'
 import ResultTabBar from '../../components/results/ResultTabBar'
 import ResultTopSection from '../../components/results/ResultTopSection'
 import { DrawerContentBottom, DrawerRoot } from '../../components/ui/drawer'
 import { Input } from '../../components/ui/input'
 import { PRODUCT_CATEGORY_LABELS } from '../../domain/surveyConfig'
-import { notify } from '../../lib/notify'
-import { cn } from '../../lib/utils'
-import { createSavedRoutineGroupKey, useSurveyResultStore } from '../../stores/surveyResultStore'
-import { createResultHeaderViewModelFromSummary } from './resultViewModel'
-import { getRoutineStepPreset, type RoutineTabId } from './routineStepPresets'
 import { useScrollCollapse } from '../../hooks/useScrollCollapse'
 import { useWindowSnapToElement } from '../../hooks/useWindowSnapToElement'
-import { useResultDetail } from './useResultDetail'
+import { notify } from '../../lib/notify'
+import { cn } from '../../lib/utils'
+import { useSurveyResultStore } from '../../stores/surveyResultStore'
+import type { RoutineTabId } from '../../components/results/types'
+import { useResultHeader } from './useResultDetail'
 import { useResultRoutine } from './useResultRoutine'
 
 type RoutineNameFieldState = 'placeholder' | 'focus' | 'typed'
 
 const ROUTINE_NAME_MAX_LENGTH = 10
-const ROUTINE_CARD_CLASS = 'flex flex-col gap-[15px] rounded-lg border border-neutral-100 bg-common-0 p-4'
+const ROUTINE_CARD_CLASS = 'flex flex-col gap-[15px] rounded-xl border border-neutral-100 bg-common-0 p-3'
 const STEP_BADGE_CLASS =
-  'inline-flex min-w-6 items-center justify-center rounded-[20px] bg-neutral-800 px-2 py-1 text-xs font-bold leading-[16.32px] text-neutral-50'
-const INGREDIENT_CHIP_CLASS =
-  'inline-flex items-center justify-center rounded bg-primary-50 px-1.5 py-0.5 text-[12px] font-medium leading-[14.3px] text-primary-500'
-const STEP_ACTION_LINK_CLASS =
-  'inline-flex h-8 w-full items-center justify-center rounded-lg border border-neutral-100 bg-common-0 px-4 text-sm font-semibold leading-[20.44px] text-neutral-600'
+  'inline-flex size-[22px] items-center justify-center rounded-lg bg-neutral-800 text-xs font-bold leading-[16.32px] text-neutral-50'
+const PRODUCT_CATEGORY_CHIP_CLASS =
+  'inline-flex items-center justify-center rounded bg-primary-50 px-1 py-0.5 text-[10px] font-medium leading-[13px] text-primary-500'
+const ROUTINE_PRODUCT_LINK_CLASS = 'inline-flex w-full items-center gap-3 bg-common-0 no-underline'
 const SAVE_ROUTINE_BUTTON_CLASS =
   'inline-flex w-full items-center justify-center rounded-lg border border-neutral-100 bg-common-0 px-6 py-3 text-base font-semibold leading-[23.68px] text-neutral-600'
 const GO_MYPAGE_LINK_CLASS =
@@ -41,14 +40,13 @@ const SAVE_SHEET_CLOSE_BUTTON_CLASS =
   'inline-flex items-center justify-center rounded-full bg-[#1212121A] p-1 outline outline-[0.5px] -outline-offset-[0.5px] outline-neutral-100 backdrop-blur-[2px]'
 const ROUTINE_SAVED_TOASTER_ID = 'result-routine-saved'
 const ROUTINE_SAVED_TOAST_ID = 'result-routine-saved-toast'
-const ROUTINE_SAVED_TOAST_WRAPPER_CLASS = 'w-full border-0 bg-[#0D0F0CE5]/90 rounded-[8px] p-0 shadow-none'
+const ROUTINE_SAVED_TOAST_WRAPPER_CLASS = 'w-full rounded-[8px] border-0 bg-[#0D0F0CE5]/90 p-0 shadow-none'
 
 const ROUTINE_PAGE_COPY = {
   title: '루틴 추천받기',
   intro: '아침과 저녁\n단계별 루틴을 안내해드려요.',
   saveRoutine: '이 루틴 저장하기',
   goMyPage: '마이페이지 바로가기',
-  stepActionLabel: '이 단계 제품 보기',
   saveSheetTitle: '루틴 저장',
   saveSheetPlaceholder: '루틴 이름을 입력하세요. (예: 여름 아침 루틴)',
   saveSheetSubmit: '완료',
@@ -65,36 +63,57 @@ const ROUTINE_TAB_ITEMS = [
 const HEADER_HEIGHT_PX = 48
 const WINDOW_SNAP_TRIGGER_PX = 80
 const FOOTER_SAFE_AREA_PADDING = 'calc(16px + env(safe-area-inset-bottom))'
+const ROUTINE_STEP_TITLE_BY_CATEGORY: Record<RoutineProduct['category'], string> = {
+  CLEANSER: '클렌징',
+  TONER: '수분 진정',
+  SERUM: '집중 케어',
+  CREAM: '보습 장벽',
+  SUNSCREEN: '자외선 차단',
+}
 
 interface RoutineStepCardProps {
   stepNumber: number
-  stepIndex: number
-  tabId: RoutineTabId
   product: RoutineProduct
 }
 
-function RoutineStepCard({ stepNumber, stepIndex, tabId, product }: RoutineStepCardProps) {
-  const preset = getRoutineStepPreset(tabId, stepIndex)
+function formatPrice(price: number): string {
+  return new Intl.NumberFormat('ko-KR').format(price)
+}
+
+function RoutineStepCard({ stepNumber, product }: RoutineStepCardProps) {
+  const stepDescription = product.reason.trim().length > 0 ? product.reason : product.note
 
   return (
     <article className={ROUTINE_CARD_CLASS}>
       <div className="inline-flex items-center gap-2">
         <span className={STEP_BADGE_CLASS}>{stepNumber}</span>
-        <h3 className="text-base font-semibold leading-[23.68px] text-neutral-900">{PRODUCT_CATEGORY_LABELS[product.category]}</h3>
+        <h3 className="text-base font-semibold leading-[23.68px] text-neutral-900">
+          {ROUTINE_STEP_TITLE_BY_CATEGORY[product.category]}
+        </h3>
       </div>
 
-      <div className="inline-flex flex-wrap items-center gap-1">
-        {preset.ingredients.map((ingredient) => (
-          <span className={INGREDIENT_CHIP_CLASS} key={`${product.productId}-${ingredient}`}>
-            {ingredient}
-          </span>
-        ))}
-      </div>
+      <p className="text-[13px] leading-[18.2px] text-neutral-800">{stepDescription}</p>
 
-      <p className="text-[13px] leading-[18.2px] text-neutral-700">{preset.description}</p>
-
-      <Link className={STEP_ACTION_LINK_CLASS} to={createProductDetailPath(product.productId)}>
-        {ROUTINE_PAGE_COPY.stepActionLabel}
+      <Link className={ROUTINE_PRODUCT_LINK_CLASS} to={createProductDetailPath(product.productId)}>
+        <SafeImage
+          alt={product.name}
+          className="size-20 rounded object-cover"
+          fallbackAlt={`${product.name} 이미지`}
+          loading="lazy"
+          src={product.imageUrl}
+        />
+        <div className="inline-flex h-20 min-w-0 flex-1 flex-col justify-between">
+          <span className={PRODUCT_CATEGORY_CHIP_CLASS}>{PRODUCT_CATEGORY_LABELS[product.category]}</span>
+          <p className="line-clamp-2 text-xs leading-[16.32px] text-neutral-800">{product.name}</p>
+          {product.price !== null ? (
+            <div className="inline-flex items-center">
+              <span className="text-xs font-bold leading-[16.32px] text-neutral-800">{formatPrice(product.price)}</span>
+              <span className="text-[11px] leading-[14.3px] text-neutral-800">원</span>
+            </div>
+          ) : (
+            <span className="text-[11px] leading-[14.3px] text-neutral-400">가격 정보 없음</span>
+          )}
+        </div>
       </Link>
     </article>
   )
@@ -106,7 +125,7 @@ interface RoutineSavedToastProps {
 
 function RoutineSavedToast({ onMoveToMyPage }: RoutineSavedToastProps) {
   return (
-    <div className="flex w-full max-w-[350px] flex-col items-start gap-2.5 rounded-[8px] bg-[rgba(13, 15, 12, 0.90)] p-3 shadow-[0px_2px_4px_rgba(13,15,12,0.05),0px_2px_20px_rgba(13,15,12,0.05)]">
+    <div className="flex w-full max-w-[350px] flex-col items-start gap-2.5 rounded-[8px] bg-[rgba(13,15,12,0.90)] p-3 shadow-[0px_2px_4px_rgba(13,15,12,0.05),0px_2px_20px_rgba(13,15,12,0.05)]">
       <div className="flex w-full flex-col items-start gap-0.5">
         <p className="text-[15px] font-medium leading-[22.2px] text-common-0">{ROUTINE_PAGE_COPY.savedToastTitle}</p>
         <p className="text-xs font-medium leading-[16.32px] text-neutral-150">{ROUTINE_PAGE_COPY.savedToastDescription}</p>
@@ -126,23 +145,23 @@ function RoutineSavedToast({ onMoveToMyPage }: RoutineSavedToastProps) {
 function ResultRoutinePage() {
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
-  const skinResultId = Number(id)
+  const resultId = Number(id)
   const [activeTabId, setActiveTabId] = useState<RoutineTabId>('am')
   const [isSaveSheetOpen, setIsSaveSheetOpen] = useState(false)
   const [routineNameDraft, setRoutineNameDraft] = useState('')
   const [isRoutineNameFocused, setIsRoutineNameFocused] = useState(false)
-  const { savedRoutineKey, savedRoutineName, markRoutineSavedByKey } = useSurveyResultStore(
+  const { savedResultId, savedRoutineName, markRoutineSavedByResultId } = useSurveyResultStore(
     useShallow((state) => ({
-      savedRoutineKey: state.savedRoutineKey,
+      savedResultId: state.savedResultId,
       savedRoutineName: state.savedRoutineName,
-      markRoutineSavedByKey: state.markRoutineSavedByKey,
+      markRoutineSavedByResultId: state.markRoutineSavedByResultId,
     })),
   )
-  const { data: detail, isLoading: isDetailLoading, error: detailError } = useResultDetail()
-  const { data: routineGroup, isLoading: isRoutineLoading, error: routineError } = useResultRoutine(skinResultId)
+  const { data: header, isLoading: isHeaderLoading, error: headerError } = useResultHeader(resultId)
+  const { data: routineGroup, isLoading: isRoutineLoading, error: routineError } = useResultRoutine(resultId)
 
-  const isLoading = isDetailLoading || isRoutineLoading
-  const error = detailError ?? routineError
+  const isLoading = isHeaderLoading || isRoutineLoading
+  const error = headerError ?? routineError
   const selectedRoutine = routineGroup ? (activeTabId === 'am' ? routineGroup.amRoutine : routineGroup.pmRoutine) : null
   const sortedProducts = selectedRoutine ? [...selectedRoutine.products].sort((a, b) => a.sortOrder - b.sortOrder) : []
 
@@ -170,11 +189,11 @@ function ResultRoutinePage() {
     }
   }, [isHeaderScrolled])
 
-  if (!id || Number.isNaN(skinResultId)) {
+  if (!id || Number.isNaN(resultId)) {
     return (
       <MobilePage>
         <AlertMessage size="md" variant="error">
-          ?щ컮瑜?寃곌낵 ID媛 ?꾨떃?덈떎.
+          올바른 결과 ID가 아닙니다.
         </AlertMessage>
       </MobilePage>
     )
@@ -184,25 +203,23 @@ function ResultRoutinePage() {
     return (
       <MobilePage>
         <AlertMessage size="md" variant="info">
-          猷⑦떞??遺덈윭?ㅻ뒗 以묒엯?덈떎...
+          루틴을 불러오는 중입니다...
         </AlertMessage>
       </MobilePage>
     )
   }
 
-  if (error || !routineGroup || !detail) {
+  if (error || !routineGroup || !header) {
     return (
       <MobilePage>
         <AlertMessage size="md" variant="error">
-          {error?.message ?? '猷⑦떞??遺덈윭?ㅼ? 紐삵뻽?듬땲??'}
+          {error?.message ?? '루틴을 불러오지 못했습니다.'}
         </AlertMessage>
       </MobilePage>
     )
   }
 
-  const header = createResultHeaderViewModelFromSummary(detail.resultSummary)
-  const savedKey = createSavedRoutineGroupKey(routineGroup.routineGroupId)
-  const isRoutineSaved = savedRoutineKey === savedKey
+  const isRoutineSaved = savedResultId === resultId
   const routineNameLength = routineNameDraft.length
   const trimmedRoutineName = routineNameDraft.trim()
   const canSubmitRoutineName = trimmedRoutineName.length > 0
@@ -235,7 +252,7 @@ function ResultRoutinePage() {
   }
 
   function handleOpenSaveSheet() {
-    setRoutineNameDraft(savedRoutineName ?? '')
+    setRoutineNameDraft(savedResultId === resultId ? (savedRoutineName ?? '') : '')
     setIsRoutineNameFocused(false)
     setIsSaveSheetOpen(true)
   }
@@ -246,7 +263,7 @@ function ResultRoutinePage() {
       return
     }
 
-    markRoutineSavedByKey(savedKey, trimmedRoutineName)
+    markRoutineSavedByResultId(resultId, trimmedRoutineName)
     setRoutineNameDraft(trimmedRoutineName)
     setIsRoutineNameFocused(false)
     setIsSaveSheetOpen(false)
@@ -265,18 +282,15 @@ function ResultRoutinePage() {
 
   return (
     <>
-      <MobilePage
-        header={<ResultPageHeader isScrolled={isHeaderScrolled} title={ROUTINE_PAGE_COPY.title} />}
-      >
+      <MobilePage header={<PageHeader isScrolled={isHeaderScrolled} title={ROUTINE_PAGE_COPY.title} />}>
         <section className="space-y-0">
-          <ResultTopSection header={header} intro={ROUTINE_PAGE_COPY.intro} skinResultId={skinResultId} />
+          <ResultTopSection header={header} intro={ROUTINE_PAGE_COPY.intro} resultId={resultId} />
           <div ref={whiteBoxSentinelRef} aria-hidden className="h-px" />
 
           <div
             ref={whiteShellRef}
             className="-mx-4 sticky top-12 flex h-[calc(100dvh-48px)] flex-col bg-common-0"
           >
-            {/* 탭바 - 상단 고정 */}
             <div className="relative z-10 shrink-0 bg-common-0 px-4">
               <ResultTabBar
                 activeTabId={activeTabId}
@@ -286,7 +300,6 @@ function ResultRoutinePage() {
               />
             </div>
 
-            {/* 카드 목록 - 스크롤 영역 */}
             <div
               ref={whiteContainerRef}
               className={cn(
@@ -296,23 +309,16 @@ function ResultRoutinePage() {
             >
               <section className="space-y-5 px-4 pb-10 pt-5">
                 {sortedProducts.map((product, index) => (
-                  <RoutineStepCard
-                    key={`${product.productId}-${product.sortOrder}`}
-                    product={product}
-                    stepIndex={index}
-                    stepNumber={index + 1}
-                    tabId={activeTabId}
-                  />
+                  <RoutineStepCard key={`${product.productId}-${product.sortOrder}`} product={product} stepNumber={index + 1} />
                 ))}
               </section>
             </div>
 
-            {/* CTA 버튼 - 하단 고정 */}
             <div
               className={cn(
                 'shrink-0 overflow-hidden border-t border-neutral-100 bg-common-0 px-4 pt-3',
                 'transition-[max-height,opacity] duration-300 ease-out',
-                isHeaderScrolled ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0 pointer-events-none',
+                isHeaderScrolled ? 'max-h-40 opacity-100' : 'pointer-events-none max-h-0 opacity-0',
               )}
               style={{ paddingBottom: FOOTER_SAFE_AREA_PADDING }}
             >
@@ -330,7 +336,7 @@ function ResultRoutinePage() {
                 <h2 className="text-base font-medium leading-[23.68px] text-neutral-800">{ROUTINE_PAGE_COPY.saveSheetTitle}</h2>
               </div>
               <button
-                aria-label="猷⑦떞 ????쒗듃 ?リ린"
+                aria-label="루틴 저장 시트 닫기"
                 className={SAVE_SHEET_CLOSE_BUTTON_CLASS}
                 onClick={() => handleSaveSheetOpenChange(false)}
                 type="button"

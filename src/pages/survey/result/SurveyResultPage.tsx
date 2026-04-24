@@ -1,18 +1,34 @@
 import { Navigate } from 'react-router-dom'
 
 import { APP_ROUTES, createResultDetailPath } from '../../../app/routes'
-import MobilePage from '../../../components/MobilePage'
-import ResultOverviewScreen from '../../../components/results/ResultOverviewScreen'
-import ResultPageHeader from '../../../components/results/ResultPageHeader'
+import ResultOverviewLayout from '../../../components/results/ResultOverviewLayout'
 import { fromPreviewResult } from '../../../components/results/resultOverviewViewModel'
 import LoginDialog from '../../../components/survey/LoginDialog'
+import { Button } from '../../../components/ui/button'
 import { selectIsAuthenticated, useAuthStore } from '../../../stores/authStore'
 import { useSurveyProgressStore } from '../../../stores/surveyProgressStore'
 import { useSurveyResultStore } from '../../../stores/surveyResultStore'
 import { useLoginAndPromote } from './useLoginAndPromote'
 
+function PreviewBlurOverlay({ onLoginClick }: { onLoginClick: () => void }) {
+  return (
+    <div className="pointer-events-none absolute inset-0 z-20 rounded-t-2xl">
+      <div className="absolute inset-0 rounded-t-2xl bg-common-0/60 backdrop-blur-[4px]" />
+      <div className="pointer-events-auto absolute inset-x-4 top-20">
+        <Button
+          className="h-auto w-full rounded-full border border-neutral-100 bg-common-0 px-6 py-3 text-base font-semibold text-neutral-600"
+          onClick={onLoginClick}
+          type="button"
+          variant="outline"
+        >
+          로그인하고 전체 결과보기
+        </Button>
+      </div>
+    </div>
+  )
+}
+
 function SurveyResultPage() {
-  const PAGE_TITLE = '진단 결과'
   const previewResult = useSurveyProgressStore((state) => state.previewResult)
   const isAuthenticated = useAuthStore(selectIsAuthenticated)
   const latestResultId = useSurveyResultStore((state) => state.latestResultId)
@@ -26,25 +42,16 @@ function SurveyResultPage() {
     return <Navigate replace to={APP_ROUTES.survey} />
   }
 
-  const viewModel = fromPreviewResult(previewResult)
-
   const openLoginDialog = () => setIsLoginModalOpen(true)
 
   return (
     <>
-      <MobilePage
-        className="bg-neutral-800"
-        header={<ResultPageHeader hideTitle title={PAGE_TITLE} tone="dark" />}
-        mainClassName="overflow-x-hidden p-0"
-      >
-        <ResultOverviewScreen
-          mode="preview"
-          onPreviewLoginClick={openLoginDialog}
-          onProductsCtaClick={openLoginDialog}
-          onRoutineCtaClick={openLoginDialog}
-          viewModel={viewModel}
-        />
-      </MobilePage>
+      <ResultOverviewLayout
+        viewModel={fromPreviewResult(previewResult)}
+        onRoutineCta={openLoginDialog}
+        onProductsCta={openLoginDialog}
+        cardOverlay={<PreviewBlurOverlay onLoginClick={openLoginDialog} />}
+      />
 
       <LoginDialog
         isPromoting={isPromoting}

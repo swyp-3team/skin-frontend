@@ -5,6 +5,8 @@ export interface ResultHeaderViewModel {
   diagnosedAt: string
 }
 
+export type RoutineTabId = 'am' | 'pm'
+
 export type ResultProductTabId =
   | 'ALL'
   | 'SKIN_TONER'

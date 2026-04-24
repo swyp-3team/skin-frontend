@@ -1,13 +1,13 @@
-import type { ProductCategory } from '../../types/domain'
-import type { ResultSummary } from '../../api/types'
+import type { ResultDetail, ResultProductsFilterCategory } from '../../api/types'
 import type { ResultHeaderViewModel, ResultProductTabId, ResultProductTabItem } from '../../components/results/types'
 
-const PRODUCT_CATEGORY_TO_TAB: Record<ProductCategory, ResultProductTabId | null> = {
-  CLEANSER: null,
-  TONER: 'SKIN_TONER',
-  SERUM: 'ESSENCE_SERUM_AMPOULE',
-  CREAM: 'CREAM',
-  SUNSCREEN: 'SUNCARE',
+const RESULT_PRODUCT_CATEGORIES_BY_TAB: Record<ResultProductTabId, readonly ResultProductsFilterCategory[]> = {
+  ALL: [],
+  SKIN_TONER: ['SKIN', 'TONER'],
+  ESSENCE_SERUM_AMPOULE: ['ESSENCE', 'SERUM', 'AMPOULE'],
+  LOTION_EMULSION: ['LOTION', 'EMULSION'],
+  CREAM: ['CREAM'],
+  SUNCARE: ['SUNCARE'],
 }
 
 export const RESULT_PRODUCT_TABS: readonly ResultProductTabItem[] = [
@@ -19,23 +19,15 @@ export const RESULT_PRODUCT_TABS: readonly ResultProductTabItem[] = [
   { id: 'SUNCARE', label: '선케어' },
 ] as const
 
-export function createResultHeaderViewModelFromSummary(summary: ResultSummary): ResultHeaderViewModel {
+export function createResultHeaderViewModel(result: ResultDetail): ResultHeaderViewModel {
   return {
-    diagnosisTitle: summary.title,
-    summary: summary.summaryShort,
-    tags: [summary.badge.label],
-    diagnosedAt: summary.createdAt,
+    diagnosisTitle: result.typeName,
+    summary: result.subSummary || result.subTitle || result.summary,
+    tags: result.concerns,
+    diagnosedAt: result.diagnosedAt,
   }
 }
 
-export function mapCategoryToResultTab(category: ProductCategory): ResultProductTabId | null {
-  return PRODUCT_CATEGORY_TO_TAB[category]
-}
-
-export function isProductVisibleInTab(category: ProductCategory, activeTab: ResultProductTabId): boolean {
-  if (activeTab === 'ALL') {
-    return true
-  }
-
-  return mapCategoryToResultTab(category) === activeTab
+export function getResultProductsCategoriesByTab(tabId: ResultProductTabId): readonly ResultProductsFilterCategory[] {
+  return RESULT_PRODUCT_CATEGORIES_BY_TAB[tabId]
 }

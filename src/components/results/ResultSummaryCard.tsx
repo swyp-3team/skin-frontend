@@ -15,25 +15,34 @@ interface ResultSummaryCardProps {
 
 interface DiagnosedAtDisplay {
   date: string
-  time: string
+  time: string | null
 }
 
 function toDiagnosedAtDisplay(value: string): DiagnosedAtDisplay {
   const parsedDate = new Date(value)
-  if (Number.isNaN(parsedDate.getTime())) {
-    return { date: '-', time: '--:--' }
+  if (!Number.isNaN(parsedDate.getTime())) {
+    const year = parsedDate.getFullYear()
+    const month = String(parsedDate.getMonth() + 1).padStart(2, '0')
+    const day = String(parsedDate.getDate()).padStart(2, '0')
+    const hour = String(parsedDate.getHours()).padStart(2, '0')
+    const minute = String(parsedDate.getMinutes()).padStart(2, '0')
+
+    return {
+      date: `${year}.${month}.${day}`,
+      time: `${hour}:${minute}`,
+    }
   }
 
-  const year = parsedDate.getFullYear()
-  const month = String(parsedDate.getMonth() + 1).padStart(2, '0')
-  const day = String(parsedDate.getDate()).padStart(2, '0')
-  const hour = String(parsedDate.getHours()).padStart(2, '0')
-  const minute = String(parsedDate.getMinutes()).padStart(2, '0')
-
-  return {
-    date: `${year}.${month}.${day}`,
-    time: `${hour}:${minute}`,
+  const matchedDate = value.match(/^(\d{4})[./-](\d{2})[./-](\d{2})(?:\s+(\d{2}):(\d{2}))?$/)
+  if (matchedDate) {
+    const [, year, month, day, hour, minute] = matchedDate
+    return {
+      date: `${year}.${month}.${day}`,
+      time: hour && minute ? `${hour}:${minute}` : null,
+    }
   }
+
+  return { date: '-', time: null }
 }
 
 function ResultSummaryCard({
@@ -48,7 +57,6 @@ function ResultSummaryCard({
   const diagnosedAtDisplay = toDiagnosedAtDisplay(diagnosedAt)
 
   return (
-    // gap 대신 mt를 summary에 직접 부여 — summary 접힐 때 mt도 함께 사라져 date가 자연스럽게 올라옴
     <article className={cn('gap-2 flex w-full flex-col rounded-2xl bg-common-0 p-4', className)}>
       <div className="flex items-start justify-between gap-2">
         <h3 className="text-[18px] font-bold leading-[25.56px] text-neutral-800">{diagnosisTitle}</h3>
@@ -70,9 +78,9 @@ function ResultSummaryCard({
       </p>
 
       <div className="mt-3 flex items-center justify-between">
-        <div className="text-[14px] flex items-center gap-1 font-light leading-[20.44px] text-neutral-400">
+        <div className="flex items-center gap-1 text-[14px] font-light leading-[20.44px] text-neutral-400">
           <span>{diagnosedAtDisplay.date}</span>
-          <span>{diagnosedAtDisplay.time}</span>
+          {diagnosedAtDisplay.time ? <span>{diagnosedAtDisplay.time}</span> : null}
         </div>
 
         <Link

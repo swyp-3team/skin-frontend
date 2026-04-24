@@ -1,19 +1,19 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
-import { cn } from '../../lib/utils'
 import { createProductDetailPath } from '../../app/routes'
 import type { ResultProductItem } from '../../api/types'
 import AlertMessage from '../../components/common/AlertMessage'
 import SafeImage from '../../components/common/SafeImage'
 import MobilePage from '../../components/MobilePage'
-import ResultPageHeader from '../../components/results/ResultPageHeader'
+import PageHeader from '../../components/common/PageHeader'
 import ResultTabBar from '../../components/results/ResultTabBar'
 import ResultTopSection from '../../components/results/ResultTopSection'
 import type { ResultProductTabId } from '../../components/results/types'
 import { useScrollCollapse } from '../../hooks/useScrollCollapse'
-import { isProductVisibleInTab, RESULT_PRODUCT_TABS, createResultHeaderViewModelFromSummary } from './resultViewModel'
-import { useResultDetail } from './useResultDetail'
+import { cn } from '../../lib/utils'
+import { RESULT_PRODUCT_TABS } from './resultViewModel'
+import { useResultHeader } from './useResultDetail'
 import { useResultProductsInfinite } from './useResultProductsInfinite'
 
 const PRODUCTS_PAGE_COPY = {
@@ -56,7 +56,7 @@ function ResultProductGridCard({ product }: ResultProductGridCardProps) {
 
 function ResultProductsPage() {
   const { id } = useParams<{ id: string }>()
-  const skinResultId = Number(id)
+  const resultId = Number(id)
   const [activeTabId, setActiveTabId] = useState<ResultProductTabId>('ALL')
   const sentinelRef = useRef<HTMLDivElement | null>(null)
   const containerRef = useRef<HTMLDivElement | null>(null)
@@ -64,7 +64,7 @@ function ResultProductsPage() {
     '-49px 0px 0px 0px',
   )
 
-  const { data: detail, isLoading: isDetailLoading, error: detailError } = useResultDetail()
+  const { data: header, isLoading: isHeaderLoading, error: headerError } = useResultHeader(resultId)
   const {
     data: productsPages,
     isLoading: isProductsLoading,
@@ -72,7 +72,7 @@ function ResultProductsPage() {
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
-  } = useResultProductsInfinite(skinResultId)
+  } = useResultProductsInfinite(resultId, activeTabId)
 
   useEffect(() => {
     if (!hasNextPage || isFetchingNextPage) {
@@ -104,7 +104,13 @@ function ResultProductsPage() {
     }
   }, [isHeaderScrolled])
 
-  if (!id || Number.isNaN(skinResultId)) {
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollTop = 0
+    }
+  }, [activeTabId])
+
+  if (!id || Number.isNaN(resultId)) {
     return (
       <MobilePage>
         <AlertMessage size="md" variant="error">
@@ -114,7 +120,7 @@ function ResultProductsPage() {
     )
   }
 
-  if (isDetailLoading || isProductsLoading) {
+  if (isHeaderLoading || isProductsLoading) {
     return (
       <MobilePage>
         <AlertMessage size="md" variant="info">
@@ -124,30 +130,36 @@ function ResultProductsPage() {
     )
   }
 
-  if (detailError || productsError || !detail || !productsPages) {
+  if (headerError || productsError || !header || !productsPages) {
     return (
       <MobilePage>
         <AlertMessage size="md" variant="error">
-          {detailError?.message ?? productsError?.message ?? '추천 제품을 불러오지 못했습니다.'}
+          {headerError?.message ?? productsError?.message ?? '추천 제품을 불러오지 못했습니다.'}
         </AlertMessage>
       </MobilePage>
     )
   }
 
-  const header = createResultHeaderViewModelFromSummary(detail.resultSummary)
   const allProducts = productsPages.pages.flatMap((page) => page.products)
-  const visibleProducts = allProducts.filter((product) => isProductVisibleInTab(product.category, activeTabId))
 
   return (
-    <MobilePage header={<ResultPageHeader isScrolled={isHeaderScrolled} title={PRODUCTS_PAGE_COPY.title} />}>
+    <MobilePage header={<PageHeader isScrolled={isHeaderScrolled} title={PRODUCTS_PAGE_COPY.title} />}>
       <section className="space-y-0">
-        <ResultTopSection header={header} intro={PRODUCTS_PAGE_COPY.intro} skinResultId={skinResultId} />
+        <ResultTopSection header={header} intro={PRODUCTS_PAGE_COPY.intro} resultId={resultId} />
         <div ref={whiteBoxSentinelRef} aria-hidden className="h-px" />
 
-        <div ref={containerRef} className={cn('-mx-4 sticky top-12 h-[calc(100dvh-48px)] bg-common-0', isHeaderScrolled ? 'overflow-y-auto' : 'overflow-hidden')}>
+        <div
+          ref={containerRef}
+          className={cn(
+            '-mx-4 sticky top-12 h-[calc(100dvh-48px)] bg-common-0',
+            isHeaderScrolled ? 'overflow-y-auto' : 'overflow-hidden',
+          )}
+        >
           <div className="sticky top-0 z-[9] space-y-5 bg-common-0 px-4 pt-5">
             <div className="inline-flex w-full items-center gap-2 rounded-lg border border-neutral-150 bg-neutral-50/50 px-3 py-3 text-sm leading-[20.44px] text-neutral-300">
-              <span aria-hidden className="text-base">⌕</span>
+              <span aria-hidden className="text-base">
+                ⌕
+              </span>
               <span>{PRODUCTS_PAGE_COPY.searchPlaceholder}</span>
             </div>
 
@@ -160,9 +172,9 @@ function ResultProductsPage() {
           </div>
 
           <section className="mt-5 px-4 pb-10">
-            {visibleProducts.length > 0 ? (
+            {allProducts.length > 0 ? (
               <div className="grid grid-cols-2 gap-x-4 gap-y-6">
-                {visibleProducts.map((product) => (
+                {allProducts.map((product) => (
                   <ResultProductGridCard key={product.productId} product={product} />
                 ))}
               </div>

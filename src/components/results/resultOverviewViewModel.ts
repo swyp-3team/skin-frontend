@@ -1,5 +1,5 @@
 import resultSafeImage from '@/assets/images/result-safe.png'
-import type { PreviewResult, ResultDetail, TopIngredientGroup } from '@/api/types'
+import type { PreviewResult, ResultDetail, ResultIngredientMeta, TopIngredientGroup } from '@/api/types'
 import { INGREDIENT_GROUP_LABELS } from '@/domain/surveyConfig'
 import type { SkinType } from '@/types/domain'
 
@@ -72,14 +72,20 @@ const PREVIEW_PLACEHOLDER_CARDS = [
 ] as const
 
 function toDateLabel(value: string): string | null {
-  const parsedDate = new Date(value)
-  if (Number.isNaN(parsedDate.getTime())) {
+  const isoParsedDate = new Date(value)
+  if (!Number.isNaN(isoParsedDate.getTime())) {
+    const year = isoParsedDate.getFullYear()
+    const month = String(isoParsedDate.getMonth() + 1).padStart(2, '0')
+    const day = String(isoParsedDate.getDate()).padStart(2, '0')
+    return `${year}.${month}.${day}`
+  }
+
+  const normalizedDate = value.match(/^(\d{4})[./-](\d{2})[./-](\d{2})$/)
+  if (!normalizedDate) {
     return null
   }
 
-  const year = parsedDate.getFullYear()
-  const month = String(parsedDate.getMonth() + 1).padStart(2, '0')
-  const day = String(parsedDate.getDate()).padStart(2, '0')
+  const [, year, month, day] = normalizedDate
   return `${year}.${month}.${day}`
 }
 
@@ -115,6 +121,29 @@ function toIngredientCards(top3: TopIngredientGroup[]): ResultOverviewIngredient
   return [...cards, ...placeholders]
 }
 
+function toIngredientCardsFromMetas(ingredientMetas: ResultIngredientMeta[]): ResultOverviewIngredientCardViewModel[] {
+  const cards = ingredientMetas.slice(0, 3).map((item, index) => ({
+    rank: index + 1,
+    name: item.name,
+    description: item.description,
+    isPrimary: index === 0,
+  }))
+
+  const missingCardCount = 3 - cards.length
+  if (missingCardCount <= 0) {
+    return cards
+  }
+
+  const placeholders = PREVIEW_PLACEHOLDER_CARDS.slice(0, missingCardCount).map((placeholder, index) => ({
+    rank: cards.length + index + 1,
+    name: placeholder.name,
+    description: placeholder.description,
+    isPrimary: cards.length + index === 0,
+  }))
+
+  return [...cards, ...placeholders]
+}
+
 function normalizeHighlights(highlights: string[]): string[] {
   const normalized = highlights.filter((item) => item.trim().length > 0).slice(0, 3)
 
@@ -127,25 +156,22 @@ function normalizeHighlights(highlights: string[]): string[] {
 }
 
 export function fromResultDetail(result: ResultDetail): ResultOverviewViewModel {
-  const highlights = result.top3.map((item) => INGREDIENT_GROUP_LABELS[item.group])
-  const ingredientCards = toIngredientCards(result.top3)
-
   return {
     top: {
-      diagnosedDate: toDateLabel(result.resultSummary.createdAt),
-      title: result.resultSummary.title,
+      diagnosedDate: toDateLabel(result.diagnosedAt),
+      title: result.typeName,
       summary: result.summary,
       imageUrl: resultSafeImage,
     },
     routine: {
       sectionTitle: RESULT_PAGE_COPY.routineSectionTitle,
-      highlights: normalizeHighlights(highlights),
-      highlightDescription: result.top3[0]?.reason ?? result.summary,
+      highlights: normalizeHighlights(result.concerns),
+      highlightDescription: result.subSummary || result.summary,
       ctaLabel: RESULT_PAGE_COPY.routineCta,
     },
     ingredients: {
       sectionTitle: RESULT_PAGE_COPY.ingredientsSectionTitle,
-      cards: ingredientCards,
+      cards: toIngredientCardsFromMetas(result.ingredientMetas),
       ctaLabel: RESULT_PAGE_COPY.productsCta,
     },
   }

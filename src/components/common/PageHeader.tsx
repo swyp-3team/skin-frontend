@@ -2,10 +2,10 @@ import NavMenuDialog from '@/components/common/NavMenuDialog'
 import { cn } from '@/lib/utils'
 
 const ROOT_CLASS =
-  'sticky top-0 z-10 flex h-12 w-full items-center justify-between px-5 py-2 transition-colors duration-450'
+  'sticky top-0 z-10 flex h-12 w-full items-center justify-between px-5 py-2 transition-colors duration-300'
 const TITLE_CLASS = 'text-[20px] font-medium leading-[27.6px]'
 
-interface ResultPageHeaderProps {
+interface PageHeaderProps {
   title: string
   className?: string
   isScrolled?: boolean
@@ -13,13 +13,13 @@ interface ResultPageHeaderProps {
   hideTitle?: boolean
 }
 
-function ResultPageHeader({
+function PageHeader({
   title,
   className,
   isScrolled = false,
   tone = 'default',
   hideTitle = false,
-}: ResultPageHeaderProps) {
+}: PageHeaderProps) {
   const isDarkTone = tone === 'dark'
 
   return (
@@ -38,4 +38,4 @@ function ResultPageHeader({
   )
 }
 
-export default ResultPageHeader
+export default PageHeader

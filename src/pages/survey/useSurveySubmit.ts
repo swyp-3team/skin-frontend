@@ -122,7 +122,6 @@ export function useSurveySubmit() {
         setPreviewToken(outcome.previewToken)
         clearProgress()
       } else {
-        // 로그인 결과: 완전히 완료됐으므로 진행 상태 초기화
         clearProgress()
         queryClient.setQueryData(queryKeys.result(outcome.result.resultId), outcome.result)
         clearPreviewResult()

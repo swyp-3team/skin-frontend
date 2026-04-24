@@ -5,13 +5,12 @@ import type { ApiClient } from './client'
 import type { ApiErrorPayload, ApiFieldError } from './contracts'
 import { ApiError } from './errors'
 import type {
-  FullResult,
   PreviewApiData,
   ProductDetail,
   ResultDetail,
+  ResultIngredientMeta,
   ResultProductsPageData,
   ResultProductsQuery,
-  ResultSummary,
   RoutineDetail,
   RoutineGroup,
   RoutineProduct,
@@ -30,6 +29,19 @@ function isRecord(value: unknown): value is WireRecord {
 
 function isProductCategory(value: unknown): value is ProductCategory {
   return typeof value === 'string' && PRODUCT_CATEGORY_SET.has(value as ProductCategory)
+}
+
+function toOptionalNumber(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value
+  }
+
+  if (typeof value === 'string' && value.trim().length > 0) {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : null
+  }
+
+  return null
 }
 
 async function readBody(response: Response): Promise<unknown> {
@@ -153,8 +165,8 @@ async function requestApi<T>(url: string, init: RequestInit, token?: string): Pr
   } catch (error) {
     throw new ApiError('네트워크 요청에 실패했습니다. API 연결 상태를 확인해 주세요.', 0, 'NETWORK_ERROR', error)
   }
-  let body: unknown
 
+  let body: unknown
   try {
     body = await readBody(response)
   } catch (error) {
@@ -169,6 +181,7 @@ async function requestApi<T>(url: string, init: RequestInit, token?: string): Pr
     if (response.status === 204) {
       return null as T
     }
+
     throw new ApiError('Response body is empty.', response.status, 'EMPTY_RESPONSE_BODY')
   }
 
@@ -209,11 +222,8 @@ function normalizeSurveyOption(raw: unknown, step: number, optionIndex: number) 
     )
   }
 
-  const optionNumberCandidate = raw.optionNumber
-  const contentCandidate = raw.content
-  const optionNumber = normalizeOptionNumber(optionNumberCandidate, step, optionIndex, raw)
-
-  if (typeof contentCandidate !== 'string') {
+  const optionNumber = normalizeOptionNumber(raw.optionNumber, step, optionIndex, raw)
+  if (typeof raw.content !== 'string') {
     throw new ApiError(
       `Survey option label is invalid. (step: ${step}, index: ${optionIndex})`,
       500,
@@ -224,7 +234,7 @@ function normalizeSurveyOption(raw: unknown, step: number, optionIndex: number) 
 
   return {
     optionNumber,
-    content: contentCandidate,
+    content: raw.content,
     code: normalizeOptionCode(raw.code),
   } satisfies SurveyQuestion['options'][number]
 }
@@ -234,26 +244,21 @@ function normalizeSurveyQuestion(raw: unknown, questionIndex: number): SurveyQue
     throw new ApiError(`Survey question format is invalid. (index: ${questionIndex})`, 500, 'INVALID_SURVEY_QUESTION_FORMAT')
   }
 
-  const stepCandidate = raw.step
-  const questionCandidate = raw.question
-  const optionsCandidate = raw.options
-
-  if (typeof stepCandidate !== 'number') {
+  if (typeof raw.step !== 'number') {
     throw new ApiError(`Survey step is invalid. (index: ${questionIndex})`, 500, 'INVALID_SURVEY_STEP', raw)
   }
-
-  if (typeof questionCandidate !== 'string') {
-    throw new ApiError(`Survey question text is invalid. (step: ${stepCandidate})`, 500, 'INVALID_SURVEY_TEXT', raw)
+  const step = raw.step
+  if (typeof raw.question !== 'string') {
+    throw new ApiError(`Survey question text is invalid. (step: ${step})`, 500, 'INVALID_SURVEY_TEXT', raw)
   }
-
-  if (!Array.isArray(optionsCandidate)) {
-    throw new ApiError(`Survey options are invalid. (step: ${stepCandidate})`, 500, 'INVALID_SURVEY_OPTIONS', raw)
+  if (!Array.isArray(raw.options)) {
+    throw new ApiError(`Survey options are invalid. (step: ${step})`, 500, 'INVALID_SURVEY_OPTIONS', raw)
   }
 
   return {
-    step: stepCandidate,
-    question: questionCandidate,
-    options: optionsCandidate.map((option, optionIndex) => normalizeSurveyOption(option, stepCandidate, optionIndex)),
+    step,
+    question: raw.question,
+    options: raw.options.map((option, optionIndex) => normalizeSurveyOption(option, step, optionIndex)),
   }
 }
 
@@ -267,47 +272,112 @@ function normalizeSurveyQuestions(payload: unknown): SurveyQuestion[] {
   return questionsPayload.map(normalizeSurveyQuestion)
 }
 
+function normalizeIngredientMeta(raw: unknown, index: number): ResultIngredientMeta {
+  if (!isRecord(raw)) {
+    throw new ApiError(`Ingredient meta is invalid. (ingredientMetas[${index}])`, 500, 'INVALID_RESULT_INGREDIENT_META', raw)
+  }
+
+  if (typeof raw.name !== 'string') {
+    throw new ApiError(`Ingredient meta name is invalid. (ingredientMetas[${index}])`, 500, 'INVALID_RESULT_INGREDIENT_NAME', raw)
+  }
+
+  if (typeof raw.description !== 'string') {
+    throw new ApiError(
+      `Ingredient meta description is invalid. (ingredientMetas[${index}])`,
+      500,
+      'INVALID_RESULT_INGREDIENT_DESCRIPTION',
+      raw,
+    )
+  }
+
+  return {
+    name: raw.name,
+    description: raw.description,
+  }
+}
+
+function normalizeResultDetail(payload: unknown, fallbackResultId?: number): ResultDetail {
+  if (!isRecord(payload)) {
+    throw new ApiError('Result response is invalid.', 500, 'INVALID_RESULT_FORMAT', payload)
+  }
+
+  const resultId = toOptionalNumber(payload.resultId) ?? fallbackResultId
+  if (resultId === undefined) {
+    throw new ApiError('resultId is missing.', 500, 'INVALID_RESULT_ID', payload)
+  }
+  if (typeof payload.diagnosedAt !== 'string') {
+    throw new ApiError('diagnosedAt is invalid.', 500, 'INVALID_RESULT_DIAGNOSED_AT', payload)
+  }
+  if (typeof payload.typeName !== 'string') {
+    throw new ApiError('typeName is invalid.', 500, 'INVALID_RESULT_TYPE_NAME', payload)
+  }
+  if (typeof payload.subTitle !== 'string') {
+    throw new ApiError('subTitle is invalid.', 500, 'INVALID_RESULT_SUBTITLE', payload)
+  }
+  if (typeof payload.summary !== 'string') {
+    throw new ApiError('summary is invalid.', 500, 'INVALID_RESULT_SUMMARY', payload)
+  }
+
+  const concerns = Array.isArray(payload.concerns)
+    ? payload.concerns.filter((item): item is string => typeof item === 'string')
+    : []
+
+  const ingredientMetas = Array.isArray(payload.ingredientMetas)
+    ? payload.ingredientMetas.map((item, index) => normalizeIngredientMeta(item, index))
+    : []
+
+  return {
+    resultId,
+    diagnosedAt: payload.diagnosedAt,
+    typeName: payload.typeName,
+    subTitle: payload.subTitle,
+    summary: payload.summary,
+    concerns,
+    subSummary: typeof payload.subSummary === 'string' ? payload.subSummary : '',
+    ingredientMetas,
+  }
+}
+
 function normalizeRoutineProduct(raw: unknown, slot: 'amRoutine' | 'pmRoutine', index: number): RoutineProduct {
   if (!isRecord(raw)) {
     throw new ApiError(`Routine product is invalid. (${slot}[${index}])`, 500, 'INVALID_ROUTINE_PRODUCT_FORMAT', raw)
   }
 
-  const { productId, name, brand, category, imageUrl, sortOrder, reason, note } = raw
-
-  if (typeof productId !== 'number') {
+  if (typeof raw.productId !== 'number') {
     throw new ApiError(`Routine productId is invalid. (${slot}[${index}])`, 500, 'INVALID_ROUTINE_PRODUCT_ID', raw)
   }
-  if (typeof name !== 'string') {
+  if (typeof raw.name !== 'string') {
     throw new ApiError(`Routine product name is invalid. (${slot}[${index}])`, 500, 'INVALID_ROUTINE_PRODUCT_NAME', raw)
   }
-  if (typeof brand !== 'string') {
+  if (typeof raw.brand !== 'string') {
     throw new ApiError(`Routine product brand is invalid. (${slot}[${index}])`, 500, 'INVALID_ROUTINE_PRODUCT_BRAND', raw)
   }
-  if (!isProductCategory(category)) {
+  if (!isProductCategory(raw.category)) {
     throw new ApiError(`Routine product category is invalid. (${slot}[${index}])`, 500, 'INVALID_ROUTINE_PRODUCT_CATEGORY', raw)
   }
-  if (imageUrl !== null && typeof imageUrl !== 'string') {
+  if (raw.imageUrl !== null && raw.imageUrl !== undefined && typeof raw.imageUrl !== 'string') {
     throw new ApiError(`Routine product imageUrl is invalid. (${slot}[${index}])`, 500, 'INVALID_ROUTINE_PRODUCT_IMAGE_URL', raw)
   }
-  if (typeof sortOrder !== 'number') {
+  if (typeof raw.sortOrder !== 'number') {
     throw new ApiError(`Routine product sortOrder is invalid. (${slot}[${index}])`, 500, 'INVALID_ROUTINE_PRODUCT_SORT_ORDER', raw)
   }
-  if (typeof reason !== 'string') {
+  if (typeof raw.reason !== 'string') {
     throw new ApiError(`Routine product reason is invalid. (${slot}[${index}])`, 500, 'INVALID_ROUTINE_PRODUCT_REASON', raw)
   }
-  if (typeof note !== 'string') {
+  if (typeof raw.note !== 'string') {
     throw new ApiError(`Routine product note is invalid. (${slot}[${index}])`, 500, 'INVALID_ROUTINE_PRODUCT_NOTE', raw)
   }
 
   return {
-    productId,
-    name,
-    brand,
-    category,
-    imageUrl,
-    sortOrder,
-    reason,
-    note,
+    productId: raw.productId,
+    name: raw.name,
+    brand: raw.brand,
+    category: raw.category,
+    imageUrl: typeof raw.imageUrl === 'string' ? raw.imageUrl : null,
+    sortOrder: raw.sortOrder,
+    reason: raw.reason,
+    note: raw.note,
+    price: toOptionalNumber(raw.price),
   }
 }
 
@@ -316,105 +386,59 @@ function normalizeRoutineDetail(raw: unknown, slot: 'amRoutine' | 'pmRoutine'): 
     throw new ApiError(`Routine detail is invalid. (${slot})`, 500, 'INVALID_ROUTINE_DETAIL_FORMAT', raw)
   }
 
-  const { routineId, routineType, memo, products } = raw
-
-  if (typeof routineId !== 'number') {
+  if (typeof raw.routineId !== 'number') {
     throw new ApiError(`Routine id is invalid. (${slot})`, 500, 'INVALID_ROUTINE_ID', raw)
   }
-  if (typeof routineType !== 'string') {
+  if (typeof raw.routineType !== 'string') {
     throw new ApiError(`Routine type is invalid. (${slot})`, 500, 'INVALID_ROUTINE_TYPE', raw)
   }
-  if (typeof memo !== 'string') {
+  if (typeof raw.memo !== 'string') {
     throw new ApiError(`Routine memo is invalid. (${slot})`, 500, 'INVALID_ROUTINE_MEMO', raw)
   }
-  if (!Array.isArray(products)) {
+  if (!Array.isArray(raw.products)) {
     throw new ApiError(`Routine products are invalid. (${slot})`, 500, 'INVALID_ROUTINE_PRODUCTS', raw)
   }
 
-  const normalizedProducts = products
-    .map((item, index) => normalizeRoutineProduct(item, slot, index))
-    .sort((a, b) => a.sortOrder - b.sortOrder)
-
   return {
-    routineId,
-    routineType,
-    memo,
-    products: normalizedProducts,
+    routineId: raw.routineId,
+    routineType: raw.routineType,
+    memo: raw.memo,
+    products: raw.products.map((item, index) => normalizeRoutineProduct(item, slot, index)).sort((a, b) => a.sortOrder - b.sortOrder),
   }
 }
 
-function normalizeResultSummary(payload: unknown): ResultSummary {
-  const raw = Array.isArray(payload) ? payload[0] : undefined
-  if (!isRecord(raw)) {
-    throw new ApiError('resultSummary is missing or invalid.', 500, 'INVALID_RESULT_SUMMARY', payload)
-  }
-
-  const { resultId, title, badge, summaryShort, createdAt } = raw
-
-  if (typeof resultId !== 'string') {
-    throw new ApiError('resultSummary.resultId is invalid.', 500, 'INVALID_RESULT_SUMMARY_ID', raw)
-  }
-  if (typeof title !== 'string') {
-    throw new ApiError('resultSummary.title is invalid.', 500, 'INVALID_RESULT_SUMMARY_TITLE', raw)
-  }
-  if (typeof summaryShort !== 'string') {
-    throw new ApiError('resultSummary.summaryShort is invalid.', 500, 'INVALID_RESULT_SUMMARY_SHORT', raw)
-  }
-  if (typeof createdAt !== 'string') {
-    throw new ApiError('resultSummary.createdAt is invalid.', 500, 'INVALID_RESULT_SUMMARY_CREATED_AT', raw)
-  }
-  if (!isRecord(badge) || typeof badge.label !== 'string' || typeof badge.type !== 'string') {
-    throw new ApiError('resultSummary.badge is invalid.', 500, 'INVALID_RESULT_SUMMARY_BADGE', raw)
-  }
-
-  return {
-    resultId,
-    title,
-    badge: { label: badge.label, type: badge.type },
-    summaryShort,
-    createdAt,
-  }
-}
-
-function normalizeRoutineGroup(payload: unknown): RoutineGroup {
+function normalizeRoutineGroup(payload: unknown, fallbackResultId: number): RoutineGroup {
   if (!isRecord(payload)) {
     throw new ApiError('Routine group response is invalid.', 500, 'INVALID_ROUTINE_GROUP_FORMAT', payload)
   }
 
-  const { routineGroupId, title, skinResultId, skinType, summary, caution, amRoutine, pmRoutine, createdAt } = payload
-
-  if (typeof routineGroupId !== 'number') {
-    throw new ApiError('routineGroupId is invalid.', 500, 'INVALID_ROUTINE_GROUP_ID', payload)
+  const resultId = toOptionalNumber(payload.resultId) ?? toOptionalNumber(payload.skinResultId) ?? fallbackResultId
+  if (!Number.isFinite(resultId)) {
+    throw new ApiError('resultId is invalid.', 500, 'INVALID_ROUTINE_RESULT_ID', payload)
   }
-  if (typeof title !== 'string') {
-    throw new ApiError('Routine title is invalid.', 500, 'INVALID_ROUTINE_TITLE', payload)
-  }
-  if (typeof skinResultId !== 'number') {
-    throw new ApiError('skinResultId is invalid.', 500, 'INVALID_SKIN_RESULT_ID', payload)
-  }
-  if (!isSkinTypeCode(skinType)) {
+  if (!isSkinTypeCode(payload.skinType)) {
     throw new ApiError('skinType is invalid.', 500, 'INVALID_SKIN_TYPE', payload)
   }
-  if (typeof summary !== 'string') {
+  if (typeof payload.title !== 'string') {
+    throw new ApiError('Routine title is invalid.', 500, 'INVALID_ROUTINE_TITLE', payload)
+  }
+  if (typeof payload.summary !== 'string') {
     throw new ApiError('Routine summary is invalid.', 500, 'INVALID_ROUTINE_SUMMARY', payload)
   }
-  if (typeof caution !== 'string') {
+  if (typeof payload.caution !== 'string') {
     throw new ApiError('Routine caution is invalid.', 500, 'INVALID_ROUTINE_CAUTION', payload)
-  }
-  if (typeof createdAt !== 'string') {
-    throw new ApiError('Routine createdAt is invalid.', 500, 'INVALID_ROUTINE_CREATED_AT', payload)
   }
 
   return {
-    routineGroupId,
-    title,
-    skinResultId,
-    skinType,
-    summary,
-    caution,
-    amRoutine: normalizeRoutineDetail(amRoutine, 'amRoutine'),
-    pmRoutine: normalizeRoutineDetail(pmRoutine, 'pmRoutine'),
-    createdAt,
+    routineGroupId: toOptionalNumber(payload.routineGroupId) ?? fallbackResultId,
+    resultId,
+    skinType: payload.skinType,
+    title: payload.title,
+    summary: payload.summary,
+    caution: payload.caution,
+    amRoutine: normalizeRoutineDetail(payload.amRoutine, 'amRoutine'),
+    pmRoutine: normalizeRoutineDetail(payload.pmRoutine, 'pmRoutine'),
+    createdAt: typeof payload.createdAt === 'string' ? payload.createdAt : '',
   }
 }
 
@@ -423,34 +447,28 @@ function normalizeResultProductItem(raw: unknown, index: number) {
     throw new ApiError(`Result product is invalid. (products[${index}])`, 500, 'INVALID_RESULT_PRODUCT_FORMAT', raw)
   }
 
-  const { productId, name, brand, category, price, imageUrl } = raw
-
-  if (typeof productId !== 'number') {
+  if (typeof raw.productId !== 'number') {
     throw new ApiError(`Result productId is invalid. (products[${index}])`, 500, 'INVALID_RESULT_PRODUCT_ID', raw)
   }
-  if (typeof name !== 'string') {
+  if (typeof raw.name !== 'string') {
     throw new ApiError(`Result product name is invalid. (products[${index}])`, 500, 'INVALID_RESULT_PRODUCT_NAME', raw)
   }
-  if (typeof brand !== 'string') {
+  if (typeof raw.brand !== 'string') {
     throw new ApiError(`Result product brand is invalid. (products[${index}])`, 500, 'INVALID_RESULT_PRODUCT_BRAND', raw)
   }
-  if (!isProductCategory(category)) {
-    throw new ApiError(`Result product category is invalid. (products[${index}])`, 500, 'INVALID_RESULT_PRODUCT_CATEGORY', raw)
-  }
-  if (typeof price !== 'number') {
+  if (typeof raw.price !== 'number') {
     throw new ApiError(`Result product price is invalid. (products[${index}])`, 500, 'INVALID_RESULT_PRODUCT_PRICE', raw)
   }
-  if (imageUrl !== null && typeof imageUrl !== 'string') {
+  if (raw.imageUrl !== null && raw.imageUrl !== undefined && typeof raw.imageUrl !== 'string') {
     throw new ApiError(`Result product imageUrl is invalid. (products[${index}])`, 500, 'INVALID_RESULT_PRODUCT_IMAGE_URL', raw)
   }
 
   return {
-    productId,
-    name,
-    brand,
-    category,
-    price,
-    imageUrl,
+    productId: raw.productId,
+    name: raw.name,
+    brand: raw.brand,
+    price: raw.price,
+    imageUrl: typeof raw.imageUrl === 'string' ? raw.imageUrl : null,
   }
 }
 
@@ -459,26 +477,20 @@ function normalizeResultProductsPage(payload: unknown): ResultProductsPageData {
     throw new ApiError('Products page response is invalid.', 500, 'INVALID_PRODUCTS_PAGE_FORMAT', payload)
   }
 
-  const { tags, skinResultDate, products, hasNext } = payload
-
-  if (!Array.isArray(tags) || tags.some((tag) => typeof tag !== 'string')) {
-    throw new ApiError('Products tags are invalid.', 500, 'INVALID_PRODUCTS_TAGS', payload)
-  }
-  if (typeof skinResultDate !== 'string') {
-    throw new ApiError('skinResultDate is invalid.', 500, 'INVALID_SKIN_RESULT_DATE', payload)
-  }
-  if (!Array.isArray(products)) {
+  if (!Array.isArray(payload.products)) {
     throw new ApiError('Products list is invalid.', 500, 'INVALID_PRODUCTS_LIST', payload)
   }
-  if (typeof hasNext !== 'boolean') {
+  if (typeof payload.hasNext !== 'boolean') {
     throw new ApiError('Products hasNext is invalid.', 500, 'INVALID_PRODUCTS_HAS_NEXT', payload)
   }
 
+  const tags = Array.isArray(payload.tags) ? payload.tags.filter((tag): tag is string => typeof tag === 'string') : []
+
   return {
     tags,
-    skinResultDate,
-    products: products.map((item, index) => normalizeResultProductItem(item, index)),
-    hasNext,
+    skinResultDate: typeof payload.skinResultDate === 'string' ? payload.skinResultDate : '',
+    products: payload.products.map((item, index) => normalizeResultProductItem(item, index)),
+    hasNext: payload.hasNext,
   }
 }
 
@@ -497,7 +509,7 @@ export function createLiveApiClient(baseUrl: string): ApiClient {
     },
 
     async submitSurveyResult(input: SurveyResultInput, authState: AuthState) {
-      return requestApi<FullResult>(
+      const payload = await requestApi<unknown>(
         `${baseUrl}/results`,
         {
           method: 'POST',
@@ -505,28 +517,40 @@ export function createLiveApiClient(baseUrl: string): ApiClient {
         },
         authState.accessToken,
       )
+
+      return normalizeResultDetail(payload)
     },
 
     async getResult(resultId: number, authState: AuthState): Promise<ResultDetail> {
       const payload = await requestApi<unknown>(`${baseUrl}/results/${resultId}`, { method: 'GET' }, authState.accessToken)
-      if (!isRecord(payload)) {
-        throw new ApiError('Result response is invalid.', 500, 'INVALID_RESULT_FORMAT', payload)
-      }
-      const resultSummary = normalizeResultSummary(payload.resultSummary)
-      return { ...(payload as unknown as FullResult), resultSummary }
+      return normalizeResultDetail(payload, resultId)
     },
 
-    async getRoutineGroup(skinResultId: number, authState: AuthState) {
-      const payload = await requestApi<unknown>(`${baseUrl}/routines/${skinResultId}`, { method: 'GET' }, authState.accessToken)
-      return normalizeRoutineGroup(payload)
+    async getRoutineGroup(resultId: number, authState: AuthState) {
+      const payload = await requestApi<unknown>(
+        `${baseUrl}/results/${resultId}/routine`,
+        { method: 'GET' },
+        authState.accessToken,
+      )
+
+      return normalizeRoutineGroup(payload, resultId)
     },
 
     async getRecommendedProducts(query: ResultProductsQuery, authState: AuthState) {
       const params = new URLSearchParams({
-        skinResultId: String(query.skinResultId),
         page: String(query.page),
       })
-      const payload = await requestApi<unknown>(`${baseUrl}/products/recommend?${params.toString()}`, { method: 'GET' }, authState.accessToken)
+
+      query.categories?.forEach((category) => {
+        params.append('category', category)
+      })
+
+      const payload = await requestApi<unknown>(
+        `${baseUrl}/results/${query.resultId}/products?${params.toString()}`,
+        { method: 'GET' },
+        authState.accessToken,
+      )
+
       return normalizeResultProductsPage(payload)
     },
 

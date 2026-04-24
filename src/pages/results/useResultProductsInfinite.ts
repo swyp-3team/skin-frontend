@@ -3,27 +3,31 @@ import { useInfiniteQuery } from '@tanstack/react-query'
 import { apiClient } from '../../api'
 import { ApiError } from '../../api/errors'
 import type { ResultProductsPageData } from '../../api/types'
+import type { ResultProductTabId } from '../../components/results/types'
 import { queryKeys } from '../../lib/queryKeys'
 import { useAuthStore } from '../../stores/authStore'
+import { getResultProductsCategoriesByTab } from './resultViewModel'
 
-function isValidSkinResultId(skinResultId: number): boolean {
-  return Number.isFinite(skinResultId) && skinResultId > 0
+function isValidResultId(resultId: number): boolean {
+  return Number.isFinite(resultId) && resultId > 0
 }
 
-export function useResultProductsInfinite(skinResultId: number) {
+export function useResultProductsInfinite(resultId: number, tabId: ResultProductTabId) {
   const accessToken = useAuthStore((state) => state.accessToken)
+  const categories = getResultProductsCategoriesByTab(tabId)
 
   return useInfiniteQuery<ResultProductsPageData, ApiError>({
-    queryKey: queryKeys.resultProducts(skinResultId),
+    queryKey: queryKeys.resultProducts(resultId, tabId),
     queryFn: ({ pageParam }) =>
       apiClient.getRecommendedProducts(
         {
-          skinResultId,
+          resultId,
           page: Number(pageParam),
+          categories: categories.length > 0 ? [...categories] : undefined,
         },
         { accessToken },
       ),
-    enabled: isValidSkinResultId(skinResultId),
+    enabled: isValidResultId(resultId),
     initialPageParam: 1,
     getNextPageParam: (lastPage, allPages) => (lastPage.hasNext ? allPages.length + 1 : undefined),
     retry: false,

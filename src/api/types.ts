@@ -50,27 +50,6 @@ export interface RecommendedProduct {
   reason: string
 }
 
-export interface ResultProductItem {
-  productId: number
-  name: string
-  brand: string
-  category: ProductCategory
-  price: number
-  imageUrl: string | null
-}
-
-export interface ResultProductsPageData {
-  tags: string[]
-  skinResultDate: string
-  products: ResultProductItem[]
-  hasNext: boolean
-}
-
-export interface ResultProductsQuery {
-  skinResultId: number
-  page: number
-}
-
 export interface ProductDetail extends RecommendedProduct {
   brandName: string
   price: number
@@ -80,9 +59,20 @@ export interface ProductDetail extends RecommendedProduct {
   purchaseUrl: string
 }
 
-export interface RoutineGuide {
-  category: ProductCategory
-  guide: string
+export interface ResultIngredientMeta {
+  name: string
+  description: string
+}
+
+export interface ResultDetail {
+  resultId: number
+  diagnosedAt: string
+  typeName: string
+  subTitle: string
+  summary: string
+  concerns: string[]
+  subSummary: string
+  ingredientMetas: ResultIngredientMeta[]
 }
 
 export interface RoutineProduct {
@@ -94,6 +84,7 @@ export interface RoutineProduct {
   sortOrder: number
   reason: string
   note: string
+  price: number | null
 }
 
 export interface RoutineDetail {
@@ -105,9 +96,9 @@ export interface RoutineDetail {
 
 export interface RoutineGroup {
   routineGroupId: number
-  title: string
-  skinResultId: number
+  resultId: number
   skinType: SkinType
+  title: string
   summary: string
   caution: string
   amRoutine: RoutineDetail
@@ -115,31 +106,40 @@ export interface RoutineGroup {
   createdAt: string
 }
 
-export interface FullResult extends PreviewResult {
+export interface ResultProductItem {
+  productId: number
+  name: string
+  brand: string
+  price: number
+  imageUrl: string | null
+}
+
+export type ResultProductsFilterCategory =
+  | 'SKIN'
+  | 'TONER'
+  | 'ESSENCE'
+  | 'SERUM'
+  | 'AMPOULE'
+  | 'LOTION'
+  | 'EMULSION'
+  | 'CREAM'
+  | 'SUNCARE'
+
+export interface ResultProductsPageData {
+  tags: string[]
+  skinResultDate: string
+  products: ResultProductItem[]
+  hasNext: boolean
+}
+
+export interface ResultProductsQuery {
   resultId: number
-  recommendedProducts: RecommendedProduct[]
-  routine: RoutineGuide[]
-}
-
-export interface ResultSummaryBadge {
-  label: string
-  type: string
-}
-
-export interface ResultSummary {
-  resultId: string
-  title: string
-  badge: ResultSummaryBadge
-  summaryShort: string
-  createdAt: string
-}
-
-export interface ResultDetail extends FullResult {
-  resultSummary: ResultSummary
+  page: number
+  categories?: ResultProductsFilterCategory[]
 }
 
 export type SurveyResultInput = SurveySubmitPayload | { previewToken: string }
 
 export type SubmitOutcome =
   | { kind: 'preview'; result: PreviewResult; previewToken: string }
-  | { kind: 'full'; result: FullResult }
+  | { kind: 'full'; result: ResultDetail }

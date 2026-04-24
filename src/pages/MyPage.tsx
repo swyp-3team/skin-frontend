@@ -10,7 +10,7 @@ import { APP_ROUTES, createResultDetailPath, createRoutineDetailPath } from '../
 import SectionTitle from '../components/common/SectionTitle'
 import SurfaceCard from '../components/common/SurfaceCard'
 import MobilePage from '../components/MobilePage'
-import ResultPageHeader from '../components/results/ResultPageHeader'
+import PageHeader from '../components/common/PageHeader'
 import { buttonVariants } from '../components/ui/button'
 import { AUTH_UI_TEXT } from '../constants/auth'
 import { useLogout } from '../hooks/useLogout'
@@ -18,6 +18,7 @@ import { queryKeys } from '../lib/queryKeys'
 import { cn } from '../lib/utils'
 import { selectIsAuthenticated, useAuthStore } from '../stores/authStore'
 import { useSurveyResultStore } from '../stores/surveyResultStore'
+import { getResultDetailQueryOptions } from './results/useResultDetail'
 
 type MyPageViewState = 'diagnosis_routine' | 'diagnosis_only' | 'empty'
 
@@ -62,31 +63,45 @@ function shouldResetByError(error: ApiError | null): boolean {
 
 function toDateTimeDisplay(value: string): { date: string; time: string } {
   const parsed = new Date(value)
-  if (Number.isNaN(parsed.getTime())) {
-    return { date: 'YYYY.MM.DD', time: 'HH:MM' }
+  if (!Number.isNaN(parsed.getTime())) {
+    const year = parsed.getFullYear()
+    const month = String(parsed.getMonth() + 1).padStart(2, '0')
+    const day = String(parsed.getDate()).padStart(2, '0')
+    const hour = String(parsed.getHours()).padStart(2, '0')
+    const minute = String(parsed.getMinutes()).padStart(2, '0')
+
+    return {
+      date: `${year}.${month}.${day}`,
+      time: `${hour}:${minute}`,
+    }
   }
 
-  const year = parsed.getFullYear()
-  const month = String(parsed.getMonth() + 1).padStart(2, '0')
-  const day = String(parsed.getDate()).padStart(2, '0')
-  const hour = String(parsed.getHours()).padStart(2, '0')
-  const minute = String(parsed.getMinutes()).padStart(2, '0')
-
-  return {
-    date: `${year}.${month}.${day}`,
-    time: `${hour}:${minute}`,
+  const matchedDate = value.match(/^(\d{4})[./-](\d{2})[./-](\d{2})(?:\s+(\d{2}):(\d{2}))?$/)
+  if (matchedDate) {
+    const [, year, month, day, hour, minute] = matchedDate
+    return {
+      date: `${year}.${month}.${day}`,
+      time: hour && minute ? `${hour}:${minute}` : '--:--',
+    }
   }
+
+  return { date: 'YYYY.MM.DD', time: 'HH:MM' }
 }
 
 function toMonthDay(value: string): string {
   const parsed = new Date(value)
-  if (Number.isNaN(parsed.getTime())) {
-    return 'MM.DD'
+  if (!Number.isNaN(parsed.getTime())) {
+    const month = String(parsed.getMonth() + 1).padStart(2, '0')
+    const day = String(parsed.getDate()).padStart(2, '0')
+    return `${month}.${day}`
   }
 
-  const month = String(parsed.getMonth() + 1).padStart(2, '0')
-  const day = String(parsed.getDate()).padStart(2, '0')
-  return `${month}.${day}`
+  const matchedDate = value.match(/^\d{4}[./-](\d{2})[./-](\d{2})/)
+  if (matchedDate) {
+    return `${matchedDate[1]}.${matchedDate[2]}`
+  }
+
+  return 'MM.DD'
 }
 
 function MyPage() {
@@ -96,17 +111,12 @@ function MyPage() {
   const logout = useLogout()
 
   const latestResultId = useSurveyResultStore((state) => state.latestResultId)
-  const savedRoutineKey = useSurveyResultStore((state) => state.savedRoutineKey)
+  const savedResultId = useSurveyResultStore((state) => state.savedResultId)
   const savedRoutineName = useSurveyResultStore((state) => state.savedRoutineName)
   const clearLatestResultId = useSurveyResultStore((state) => state.clearLatestResultId)
   const clearSavedRoutine = useSurveyResultStore((state) => state.clearSavedRoutine)
 
-  const resultQuery = useQuery<ResultDetail, ApiError>({
-    queryKey: queryKeys.result(latestResultId ?? -1),
-    queryFn: () => apiClient.getResult(latestResultId!, { accessToken }),
-    enabled: isAuthenticated && latestResultId != null,
-    retry: false,
-  })
+  const resultQuery = useQuery<ResultDetail, ApiError>(getResultDetailQueryOptions(latestResultId ?? -1, accessToken))
 
   const shouldResetByResultError = shouldResetByError(resultQuery.error ?? null)
 
@@ -116,11 +126,11 @@ function MyPage() {
     clearSavedRoutine()
   }, [shouldResetByResultError, clearLatestResultId, clearSavedRoutine])
 
-  const hasSavedRoutine = savedRoutineKey !== null
+  const hasSavedRoutine = latestResultId != null && savedResultId === latestResultId
   const hasDiagnosis = resultQuery.data !== undefined || (latestResultId != null && !shouldResetByResultError)
 
   const routineQuery = useQuery<RoutineGroup, ApiError>({
-    queryKey: queryKeys.routineGroup(latestResultId ?? -1),
+    queryKey: queryKeys.resultRoutine(latestResultId ?? -1),
     queryFn: () => apiClient.getRoutineGroup(latestResultId!, { accessToken }),
     enabled: isAuthenticated && latestResultId != null && hasDiagnosis && hasSavedRoutine,
     retry: false,
@@ -140,18 +150,23 @@ function MyPage() {
     viewState = 'diagnosis_only'
   }
 
-  const summary = resultQuery.data?.resultSummary
-  const historyDateTime = summary ? toDateTimeDisplay(summary.createdAt) : null
+  const summary = resultQuery.data
+  const historyDateTime = summary ? toDateTimeDisplay(summary.diagnosedAt) : null
 
   const routineName = savedRoutineName ?? routineQuery.data?.title ?? '저장한 루틴'
   const routineDate = routineQuery.data ? toMonthDay(routineQuery.data.createdAt) : 'MM.DD'
   const routineDetailPath = routineQuery.data ? createRoutineDetailPath(routineQuery.data.routineGroupId) : null
 
   return (
-    <MobilePage header={<ResultPageHeader title="마이페이지" className="bg-neutral-50" />} mainClassName="bg-neutral-50 px-5 py-5">
+    <MobilePage
+      header={<PageHeader title="마이페이지" className="bg-neutral-50" />}
+      mainClassName="bg-neutral-50 px-5 py-5"
+    >
       <section className="space-y-5 pb-8">
         <SurfaceCard className="rounded-xl bg-common-0 p-4">
-          <p className="text-base font-semibold leading-[23.68px] text-neutral-800">{nickname ?? AUTH_UI_TEXT.defaultMockNickname}</p>
+          <p className="text-base font-semibold leading-[23.68px] text-neutral-800">
+            {nickname ?? AUTH_UI_TEXT.defaultMockNickname}
+          </p>
           <p className="text-xs leading-[16.32px] text-neutral-800">{MOCK_USER_EMAIL}</p>
         </SurfaceCard>
 
@@ -160,9 +175,13 @@ function MyPage() {
 
           {viewState === 'diagnosis_routine' ? (
             routineQuery.isLoading ? (
-              <p className="rounded-lg border border-neutral-150 px-3 py-6 text-center text-sm text-neutral-400">루틴 정보를 불러오는 중입니다.</p>
+              <p className="rounded-lg border border-neutral-150 px-3 py-6 text-center text-sm text-neutral-400">
+                루틴 정보를 불러오는 중입니다.
+              </p>
             ) : routineQuery.error ? (
-              <p className="rounded-lg border border-neutral-150 px-3 py-6 text-center text-sm text-neutral-400">루틴 정보를 불러오지 못했습니다.</p>
+              <p className="rounded-lg border border-neutral-150 px-3 py-6 text-center text-sm text-neutral-400">
+                루틴 정보를 불러오지 못했습니다.
+              </p>
             ) : (
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-2">
@@ -184,7 +203,10 @@ function MyPage() {
                 </div>
 
                 {routineDetailPath ? (
-                  <Link className="inline-flex items-center gap-0.5 px-2 py-1 text-xs font-medium leading-[16.32px] text-neutral-300" to={routineDetailPath}>
+                  <Link
+                    className="inline-flex items-center gap-0.5 px-2 py-1 text-xs font-medium leading-[16.32px] text-neutral-300"
+                    to={routineDetailPath}
+                  >
                     <span>전체보기</span>
                     <ChevronRight className="size-4" strokeWidth={1.8} />
                   </Link>
@@ -198,7 +220,10 @@ function MyPage() {
                   ? '저장된 루틴이 없어요.\n루틴 추천 결과를 저장해 보세요.'
                   : '피부 진단 받고 루틴을 저장해 보세요.'}
               </p>
-              <Link className={cn(buttonVariants({ variant: 'dark' }), 'h-auto rounded-lg px-4 py-1.5 text-sm')} to={APP_ROUTES.survey}>
+              <Link
+                className={cn(buttonVariants({ variant: 'dark' }), 'h-auto rounded-lg px-4 py-1.5 text-sm')}
+                to={APP_ROUTES.survey}
+              >
                 피부 진단하기
               </Link>
             </div>
@@ -210,28 +235,39 @@ function MyPage() {
 
           {viewState === 'empty' ? (
             <div className="space-y-4 rounded-lg border border-neutral-150 px-2.5 py-6 text-center">
-              <p className="whitespace-pre-line text-sm leading-[20.44px] text-neutral-400">진단 이력이 없어요.\n피부 진단을 시작해 보세요.</p>
-              <Link className={cn(buttonVariants({ variant: 'dark' }), 'h-auto rounded-lg px-4 py-1.5 text-sm')} to={APP_ROUTES.survey}>
+              <p className="whitespace-pre-line text-sm leading-[20.44px] text-neutral-400">
+                진단 이력이 없어요.\n피부 진단을 시작해 보세요.
+              </p>
+              <Link
+                className={cn(buttonVariants({ variant: 'dark' }), 'h-auto rounded-lg px-4 py-1.5 text-sm')}
+                to={APP_ROUTES.survey}
+              >
                 피부 진단하기
               </Link>
             </div>
           ) : resultQuery.isLoading ? (
-            <p className="rounded-lg border border-neutral-150 px-3 py-6 text-center text-sm text-neutral-400">진단 이력을 불러오는 중입니다.</p>
+            <p className="rounded-lg border border-neutral-150 px-3 py-6 text-center text-sm text-neutral-400">
+              진단 이력을 불러오는 중입니다.
+            </p>
           ) : resultQuery.error ? (
-            <p className="rounded-lg border border-neutral-150 px-3 py-6 text-center text-sm text-neutral-400">진단 이력을 불러오지 못했습니다.</p>
+            <p className="rounded-lg border border-neutral-150 px-3 py-6 text-center text-sm text-neutral-400">
+              진단 이력을 불러오지 못했습니다.
+            </p>
           ) : summary && historyDateTime ? (
             <ul>
               <HistoryRow
                 date={historyDateTime.date}
-                resultDetailPath={createResultDetailPath(summary.resultId)}
+                resultDetailPath={latestResultId != null ? createResultDetailPath(latestResultId) : undefined}
                 time={historyDateTime.time}
-                title={summary.title}
+                title={summary.typeName}
               />
               <HistoryRow date="YYYY.MM.DD" time="HH:MM" title={PLACEHOLDER_HISTORY_TITLE} />
               <HistoryRow date="YYYY.MM.DD" time="HH:MM" title={PLACEHOLDER_HISTORY_TITLE} />
             </ul>
           ) : (
-            <p className="rounded-lg border border-neutral-150 px-3 py-6 text-center text-sm text-neutral-400">진단 이력을 불러오지 못했습니다.</p>
+            <p className="rounded-lg border border-neutral-150 px-3 py-6 text-center text-sm text-neutral-400">
+              진단 이력을 불러오지 못했습니다.
+            </p>
           )}
         </SurfaceCard>
 
@@ -245,7 +281,9 @@ function MyPage() {
 
         <div className="space-y-2 py-5">
           <p className="text-sm font-medium leading-[20.44px] text-neutral-900">회원 탈퇴</p>
-          <p className="text-xs font-medium leading-[16.32px] text-neutral-400">탈퇴하면 모든 데이터가 삭제되며 복구할 수 없습니다.</p>
+          <p className="text-xs font-medium leading-[16.32px] text-neutral-400">
+            탈퇴하면 모든 데이터가 삭제되며 복구할 수 없습니다.
+          </p>
           <button
             className="inline-flex items-center gap-0.5 px-2 py-1 text-xs font-medium leading-[16.32px] text-red-400 opacity-70 disabled:cursor-not-allowed"
             disabled
