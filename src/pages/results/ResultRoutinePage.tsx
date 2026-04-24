@@ -20,6 +20,7 @@ import { createResultHeaderViewModelFromSummary } from './resultViewModel'
 import { getRoutineStepPreset, type RoutineTabId } from './routineStepPresets'
 import { useRoutineStackLayout } from './useRoutineStackLayout'
 import { useScrollCollapse } from '../../hooks/useScrollCollapse'
+import { useWindowSnapToElement } from '../../hooks/useWindowSnapToElement'
 import { useResultDetail } from './useResultDetail'
 import { useResultRoutine } from './useResultRoutine'
 
@@ -65,7 +66,8 @@ const ROUTINE_TAB_ITEMS = [
 const HEADER_HEIGHT_PX = 48
 const CARD_PEEK_HEIGHT_PX = 84
 const STACK_CARD_FLOW_GAP_PX = 20
-const STACK_CTA_GAP_PX = 20
+const WINDOW_SNAP_TRIGGER_PX = 80
+const FOOTER_SAFE_AREA_PADDING = 'calc(16px + env(safe-area-inset-bottom))'
 
 interface RoutineStepCardProps {
   stepNumber: number
@@ -150,19 +152,25 @@ function ResultRoutinePage() {
   const stackLayoutKey = `${skinResultId}:${activeTabId}:${cardCount}`
 
   const tabBarContainerRef = useRef<HTMLDivElement>(null)
+  const whiteShellRef = useRef<HTMLDivElement>(null)
   const whiteContainerRef = useRef<HTMLDivElement>(null)
   const [tabBarHeight, setTabBarHeight] = useState(0)
   const { ref: whiteBoxSentinelRef, isCollapsed: isHeaderScrolled } = useScrollCollapse<HTMLDivElement>(
-    '-48px 0px 0px 0px',
+    '-49px 0px 0px 0px',
   )
   const effectiveHeaderHeight = HEADER_HEIGHT_PX + tabBarHeight
 
-  const { trackRef, ctaRef, registerCardRef, metrics, progress, phase, cardOffsets, ctaOffset } = useRoutineStackLayout({
+  useWindowSnapToElement({
+    targetRef: whiteShellRef,
+    stickyOffset: HEADER_HEIGHT_PX,
+    triggerThreshold: WINDOW_SNAP_TRIGGER_PX,
+  })
+
+  const { trackRef, registerCardRef, metrics, progress, phase, cardOffsets } = useRoutineStackLayout({
     cardCount,
     headerHeight: effectiveHeaderHeight,
     cardPeekHeight: CARD_PEEK_HEIGHT_PX,
     cardFlowGap: STACK_CARD_FLOW_GAP_PX,
-    ctaGap: STACK_CTA_GAP_PX,
     resetKey: stackLayoutKey,
     scrollContainerRef: whiteContainerRef,
   })
@@ -172,6 +180,12 @@ function ResultRoutinePage() {
       notify.dismiss(ROUTINE_SAVED_TOAST_ID)
     }
   }, [])
+
+  useEffect(() => {
+    if (!isHeaderScrolled && whiteContainerRef.current) {
+      whiteContainerRef.current.scrollTop = 0
+    }
+  }, [isHeaderScrolled])
 
   useLayoutEffect(() => {
     const el = tabBarContainerRef.current
@@ -276,14 +290,6 @@ function ResultRoutinePage() {
     }
   }
 
-  function getAnimatedCtaStyle(): CSSProperties {
-    return {
-      top: metrics.collapsedCtaTop,
-      transform: `translateY(${ctaOffset * (1 - progress)}px)`,
-      zIndex: cardCount + 2,
-    }
-  }
-
   const routineAction = !isRoutineSaved ? (
     <button className={SAVE_ROUTINE_BUTTON_CLASS} onClick={handleOpenSaveSheet} type="button">
       {ROUTINE_PAGE_COPY.saveRoutine}
@@ -296,77 +302,88 @@ function ResultRoutinePage() {
 
   return (
     <>
-      <MobilePage header={<ResultPageHeader isScrolled={isHeaderScrolled} title={ROUTINE_PAGE_COPY.title} />}>
+      <MobilePage
+        header={<ResultPageHeader isScrolled={isHeaderScrolled} title={ROUTINE_PAGE_COPY.title} />}
+      >
         <section className="space-y-0">
           <ResultTopSection header={header} intro={ROUTINE_PAGE_COPY.intro} skinResultId={skinResultId} />
-          <div ref={whiteBoxSentinelRef} aria-hidden className="h-0" />
+          <div ref={whiteBoxSentinelRef} aria-hidden className="h-px" />
 
           <div
-            ref={whiteContainerRef}
-            className="-mx-4 sticky top-12 h-[calc(100dvh-48px)] overflow-y-auto bg-common-0"
+            ref={whiteShellRef}
+            className="-mx-4 sticky top-12 h-[calc(100dvh-48px)] bg-common-0"
           >
-            <div ref={tabBarContainerRef} className="sticky top-0 z-[9] bg-common-0 px-4">
-              <ResultTabBar
-                activeTabId={activeTabId}
-                items={ROUTINE_TAB_ITEMS}
-                mode="equal"
-                onChange={(tabId) => setActiveTabId(tabId as RoutineTabId)}
-              />
-            </div>
-
-            <section className="mt-5 px-4 pb-10">
-              <div
-                className="relative isolate z-0"
-                data-stack-phase={isStackReady ? phase : 'stacking'}
-                ref={trackRef}
-                style={isStackReady ? { height: metrics.trackHeight } : undefined}
-              >
-                {isStackReady ? (
-                  <div className="sticky isolate z-0 overflow-visible" style={{ top: tabBarHeight, height: metrics.stickyHeight }}>
-                    <div className="relative overflow-visible" style={{ height: metrics.stickyHeight }}>
-                      {sortedProducts.map((product, index) => (
-                        <div
-                          className="absolute inset-x-0 will-change-transform"
-                          key={`${product.productId}-${product.sortOrder}`}
-                          ref={registerCardRef(index)}
-                          style={getAnimatedCardStyle(index)}
-                        >
-                          <RoutineStepCard
-                            product={product}
-                            stepIndex={index}
-                            stepNumber={index + 1}
-                            tabId={activeTabId}
-                          />
-                        </div>
-                      ))}
-
-                      <div
-                        className="absolute inset-x-0 bg-common-0 will-change-transform"
-                        ref={ctaRef}
-                        style={getAnimatedCtaStyle()}
-                      >
-                        {routineAction}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-5">
-                    {sortedProducts.map((product, index) => (
-                      <div key={`${product.productId}-${product.sortOrder}`} ref={registerCardRef(index)}>
-                        <RoutineStepCard
-                          product={product}
-                          stepIndex={index}
-                          stepNumber={index + 1}
-                          tabId={activeTabId}
-                        />
-                      </div>
-                    ))}
-
-                    <div ref={ctaRef}>{routineAction}</div>
-                  </div>
-                )}
+            <div className="flex h-full min-h-0 flex-col">
+              <div ref={tabBarContainerRef} className="shrink-0 bg-common-0 px-4">
+                <ResultTabBar
+                  activeTabId={activeTabId}
+                  items={ROUTINE_TAB_ITEMS}
+                  mode="equal"
+                  onChange={(tabId) => setActiveTabId(tabId as RoutineTabId)}
+                />
               </div>
-            </section>
+
+              <div
+                ref={whiteContainerRef}
+                className={cn(
+                  'min-h-0 flex-1 bg-common-0 hide-scrollbar',
+                  isHeaderScrolled ? 'overflow-y-auto' : 'overflow-y-hidden',
+                )}
+              >
+                <section className="px-4 pb-10 pt-5">
+                  <div
+                    className="relative isolate z-0"
+                    data-stack-phase={isStackReady ? phase : 'stacking'}
+                    ref={trackRef}
+                    style={isStackReady ? { height: metrics.trackHeight + 200 } : undefined}
+                  >
+                    {isStackReady ? (
+                      <div className="sticky isolate z-0 overflow-visible" style={{ top: 20, height: metrics.stickyHeight }}>
+                        <div className="relative overflow-visible" style={{ height: metrics.stickyHeight }}>
+                          {sortedProducts.map((product, index) => (
+                            <div
+                              className="absolute inset-x-0 will-change-transform"
+                              key={`${product.productId}-${product.sortOrder}`}
+                              ref={registerCardRef(index)}
+                              style={getAnimatedCardStyle(index)}
+                            >
+                              <RoutineStepCard
+                                product={product}
+                                stepIndex={index}
+                                stepNumber={index + 1}
+                                tabId={activeTabId}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-5">
+                        {sortedProducts.map((product, index) => (
+                          <div key={`${product.productId}-${product.sortOrder}`} ref={registerCardRef(index)}>
+                            <RoutineStepCard
+                              product={product}
+                              stepIndex={index}
+                              stepNumber={index + 1}
+                              tabId={activeTabId}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </section>
+              </div>
+
+              {isHeaderScrolled ? (
+                <div
+                  className="shrink-0 border-t border-neutral-100 bg-common-0 px-4 pt-3"
+                  style={{ paddingBottom: FOOTER_SAFE_AREA_PADDING }}
+                >
+                  {routineAction}
+                </div>
+              ) : null}
+            </div>
           </div>
         </section>
       </MobilePage>

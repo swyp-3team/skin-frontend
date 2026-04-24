@@ -26,14 +26,14 @@ function ResultPageHeader({
     <header
       className={cn(
         ROOT_CLASS,
-        isDarkTone ? 'bg-gradient-to-b  from-neutral-800/90 via-neutral-800/60 via-40% to-neutral-800/15' : isScrolled ? 'bg-common-0' : 'bg-primary-150',
+        isDarkTone && !isScrolled ? 'bg-gradient-to-b from-neutral-800/90 via-neutral-800/60 via-40% to-neutral-800/15' : isScrolled ? 'bg-common-0' : 'bg-primary-150',
         className,
       )}
     >
-      <h1 className={cn(TITLE_CLASS, isDarkTone ? 'text-common-0' : 'text-neutral-800', hideTitle && 'invisible')}>
+      <h1 className={cn(TITLE_CLASS, isDarkTone && !isScrolled ? 'text-common-0' : 'text-neutral-800', hideTitle && 'invisible')}>
         {title}
       </h1>
-      <NavMenuDialog triggerClassName={isDarkTone ? '[&>img]:brightness-0 [&>img]:invert' : undefined} />
+      <NavMenuDialog triggerClassName={isDarkTone && !isScrolled ? '[&>img]:brightness-0 [&>img]:invert' : undefined} />
     </header>
   )
 }

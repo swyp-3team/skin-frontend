@@ -58,8 +58,8 @@ function ResultOverviewScreen({
   const isPreview = mode === 'preview'
 
   return (
-    <section className="relative w-full overflow-hidden bg-neutral-800">
-      <section className="px-7 pb-10 pt-8 text-common-0">
+    <section className="relative w-full overflow-hidden bg-common-0">
+      <section className="bg-neutral-800 px-7 pb-10 pt-8 text-common-0">
         <div className="flex flex-col items-center gap-3 text-center">
           {viewModel.top.diagnosedDate ? (
             <span className="inline-flex items-center rounded-full bg-neutral-600 px-2 py-1 text-[11px] leading-[14.3px] text-neutral-200">
@@ -76,13 +76,13 @@ function ResultOverviewScreen({
             src={viewModel.top.imageUrl}
           />
 
-          <p className="w-full text-[15px] leading-[22.2px] text-common-0">{viewModel.top.summary}</p>
+          <p className="px-5 w-full text-[15px] leading-[22.2px] text-common-0">{viewModel.top.summary}</p>
         </div>
       </section>
 
-      <div className="h-16 bg-gradient-to-b from-neutral-800 via-neutral-800/70 to-transparent" />
+      <div className="h-20 bg-gradient-to-b from-neutral-800 via-neutral-800/70 to-transparent" />
 
-      <section className="relative -mt-6 rounded-t-2xl bg-common-0 px-4 pb-12 pt-6 text-neutral-800">
+      <section className="relative -mt-20 mx-3 rounded-t-2xl bg-common-0 px-4 pb-12 pt-6 text-neutral-800">
         <div className="space-y-10">
           <section className="space-y-6">
             <h2 className="whitespace-pre-line text-[20px] font-bold leading-[27.6px] text-neutral-800">
@@ -125,28 +125,26 @@ function ResultOverviewScreen({
                 {viewModel.ingredients.cards.slice(0, 3).map((card) => (
                   <article
                     className={cn(
-                      'w-[149px] rounded-lg p-3',
-                      card.isPrimary ? 'bg-primary-300 text-neutral-800' : 'bg-neutral-600 text-common-0',
+                      'h-[170px] w-[149px] rounded-lg',
+                      card.isPrimary
+                        ? 'flex flex-col justify-between p-3 bg-primary-300 text-neutral-800'
+                        : 'flex flex-col gap-1 px-2 py-3 bg-neutral-600 text-common-0',
                     )}
                     key={`${card.rank}-${card.name}`}
                   >
-                    <p
-                      className={cn(
-                        'text-xs font-medium leading-[16.32px]',
-                        card.isPrimary ? 'text-neutral-700' : 'text-neutral-200',
-                      )}
-                    >
-                      {String(card.rank).padStart(2, '0')}
-                    </p>
-                    <p className="mt-1 text-base font-semibold leading-[23.68px]">{card.name}</p>
-                    <p
-                      className={cn(
-                        'mt-4 text-[11px] leading-[15.4px]',
-                        card.isPrimary ? 'text-neutral-700' : 'text-neutral-100',
-                      )}
-                    >
-                      {card.description}
-                    </p>
+                    {card.isPrimary ? (
+                      <>
+                        <p className="text-base font-semibold leading-[23.68px]">{card.name}</p>
+                        <p className="text-[10px] leading-[14px] text-neutral-700">{card.description}</p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-xs font-medium leading-[16.32px] text-neutral-200">
+                          {String(card.rank).padStart(2, '0')}
+                        </p>
+                        <p className="text-base font-semibold leading-[23.68px]">{card.name}</p>
+                      </>
+                    )}
                   </article>
                 ))}
               </div>

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
+import { cn } from '../../lib/utils'
 import { createProductDetailPath } from '../../app/routes'
 import type { ResultProductItem } from '../../api/types'
 import AlertMessage from '../../components/common/AlertMessage'
@@ -58,8 +59,9 @@ function ResultProductsPage() {
   const skinResultId = Number(id)
   const [activeTabId, setActiveTabId] = useState<ResultProductTabId>('ALL')
   const sentinelRef = useRef<HTMLDivElement | null>(null)
+  const containerRef = useRef<HTMLDivElement | null>(null)
   const { ref: whiteBoxSentinelRef, isCollapsed: isHeaderScrolled } = useScrollCollapse<HTMLDivElement>(
-    '-48px 0px 0px 0px',
+    '-49px 0px 0px 0px',
   )
 
   const { data: detail, isLoading: isDetailLoading, error: detailError } = useResultDetail()
@@ -95,6 +97,12 @@ function ResultProductsPage() {
     observer.observe(sentinel)
     return () => observer.disconnect()
   }, [fetchNextPage, hasNextPage, isFetchingNextPage])
+
+  useEffect(() => {
+    if (!isHeaderScrolled && containerRef.current) {
+      containerRef.current.scrollTop = 0
+    }
+  }, [isHeaderScrolled])
 
   if (!id || Number.isNaN(skinResultId)) {
     return (
@@ -134,9 +142,9 @@ function ResultProductsPage() {
     <MobilePage header={<ResultPageHeader isScrolled={isHeaderScrolled} title={PRODUCTS_PAGE_COPY.title} />}>
       <section className="space-y-0">
         <ResultTopSection header={header} intro={PRODUCTS_PAGE_COPY.intro} skinResultId={skinResultId} />
-        <div ref={whiteBoxSentinelRef} aria-hidden className="h-0" />
+        <div ref={whiteBoxSentinelRef} aria-hidden className="h-px" />
 
-        <div className="-mx-4 sticky top-12 h-[calc(100dvh-48px)] overflow-y-auto bg-common-0">
+        <div ref={containerRef} className={cn('-mx-4 sticky top-12 h-[calc(100dvh-48px)] bg-common-0', isHeaderScrolled ? 'overflow-y-auto' : 'overflow-hidden')}>
           <div className="sticky top-0 z-[9] space-y-5 bg-common-0 px-4 pt-5">
             <div className="inline-flex w-full items-center gap-2 rounded-lg border border-neutral-150 bg-neutral-50/50 px-3 py-3 text-sm leading-[20.44px] text-neutral-300">
               <span aria-hidden className="text-base">⌕</span>

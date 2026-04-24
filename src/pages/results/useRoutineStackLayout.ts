@@ -6,8 +6,6 @@ interface RoutineStackMetrics {
   cardHeights: number[]
   naturalTops: number[]
   collapsedTops: number[]
-  naturalCtaTop: number
-  collapsedCtaTop: number
   stickyHeight: number
   trackHeight: number
   collapseDistance: number
@@ -19,7 +17,6 @@ interface UseRoutineStackLayoutParams {
   headerHeight: number
   cardPeekHeight: number
   cardFlowGap: number
-  ctaGap: number
   resetKey: string
   scrollContainerRef?: RefObject<HTMLDivElement | null>
 }
@@ -28,8 +25,6 @@ const EMPTY_METRICS: RoutineStackMetrics = {
   cardHeights: [],
   naturalTops: [],
   collapsedTops: [],
-  naturalCtaTop: 0,
-  collapsedCtaTop: 0,
   stickyHeight: 0,
   trackHeight: 0,
   collapseDistance: 0,
@@ -45,12 +40,10 @@ export function useRoutineStackLayout({
   headerHeight,
   cardPeekHeight,
   cardFlowGap,
-  ctaGap,
   resetKey,
   scrollContainerRef,
 }: UseRoutineStackLayoutParams) {
   const trackRef = useRef<HTMLDivElement | null>(null)
-  const ctaRef = useRef<HTMLDivElement | null>(null)
   const cardRefs = useRef<(HTMLDivElement | null)[]>([])
   const [metrics, setMetrics] = useState<RoutineStackMetrics>(EMPTY_METRICS)
   const [progress, setProgress] = useState(0)
@@ -71,9 +64,8 @@ export function useRoutineStackLayout({
     const cardHeights = cardRefs.current
       .slice(0, cardCount)
       .map((card) => Math.round(card?.getBoundingClientRect().height ?? 0))
-    const ctaHeight = Math.round(ctaRef.current?.getBoundingClientRect().height ?? 0)
 
-    if (cardHeights.some((height) => height <= 0) || ctaHeight <= 0) {
+    if (cardHeights.some((height) => height <= 0)) {
       setMetrics((previous) => (previous.isReady ? { ...previous, isReady: false } : previous))
       return
     }
@@ -92,24 +84,20 @@ export function useRoutineStackLayout({
       (maxHeight, cardHeight, index) => Math.max(maxHeight, collapsedTops[index] + cardHeight),
       0,
     )
-    const naturalCtaTop = naturalStackHeight + ctaGap
-    const collapsedCtaTop = collapsedStackHeight + ctaGap
-    const stickyHeight = collapsedCtaTop + ctaHeight
-    const trackHeight = naturalCtaTop + ctaHeight
+    const stickyHeight = collapsedStackHeight
+    const trackHeight = naturalStackHeight
     const collapseDistance = Math.max(trackHeight - stickyHeight, 0)
 
     setMetrics({
       cardHeights,
       naturalTops,
       collapsedTops,
-      naturalCtaTop,
-      collapsedCtaTop,
       stickyHeight,
       trackHeight,
       collapseDistance,
       isReady: true,
     })
-  }, [cardCount, cardFlowGap, cardPeekHeight, ctaGap])
+  }, [cardCount, cardFlowGap, cardPeekHeight])
 
   useLayoutEffect(() => {
     let frameId = 0
@@ -137,10 +125,6 @@ export function useRoutineStackLayout({
         observer.observe(card)
       }
     })
-
-    if (ctaRef.current) {
-      observer.observe(ctaRef.current)
-    }
 
     return () => {
       if (frameId !== 0) {
@@ -204,17 +188,14 @@ export function useRoutineStackLayout({
     () => metrics.naturalTops.map((naturalTop, index) => naturalTop - metrics.collapsedTops[index]),
     [metrics.collapsedTops, metrics.naturalTops],
   )
-  const ctaOffset = metrics.naturalCtaTop - metrics.collapsedCtaTop
   const phase: StackPhase = progress >= 0.999 ? 'released' : 'stacking'
 
   return {
     trackRef,
-    ctaRef,
     registerCardRef,
     metrics,
     progress,
     phase,
     cardOffsets,
-    ctaOffset,
   }
 }

@@ -24,7 +24,9 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git push:*)",
-      "Bash(npx eslint:*)"
+      "Bash(npx eslint:*)",
+      "Bash(grep -r \"scrollbar\" C:/Users/dayou/skin-web/dist/assets/*.css)",
+      "Bash(grep -o \"scrollbar[^}]*}\" C:/Users/dayou/skin-web/dist/assets/index-*.css)"
     ]
   }
 }
