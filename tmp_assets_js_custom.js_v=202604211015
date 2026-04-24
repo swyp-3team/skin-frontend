@@ -1,0 +1,485 @@
+(function() {
+	const Custom = {
+		heroKvIntro() {
+			const wrap = document.querySelector('.heroWrap .kv-wrap');
+			if (!wrap) return;
+
+			const lightOn = wrap.querySelector('.kv-img .light-on');
+
+			if (lightOn) {
+				lightOn.addEventListener(
+					'animationend',
+					(e) => {
+						if (e.animationName !== 'kv-hero-light-on') return;
+						wrap.classList.add('is-kv-ambient');
+					},
+					{ once: true }
+				);
+			}
+
+			const play = () => wrap.classList.add('is-kv-play');
+
+			requestAnimationFrame(() => {
+				requestAnimationFrame(() => {
+					setTimeout(play, 180);
+				});
+			});
+		},
+		processListSequence() {
+			const lists = Array.from(document.querySelectorAll('.recruitProcessWrap .process'));
+			if (!lists.length) return;
+
+			const bindSequence = (list) => {
+				const items = Array.from(list.querySelectorAll('.process-item'));
+				if (!items.length) return;
+
+				items.forEach((item) => {
+					item.style.opacity = '0';
+					item.style.transform = 'translateX(24px)';
+					item.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+				});
+
+				let played = false;
+				let timers = [];
+
+				const clearTimers = () => {
+					timers.forEach((timerId) => clearTimeout(timerId));
+					timers = [];
+				};
+
+				const resetItems = () => {
+					clearTimers();
+					played = false;
+					items.forEach((item) => {
+						item.style.opacity = '0';
+						item.style.transform = 'translateX(24px)';
+					});
+				};
+
+				const showItems = () => {
+					if (played) return;
+					played = true;
+
+					items.forEach((item, idx) => {
+						const timerId = setTimeout(() => {
+							item.style.opacity = '1';
+							item.style.transform = 'translateX(0)';
+						}, idx * 300);
+						timers.push(timerId);
+					});
+				};
+
+				const observer = new IntersectionObserver(([entry]) => {
+					if (entry.isIntersecting) {
+						showItems();
+					} else {
+						resetItems();
+					}
+				}, { threshold: 0.25 });
+
+				observer.observe(list);
+			};
+
+			lists.forEach(bindSequence);
+		},
+		benefitBoxReveal() {
+			const section = document.querySelector('.recruitingWrap.campus');
+			const box = section?.querySelector('.benefit-box');
+			if (!section || !box) return;
+
+			const svg = box.querySelector('svg');
+			const text = box.querySelector('div');
+			const pointSpan = text?.querySelector('span');
+			if (!svg || !text || !pointSpan) return;
+
+			let textTimer = null;
+			let blinkTimer = null;
+			let svgAnim = null;
+
+			const reset = () => {
+				if (textTimer) {
+					clearTimeout(textTimer);
+					textTimer = null;
+				}
+				if (blinkTimer) {
+					clearTimeout(blinkTimer);
+					blinkTimer = null;
+				}
+				if (svgAnim) {
+					svgAnim.cancel();
+					svgAnim = null;
+				}
+
+				box.classList.remove('is-after-blink');
+				svg.style.transformOrigin = '0 50%';
+				svg.style.opacity = '0';
+				svg.style.transform = 'scale(0)';
+				svg.style.transition = 'opacity 0.45s ease, transform 1s cubic-bezier(0.22, 1, 0.36, 1)';
+				text.style.opacity = '0';
+				text.style.transform = 'translateY(10px)';
+				text.style.transition = 'opacity 0.35s ease, transform 0.35s ease';
+			};
+
+			const play = () => {
+				if (svgAnim) {
+					svgAnim.cancel();
+					svgAnim = null;
+				}
+
+				svg.style.opacity = '1';
+				svg.style.transform = 'scale(1)';
+				svgAnim = svg.animate(
+					[
+						{ opacity: 0, transform: 'scale(0.68)' },
+						{ opacity: 1, transform: 'scale(1.08)', offset: 0.8 },
+						{ opacity: 1, transform: 'scale(1)' }
+					],
+					{
+						duration: 1100,
+						easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+						fill: 'forwards'
+					}
+				);
+
+				textTimer = setTimeout(() => {
+					text.style.opacity = '1';
+					text.style.transform = 'translateY(0)';
+					blinkTimer = setTimeout(() => {
+						box.classList.remove('is-after-blink');
+						void pointSpan.offsetWidth;
+						box.classList.add('is-after-blink');
+					}, 120);
+				}, 320);
+			};
+
+			reset();
+
+			const observer = new IntersectionObserver(([entry]) => {
+				if (entry.isIntersecting) {
+					play();
+				} else {
+					reset();
+				}
+			}, { threshold: 0.35 });
+
+			observer.observe(box);
+		},
+		introWrapMotion() {
+			const section = document.querySelector('.introWrap');
+			if (!section) return;
+
+			const applyState = (isPlaying) => {
+				section.classList.toggle('play-mo', isPlaying);
+			};
+
+			if (typeof IntersectionObserver === 'undefined') {
+				applyState(true);
+				return;
+			}
+
+			applyState(false);
+
+			const observer = new IntersectionObserver(
+				([entry]) => {
+					if (!entry) return;
+					applyState(entry.isIntersecting);
+				},
+				{ threshold: 0.45 }
+			);
+
+			observer.observe(section);
+		},
+		businessSlider() {
+			const slider = document.querySelector('.businessSlider');
+			if (!slider) return;
+
+			const updateEdgeDim = (s) => {
+				const slides = Array.from(s.slides || []);
+				slides.forEach((el) => el.classList.remove('is-edge-dim'));
+
+				const last = slides.length - 1;
+				if (last < 0) return;
+
+				// 요구사항 기반(5개 슬라이드 기준):
+				// - 처음이면 4/5, 5/5만 dim
+				// - 끝이면 1/5, 2/5만 dim
+				// - 그 외엔 1/5, 5/5만 dim
+				if (s.isBeginning) {
+					if (last >= 3) slides[last - 1].classList.add('is-edge-dim');
+					if (last >= 4) slides[last].classList.add('is-edge-dim');
+				} else if (s.isEnd) {
+					if (last >= 0) slides[0].classList.add('is-edge-dim');
+					if (last >= 1) slides[1].classList.add('is-edge-dim');
+				} else {
+					slides[0].classList.add('is-edge-dim');
+					slides[last].classList.add('is-edge-dim');
+				}
+			};
+
+			const swiper = new Swiper(slider, {
+				slidesPerView: 'auto',
+				spaceBetween: 8,
+				pagination: {
+					el: '.slider-pagination',
+					clickable: true,
+					type: 'bullets',
+				},
+				breakpoints: {
+					768: {
+						slidesPerView: 'auto',
+						spaceBetween: 20,
+					}
+				},
+				on: {
+					init: updateEdgeDim,
+					resize: updateEdgeDim,
+					slideChange: updateEdgeDim,
+				},
+			});
+			updateEdgeDim(swiper);
+		},
+		// talent interaction
+		talentInteraction() {
+			const section = document.querySelector('.talentWrap');
+			if (!section) return;
+
+			const gridItems = Array.from(section.querySelectorAll('.grid-item'));
+			const guide = section.querySelector('.talent-content .guide-wrap');
+			const textWrap = section.querySelector('.talent-content .talent-text');
+			if (!gridItems.length || !textWrap) return;
+
+			const textItems = Array.from(textWrap.children).filter((el) => el.nodeType === 1);
+
+			const setActive = (talentKey) => {
+				section.classList.add('is-talent-selected');
+				if (guide) guide.hidden = true;
+
+				gridItems.forEach((item) => {
+					const cube = item.querySelector('.cube');
+					const isActive = item.dataset.talent === talentKey;
+					item.classList.toggle('is-active', isActive);
+					if (cube) cube.classList.toggle('is-active', isActive);
+				});
+
+				textWrap.classList.add('is-visible');
+				textItems.forEach((el) => {
+					const isMatch = el.classList.contains(talentKey);
+					el.classList.toggle('is-active', isMatch);
+					if (isMatch) {
+						// re-trigger CSS animation on repeated clicks
+						el.classList.remove('is-anim');
+						void el.offsetWidth;
+						el.classList.add('is-anim');
+					} else {
+						el.classList.remove('is-anim');
+					}
+				});
+			};
+
+			gridItems.forEach((item) => {
+				item.setAttribute('role', 'button');
+				item.setAttribute('tabindex', '0');
+
+				const activateFromItem = () => {
+					const key = item.dataset.talent;
+					if (!key) return;
+					setActive(key);
+				};
+
+				item.addEventListener('click', activateFromItem);
+				item.addEventListener('keydown', (e) => {
+					if (e.key === 'Enter' || e.key === ' ') {
+						e.preventDefault();
+						activateFromItem();
+					}
+				});
+			});
+		},
+		// interview spread motion
+		interviewSpreadMotion() {
+			const section = document.querySelector('.interviewWrap');
+			const list = section?.querySelector('.interview');
+			if (!section || !list) return;
+
+			const items = Array.from(list.querySelectorAll('.interview-card'));
+			if (!items.length) return;
+
+			let played = false;
+			let cleanups = [];
+			let holdTimer = null;
+
+			const isMobile = () => window.matchMedia('(max-width: 768px)').matches;
+
+			// 중앙(겹침/덱) 홀드 + 펼침 타이밍
+			// 모바일에서 조금 짧게/가볍게
+			const holdMsDesktop = 350;
+			const spreadMsDesktop = 750;
+			const holdMsMobile = 280;
+			const spreadMsMobile = 700;
+
+			// 중앙에 "덱처럼" 겹쳐 보이기 위한 스택값
+			// baseX: 각 카드가 중앙으로 모이기 위한 이동량(현 레이아웃 기준 튜닝값)
+			// deckX/Y/R/S: 캡처처럼 살짝 펼쳐진 덱(오른쪽으로 fan) 느낌
+			const baseXDesktop = [400, 170, -170, -400];
+			const baseXMobile = [80, -60, 80, -60];
+
+			const deckXDesktop = [0, 16, 28, 38];
+			const deckXMobile = [0, 10, 18, 26];
+			const deckYDesktop = [0, 2, 5, 9];
+			const deckYMobile = [0, 2, 4, 7];
+			const deckR = [0, 3, 6, 9];
+			const deckS = [1.0, 0.995, 0.99, 0.985];
+			const baseScale = 0.92;
+			const baseY = 24;
+
+			const getGatherStack = () => {
+				const baseX = isMobile() ? baseXMobile : baseXDesktop;
+				const deckX = isMobile() ? deckXMobile : deckXDesktop;
+				const deckY = isMobile() ? deckYMobile : deckYDesktop;
+				return items.map((_, idx) => ({
+					x: (baseX[idx] ?? 0) + (deckX[idx] ?? 0),
+					y: baseY + (deckY[idx] ?? 0),
+					r: deckR[idx] ?? 0,
+					s: baseScale * (deckS[idx] ?? 1),
+				}));
+			};
+
+			const getHoldMs = () => (isMobile() ? holdMsMobile : holdMsDesktop);
+			const getSpreadMs = () => (isMobile() ? spreadMsMobile : spreadMsDesktop);
+
+			const finalTransforms = [
+				'rotate(-3.25deg) translateY(0)',
+				'rotate(0deg) translateY(0)',
+				'rotate(-3.25deg) translateY(0)',
+				'rotate(4.31deg) translateY(0)',
+			];
+
+			const reset = () => {
+				if (holdTimer) {
+					clearTimeout(holdTimer);
+					holdTimer = null;
+				}
+				played = false;
+				cleanups.forEach((fn) => fn());
+				cleanups = [];
+
+				const gatherStack = getGatherStack();
+
+				items.forEach((item, idx) => {
+					const stack = gatherStack[idx] ?? gatherStack[gatherStack.length - 1] ?? { x: 0, y: baseY, r: 0, s: baseScale };
+					item.style.willChange = 'transform, opacity, filter';
+					// 모인 상태(홀드)에서도 카드가 보이게
+					item.style.opacity = '1';
+					item.style.filter = 'blur(0px)';
+					item.style.transformOrigin = '50% 60%';
+					item.style.transform = `translate(${stack.x}px, ${stack.y}px) rotate(${stack.r}deg) scale(${stack.s})`;
+					item.style.transition = 'none';
+				});
+			};
+
+			const play = () => {
+				if (played) return;
+				played = true;
+
+				items.forEach((item, idx) => {
+					const spreadMs = getSpreadMs();
+					// 강제 reflow로 transition 적용 보장
+					void item.offsetWidth;
+					item.style.transition =
+						`transform ${spreadMs}ms cubic-bezier(0.22, 1, 0.36, 1), opacity 520ms ease, filter 520ms ease`;
+					item.style.opacity = '1';
+					item.style.filter = 'blur(0px)';
+					item.style.transform = finalTransforms[idx] ?? 'none';
+
+					const onEnd = (e) => {
+						if (e.propertyName !== 'transform') return;
+						item.removeEventListener('transitionend', onEnd);
+						// 인라인 제거해서 hover/is-active 등 기존 CSS transform을 그대로 사용
+						item.style.willChange = '';
+						item.style.transition = '';
+						item.style.opacity = '';
+						item.style.filter = '';
+						item.style.transformOrigin = '';
+						item.style.transform = '';
+					};
+					item.addEventListener('transitionend', onEnd);
+					cleanups.push(() => item.removeEventListener('transitionend', onEnd));
+				});
+			};
+
+			reset();
+
+			const observer = new IntersectionObserver(
+				([entry]) => {
+					if (!entry) return;
+					if (entry.isIntersecting) {
+						// 진입 시: 중앙에 모여서 잠깐 홀드 후 펼치기
+						reset();
+						holdTimer = setTimeout(() => {
+							holdTimer = null;
+							play();
+						}, getHoldMs());
+					} else {
+						reset();
+					}
+				},
+				{ threshold: 0.35 }
+			);
+
+			observer.observe(section);
+		},
+		initApplyDropdown() {
+			const boxes = document.querySelectorAll('.gnb-box');
+			if (!boxes.length) return;
+	
+			boxes.forEach((box) => {
+				const link = box.querySelector('.apply-link');
+				const dropdown = box.querySelector('.apply-dropdown');
+				if (!link || !dropdown) return;
+	
+				const open = () => {
+					link.classList.add('active');
+					dropdown.classList.add('active');
+				};
+	
+				const close = () => {
+					link.classList.remove('active');
+					dropdown.classList.remove('active');
+				};
+	
+				link.addEventListener('mouseenter', open);
+				dropdown.addEventListener('mouseleave', close);
+			});
+		}
+	};
+	Custom.floatingBtn = function () {
+		const btn = document.querySelector('.floating-wrap');
+		const trigger = document.querySelector('.introWrap.store_global');
+		if (!btn || !trigger) return;
+	
+		let triggerTop = trigger.offsetTop;
+	
+		const onScroll = () => {
+			btn.classList.toggle('is-visible', window.scrollY >= triggerTop);
+		};
+	
+		onScroll();
+		window.addEventListener('scroll', onScroll, { passive: true });
+		window.addEventListener('resize', () => {
+			triggerTop = trigger.offsetTop;
+			onScroll();
+		});
+	};
+	
+	$(document).ready(function() {
+		// Custom.heroKvIntro();
+		Custom.processListSequence();
+		Custom.benefitBoxReveal();
+		Custom.introWrapMotion();
+		Custom.floatingBtn();
+		Custom.businessSlider();
+		Custom.interviewSpreadMotion();
+		Custom.talentInteraction();
+		Custom.initApplyDropdown();
+	});
+})();

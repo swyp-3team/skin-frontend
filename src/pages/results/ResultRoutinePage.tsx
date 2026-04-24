@@ -26,11 +26,12 @@ import { useResultRoutine } from './useResultRoutine'
 type RoutineNameFieldState = 'placeholder' | 'focus' | 'typed'
 
 const ROUTINE_NAME_MAX_LENGTH = 10
-const ROUTINE_CARD_CLASS = 'flex flex-col gap-[15px] rounded-xl border border-neutral-100 bg-common-0 p-3'
+const ROUTINE_CARD_CLASS =
+  'flex flex-col gap-[15px] rounded-xl outline outline-1 -outline-offset-1 outline-neutral-100 bg-common-0 p-3'
 const STEP_BADGE_CLASS =
-  'inline-flex size-[22px] items-center justify-center rounded-lg bg-neutral-800 text-xs font-bold leading-[16.32px] text-neutral-50'
+  'inline-flex px-1.5 py-1 items-center size-[22px] justify-center rounded-[8px] bg-neutral-800 text-[12px] font-bold leading-[16.32px] text-neutral-50'
 const PRODUCT_CATEGORY_CHIP_CLASS =
-  'inline-flex items-center justify-center rounded bg-primary-50 px-1 py-0.5 text-[10px] font-medium leading-[13px] text-primary-500'
+  'inline-flex self-start items-center justify-center rounded bg-primary-50 px-1 py-0.5 text-[10px] font-medium leading-[13px] text-primary-500'
 const ROUTINE_PRODUCT_LINK_CLASS = 'inline-flex w-full items-center gap-3 bg-common-0 no-underline'
 const SAVE_ROUTINE_BUTTON_CLASS =
   'inline-flex w-full items-center justify-center rounded-lg border border-neutral-100 bg-common-0 px-6 py-3 text-base font-semibold leading-[23.68px] text-neutral-600'
@@ -87,12 +88,12 @@ function RoutineStepCard({ stepNumber, product }: RoutineStepCardProps) {
     <article className={ROUTINE_CARD_CLASS}>
       <div className="inline-flex items-center gap-2">
         <span className={STEP_BADGE_CLASS}>{stepNumber}</span>
-        <h3 className="text-base font-semibold leading-[23.68px] text-neutral-900">
+        <h3 className="text-base font-semibold leading-[23.68px] text-black">
           {ROUTINE_STEP_TITLE_BY_CATEGORY[product.category]}
         </h3>
       </div>
 
-      <p className="text-[13px] leading-[18.2px] text-neutral-800">{stepDescription}</p>
+      <p className="text-[13px] leading-[18.2px] text-black">{stepDescription}</p>
 
       <Link className={ROUTINE_PRODUCT_LINK_CLASS} to={createProductDetailPath(product.productId)}>
         <SafeImage

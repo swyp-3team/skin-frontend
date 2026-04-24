@@ -2,6 +2,10 @@ import { Drawer as DrawerPrimitive } from 'vaul'
 
 import { cn } from '@/lib/utils'
 
+const CENTERED_DRAWER_STYLE = {
+  left: 'calc(50% - (var(--removed-body-scroll-bar-size, 0px) / 2))',
+} as const
+
 function DrawerRoot({ ...props }: React.ComponentProps<typeof DrawerPrimitive.Root>) {
   return <DrawerPrimitive.Root data-slot="drawer" {...props} />
 }
@@ -28,7 +32,7 @@ function DrawerOverlay({ className, ...props }: React.ComponentProps<typeof Draw
   )
 }
 
-function DrawerContent({ className, children, ...props }: React.ComponentProps<typeof DrawerPrimitive.Content>) {
+function DrawerContent({ className, children, style, ...props }: React.ComponentProps<typeof DrawerPrimitive.Content>) {
   return (
     <DrawerPortal>
       <DrawerOverlay />
@@ -38,6 +42,7 @@ function DrawerContent({ className, children, ...props }: React.ComponentProps<t
           'fixed top-0 left-1/2 z-50 flex h-[100dvh] w-full max-w-[390px] -translate-x-1/2 flex-col bg-white outline-none',
           className,
         )}
+        style={{ ...CENTERED_DRAWER_STYLE, ...style }}
         {...props}
       >
         {children}
@@ -46,7 +51,7 @@ function DrawerContent({ className, children, ...props }: React.ComponentProps<t
   )
 }
 
-function DrawerContentBottom({ className, children, ...props }: React.ComponentProps<typeof DrawerPrimitive.Content>) {
+function DrawerContentBottom({ className, children, style, ...props }: React.ComponentProps<typeof DrawerPrimitive.Content>) {
   return (
     <DrawerPortal>
       <DrawerOverlay />
@@ -56,6 +61,7 @@ function DrawerContentBottom({ className, children, ...props }: React.ComponentP
           'fixed bottom-0 left-1/2 z-50 flex w-full max-w-[390px] -translate-x-1/2 flex-col rounded-t-[20px] bg-white outline-none shadow-[0px_2px_15px_rgba(13,15,12,0.20),0px_0px_40px_rgba(13,15,12,0.10)]',
           className,
         )}
+        style={{ ...CENTERED_DRAWER_STYLE, ...style }}
         {...props}
       >
         {children}
