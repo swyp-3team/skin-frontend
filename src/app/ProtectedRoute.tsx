@@ -11,7 +11,12 @@ interface ProtectedRouteProps {
 
 function ProtectedRoute({ redirectTo = APP_ROUTES.landing }: ProtectedRouteProps) {
   const isAuthenticated = useAuthStore(selectIsAuthenticated)
+  const authCheckCompleted = useAuthStore((state) => state.authCheckCompleted)
   const location = useLocation()
+
+  if (!authCheckCompleted) {
+    return null
+  }
 
   if (!isAuthenticated) {
     saveIntent({ type: 'return', returnTo: location.pathname })

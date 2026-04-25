@@ -2,16 +2,16 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useShallow } from 'zustand/react/shallow'
 
+import { apiClient } from '@/api'
 import { clearIntent, readIntent } from '@/auth/postLoginIntent'
 import { createResultDetailPath } from '@/app/routes'
-import { apiClient } from '@/api'
-import { Skeleton } from '@/components/ui/skeleton'
 import MobilePage from '@/components/MobilePage'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
+import { queryClient } from '@/lib/queryClient'
 import { useAuthStore } from '@/stores/authStore'
 import { useSurveyProgressStore } from '@/stores/surveyProgressStore'
 import { useSurveyResultStore } from '@/stores/surveyResultStore'
-import { queryClient } from '@/lib/queryClient'
 
 function AuthCallbackSkeleton() {
   return (
@@ -47,42 +47,50 @@ function AuthCallbackPage() {
   const [hasError, setHasError] = useState(false)
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-
-  const { setTokens, setUser } = useAuthStore(
-    useShallow((s) => ({ setTokens: s.setTokens, setUser: s.setUser })),
-  )
-  const previewToken = useSurveyProgressStore((s) => s.previewToken)
-  const clearPreviewResult = useSurveyProgressStore((s) => s.clearPreviewResult)
-  const { setLatestResultId, clearSavedRoutine } = useSurveyResultStore(
-    useShallow((s) => ({ setLatestResultId: s.setLatestResultId, clearSavedRoutine: s.clearSavedRoutine })),
-  )
-
-  // 엄격 모드 이중 실행 방지
   const handledRef = useRef(false)
+
+  const { setTokens, setUser, clearAuth, setAuthCheckCompleted } = useAuthStore(
+    useShallow((state) => ({
+      setTokens: state.setTokens,
+      setUser: state.setUser,
+      clearAuth: state.clearAuth,
+      setAuthCheckCompleted: state.setAuthCheckCompleted,
+    })),
+  )
+
+  const previewToken = useSurveyProgressStore((state) => state.previewToken)
+  const clearPreviewResult = useSurveyProgressStore((state) => state.clearPreviewResult)
+  const { setLatestResultId, clearSavedRoutine } = useSurveyResultStore(
+    useShallow((state) => ({
+      setLatestResultId: state.setLatestResultId,
+      clearSavedRoutine: state.clearSavedRoutine,
+    })),
+  )
 
   useEffect(() => {
     if (handledRef.current) return
     handledRef.current = true
 
-    async function handleCallback() {
+    const handleCallback = async () => {
       const accessToken = searchParams.get('accessToken')
       const refreshToken = searchParams.get('refreshToken')
-
-      if (!accessToken || !refreshToken) {
-        setHasError(true)
-        return
-      }
+      const hasQueryTokens = Boolean(accessToken && refreshToken)
 
       try {
-        setTokens(accessToken, refreshToken)
-        const user = await apiClient.getMe(accessToken)
+        // 토큰 쿼리 방식(기존)과 HttpOnly 쿠키 방식(임시)을 모두 허용한다.
+        if (accessToken && refreshToken) {
+          setTokens(accessToken, refreshToken)
+        }
+
+        const user = await apiClient.getMe(accessToken ?? undefined)
         setUser(user)
+        setAuthCheckCompleted(true)
         queryClient.invalidateQueries()
       } catch {
-        // getMe 실패 시 토큰은 유지하고 홈으로 이동
-        const intent = readIntent()
+        clearAuth()
+        setAuthCheckCompleted(true)
         clearIntent()
-        navigate(intent?.type === 'return' ? intent.returnTo : '/', { replace: true })
+        setHasError(true)
         return
       }
 
@@ -91,13 +99,15 @@ function AuthCallbackPage() {
 
       if (intent?.type === 'promote-preview' && previewToken) {
         try {
-          const result = await apiClient.submitSurveyResult({ previewToken }, { accessToken })
+          const result = await apiClient.submitSurveyResult(
+            { previewToken },
+            hasQueryTokens && accessToken ? { accessToken } : {},
+          )
           setLatestResultId(result.resultId)
           clearPreviewResult()
           clearSavedRoutine()
           navigate(createResultDetailPath(result.resultId), { replace: true })
         } catch {
-          // 승격 실패 시 홈으로
           navigate('/', { replace: true })
         }
         return
@@ -112,7 +122,18 @@ function AuthCallbackPage() {
     }
 
     handleCallback()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [
+    clearAuth,
+    clearPreviewResult,
+    clearSavedRoutine,
+    navigate,
+    previewToken,
+    searchParams,
+    setAuthCheckCompleted,
+    setLatestResultId,
+    setTokens,
+    setUser,
+  ])
 
   if (hasError) {
     return <AuthCallbackError onGoHome={() => navigate('/', { replace: true })} />

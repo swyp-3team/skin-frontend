@@ -163,7 +163,7 @@ async function requestApi<T>(url: string, init: RequestInit, token?: string): Pr
 
   let response: Response
   try {
-    response = await fetch(url, { ...init, headers })
+    response = await fetch(url, { ...init, headers, credentials: 'include' })
   } catch (error) {
     throw new ApiError('네트워크 요청에 실패했습니다. API 연결 상태를 확인해 주세요.', 0, 'NETWORK_ERROR', error)
   }
@@ -726,7 +726,7 @@ export function createLiveApiClient(baseUrl: string): ApiClient {
       return requestApi<ProductDetail>(`${baseUrl}/products/${productId}`, { method: 'GET' })
     },
 
-    async getMe(accessToken: string): Promise<AuthUser> {
+    async getMe(accessToken?: string): Promise<AuthUser> {
       const body = await requestApi<unknown>(`${baseUrl}/auth/me`, { method: 'GET' }, accessToken)
       return unwrapMeResponse(body)
     },
@@ -738,6 +738,7 @@ export function createLiveApiClient(baseUrl: string): ApiClient {
         response = await fetch(`${baseUrl}/auth/refresh`, {
           method: 'POST',
           headers,
+          credentials: 'include',
           body: JSON.stringify({ refreshToken }),
         })
       } catch (error) {
@@ -758,7 +759,7 @@ export function createLiveApiClient(baseUrl: string): ApiClient {
       return normalizeRefreshResponse(body)
     },
 
-    async logout(accessToken: string): Promise<void> {
+    async logout(accessToken?: string): Promise<void> {
       await requestApi<null>(`${baseUrl}/auth/logout`, { method: 'POST' }, accessToken)
     },
   }

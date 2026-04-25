@@ -21,7 +21,7 @@ export interface ApiClient {
   getProductDetail(productId: number): Promise<ProductDetail>
 
   // 인증 메서드
-  getMe(accessToken: string): Promise<AuthUser>
+  getMe(accessToken?: string): Promise<AuthUser>
   refreshAccessToken(refreshToken: string): Promise<{ accessToken: string; refreshToken?: string }>
-  logout(accessToken: string): Promise<void>
+  logout(accessToken?: string): Promise<void>
 }

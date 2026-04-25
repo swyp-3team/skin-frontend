@@ -8,17 +8,19 @@ interface AuthStoreState {
   accessToken?: string
   refreshToken?: string
   user?: AuthUser
+  authCheckCompleted: boolean
 }
 
 interface AuthStoreActions {
   setTokens: (accessToken: string, refreshToken: string) => void
   setUser: (user: AuthUser) => void
+  setAuthCheckCompleted: (completed: boolean) => void
   clearAuth: () => void
 }
 
 export type AuthStore = AuthStoreState & AuthStoreActions
 
-export const selectIsAuthenticated = (state: AuthStoreState) => state.accessToken !== undefined
+export const selectIsAuthenticated = (state: AuthStoreState) => state.user !== undefined || state.accessToken !== undefined
 
 export const useAuthStore = create<AuthStore>()(
   persist(
@@ -26,14 +28,18 @@ export const useAuthStore = create<AuthStore>()(
       accessToken: undefined,
       refreshToken: undefined,
       user: undefined,
+      authCheckCompleted: false,
       setTokens: (accessToken, refreshToken) => {
         set({ accessToken, refreshToken })
       },
       setUser: (user) => {
         set({ user })
       },
+      setAuthCheckCompleted: (completed) => {
+        set({ authCheckCompleted: completed })
+      },
       clearAuth: () => {
-        set({ accessToken: undefined, refreshToken: undefined, user: undefined })
+        set({ accessToken: undefined, refreshToken: undefined, user: undefined, authCheckCompleted: true })
       },
     }),
     {

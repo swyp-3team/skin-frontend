@@ -628,7 +628,7 @@ export const mockApiClient: ApiClient = {
     return withDelay(product)
   },
 
-  async getMe(accessToken: string): Promise<AuthUser> {
+  async getMe(accessToken?: string): Promise<AuthUser> {
     void accessToken
     return withDelay({
       userId: 1,
@@ -643,7 +643,7 @@ export const mockApiClient: ApiClient = {
     return withDelay({ accessToken: 'mock-access-token-refreshed' })
   },
 
-  async logout(accessToken: string): Promise<void> {
+  async logout(accessToken?: string): Promise<void> {
     void accessToken
     return withDelay(undefined as unknown as void)
   },

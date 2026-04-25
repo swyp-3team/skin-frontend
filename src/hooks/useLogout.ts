@@ -18,8 +18,6 @@ export function useLogout() {
     queryClient.clear()
     clearLatestResultId()
     clearSavedRoutine()
-    if (token) {
-      apiClient.logout(token).catch(() => {})
-    }
+    apiClient.logout(token).catch(() => {})
   }
 }
