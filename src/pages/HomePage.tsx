@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 
 import { APP_ROUTES } from '../app/routes'
 import AlertMessage from '../components/common/AlertMessage'
+import PageHeader from '../components/common/PageHeader'
 import MobilePage from '../components/MobilePage'
 import { Button, buttonVariants } from '../components/ui/button'
 import { AUTH_UI_TEXT, isAuthRedirectState } from '../constants/auth'
@@ -60,25 +61,17 @@ function HomePage() {
   const logout = useLogout()
 
   return (
-    <MobilePage mainClassName="px-0">
+    <MobilePage className="bg-[#F2FAFA]" header={<PageHeader showLogo tone="light" />} mainClassName="px-0">
       <div className="flex flex-col pb-16">
-        <section className="px-5 pb-14 pt-24">
+        <section className="px-5 pb-14 pt-18">
           <div className="inline-flex items-center rounded-[4px] bg-primary-50 px-2 py-1">
             <span className="text-[12px] font-medium leading-[16.32px] text-primary-500">{HOME_CONTENT.hero.badge}</span>
           </div>
 
-          <h1 className="mt-5">
-            {HOME_CONTENT.hero.headlineLines.map((line, index) => (
-              <span
-                key={line}
-                className={cn(
-                  'block text-[24px] font-bold leading-[32.4px] text-neutral-800',
-                  index === 1 && 'text-primary-400',
-                )}
-              >
-                {line}
-              </span>
-            ))}
+          <h1 className="mt-5 flex flex-col gap-[5px]">
+            <span className="block text-[24px] font-bold leading-[32.4px] text-neutral-800">피부 고민을 입력하면</span>
+            <span className="block text-[24px] font-bold leading-[32.4px] text-primary-400">나에게 맞는</span>
+            <span className="block text-[24px] font-bold leading-[32.4px] text-neutral-800">성분과 루틴을 알려드려요</span>
           </h1>
 
           <p className="mt-5 whitespace-pre-line text-[15px] leading-[22.2px] text-neutral-600">
@@ -97,7 +90,7 @@ function HomePage() {
               buttonVariants({ variant: 'dark' }),
               'mt-8 h-12 w-full rounded-full px-6 py-3 text-center text-base font-medium shadow-[var(--shadow-cta)]',
             )}
-            to={APP_ROUTES.survey}
+            to={APP_ROUTES.surveySteps}
           >
             {HOME_CONTENT.hero.primaryCta}
           </Link>

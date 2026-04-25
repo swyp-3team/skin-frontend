@@ -7,7 +7,6 @@ import AlertMessage from '../../components/common/AlertMessage'
 import SafeImage from '../../components/common/SafeImage'
 import MobilePage from '../../components/MobilePage'
 import PageHeader from '../../components/common/PageHeader'
-import ResultTabBar from '../../components/results/ResultTabBar'
 import ResultTopSection from '../../components/results/ResultTopSection'
 import type { ResultProductTabId } from '../../components/results/types'
 import { useScrollCollapse } from '../../hooks/useScrollCollapse'
@@ -33,7 +32,7 @@ interface ResultProductGridCardProps {
 function ResultProductGridCard({ product }: ResultProductGridCardProps) {
   return (
     <Link className="flex flex-col gap-3" to={createProductDetailPath(product.productId)}>
-      <div className="overflow-hidden rounded bg-common-0">
+      <div className="overflow-hidden rounded h-[159px] w-[159px] bg-common-0">
         <SafeImage
           alt={product.name}
           className="aspect-square w-full object-cover"
@@ -68,6 +67,7 @@ function ResultProductsPage() {
   const {
     data: productsPages,
     isLoading: isProductsLoading,
+    isFetching: isProductsFetching,
     error: productsError,
     hasNextPage,
     isFetchingNextPage,
@@ -104,12 +104,6 @@ function ResultProductsPage() {
     }
   }, [isHeaderScrolled])
 
-  useEffect(() => {
-    if (containerRef.current) {
-      containerRef.current.scrollTop = 0
-    }
-  }, [activeTabId])
-
   if (!id || Number.isNaN(resultId)) {
     return (
       <MobilePage>
@@ -141,6 +135,7 @@ function ResultProductsPage() {
   }
 
   const allProducts = productsPages.pages.flatMap((page) => page.products)
+  const isTabSwitching = isProductsFetching && !isFetchingNextPage
 
   return (
     <MobilePage header={<PageHeader isScrolled={isHeaderScrolled} title={PRODUCTS_PAGE_COPY.title} />}>
@@ -151,27 +146,55 @@ function ResultProductsPage() {
         <div
           ref={containerRef}
           className={cn(
-            '-mx-4 sticky top-12 h-[calc(100dvh-48px)] bg-common-0',
+            '-mx-4 sticky top-12 h-[calc(100dvh-48px)] bg-common-0 hide-scrollbar',
             isHeaderScrolled ? 'overflow-y-auto' : 'overflow-hidden',
           )}
         >
-          <div className="sticky top-0 z-[9] space-y-5 bg-common-0 px-4 pt-5">
-            <div className="inline-flex w-full items-center gap-2 rounded-lg border border-neutral-150 bg-neutral-50/50 px-3 py-3 text-sm leading-[20.44px] text-neutral-300">
+          <div className="sticky top-0 z-9 space-y-5 bg-gradient-to-b from-common-0 via-common-0 to-transparent px-4 pt-5">
+            <div className="inline-flex w-full items-center gap-2 rounded-lg border border-neutral-150 bg-neutral-50/50 px-3 py-3 text-sm font-light leading-[20.44px] text-neutral-300">
               <span aria-hidden className="text-base">
                 ⌕
               </span>
               <span>{PRODUCTS_PAGE_COPY.searchPlaceholder}</span>
             </div>
 
-            <ResultTabBar
-              activeTabId={activeTabId}
-              items={RESULT_PRODUCT_TABS}
-              mode="scroll"
-              onChange={(tabId) => setActiveTabId(tabId as ResultProductTabId)}
-            />
+            <div style={{width: '100%', height: '100%', justifyContent: 'flex-start', alignItems: 'flex-start', gap: 8, display: 'inline-flex', flexWrap: 'wrap', alignContent: 'flex-start'}}>
+              {RESULT_PRODUCT_TABS.map((tab) => {
+                const isActive = activeTabId === tab.id
+                return (
+                  <div
+                    key={tab.id}
+                    data-property-1={isActive ? 'on' : 'off'}
+                    onClick={() => setActiveTabId(tab.id as ResultProductTabId)}
+                    style={{
+                      fontWeight: 500,
+                      fontSize: 14,
+                      paddingLeft: 8,
+                      paddingRight: 8,
+                      paddingTop: 6,
+                      paddingBottom: 6,
+                      height: 32,
+                      background: isActive ? 'var(--Neutral-800, #1A1C18)' : 'var(--Common-0, white)',
+                      borderRadius: 8,
+                      outline: isActive ? undefined : '1px var(--Neutral-150, #E0E2E0) solid',
+                      outlineOffset: isActive ? undefined : '-1px',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      gap: 10,
+                      display: 'flex',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <div style={{textAlign: 'center', color: isActive ? 'var(--Common-0, white)' : 'var(--Neutral-300, #A4AAA6)', fontSize: 14, fontFamily: 'Pretendard', fontWeight: '500', lineHeight: '20.44px', wordWrap: 'break-word'}}>
+                      {tab.label}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           </div>
 
-          <section className="mt-5 px-4 pb-10">
+          <section className={cn('mt-5 px-4 pb-10 transition-opacity duration-150', isTabSwitching && 'opacity-40')}>
             {allProducts.length > 0 ? (
               <div className="grid grid-cols-2 gap-x-4 gap-y-6">
                 {allProducts.map((product) => (

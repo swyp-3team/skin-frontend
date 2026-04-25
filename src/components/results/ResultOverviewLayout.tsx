@@ -26,7 +26,7 @@ function ResultOverviewLayout({ viewModel, onRoutineCta, onProductsCta, cardOver
   return (
     <MobilePage
       className="bg-neutral-800"
-      header={<PageHeader hideTitle title="진단 결과" tone="dark" />}
+      header={<PageHeader showLogo tone="dark" />}
       mainClassName="overflow-x-hidden p-0"
     >
       <section className="relative w-full overflow-hidden bg-common-0">

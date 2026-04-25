@@ -1,4 +1,4 @@
-import { useInfiniteQuery } from '@tanstack/react-query'
+import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query'
 
 import { apiClient } from '../../api'
 import { ApiError } from '../../api/errors'
@@ -30,6 +30,7 @@ export function useResultProductsInfinite(resultId: number, tabId: ResultProduct
     enabled: isValidResultId(resultId),
     initialPageParam: 1,
     getNextPageParam: (lastPage, allPages) => (lastPage.hasNext ? allPages.length + 1 : undefined),
+    placeholderData: keepPreviousData,
     retry: false,
   })
 }

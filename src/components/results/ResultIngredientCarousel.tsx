@@ -82,7 +82,7 @@ function ResultIngredientCarousel({ cards }: ResultIngredientCarouselProps) {
     return null
   }
 
-  const emphasizedIndex = hoveredIndex ?? focusedIndex ?? activeIndex
+  const emphasizedIndex = hoveredIndex ?? focusedIndex ?? flippedIndex
 
   function handleCardClick(index: number) {
     swiperRef.current?.slideTo(index)
@@ -168,10 +168,10 @@ function ResultIngredientCarousel({ cards }: ResultIngredientCarouselProps) {
                 aria-label={`${rankLabel} ${card.name}`}
                 aria-pressed={!supportsHover ? flippedIndex === index : undefined}
                 className={cn(
-                  'group relative block h-[170px] w-[158px] rounded-lg text-left transition-[transform,opacity,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-300/80 focus-visible:ring-offset-2 focus-visible:ring-offset-common-0',
+                  'group relative block h-[170px] w-[158px] cursor-default rounded-lg text-left transition-transform opacity-100 shadow-none transition-transform duration-[650ms] ease-[cubic-bezier(0.22,1,0.36,1)]',
                   isEmphasized
-                    ? '-translate-y-1.5 opacity-100 shadow-[0_18px_28px_rgba(13,15,12,0.18)]'
-                    : 'translate-y-0 scale-[0.96] opacity-45 shadow-none',
+                    ? '-translate-y-3'
+                    : 'translate-y-0',
                 )}
                 onBlur={() => handleCardBlur(index)}
                 onClick={() => handleCardClick(index)}
@@ -183,23 +183,23 @@ function ResultIngredientCarousel({ cards }: ResultIngredientCarouselProps) {
                 <span className="block h-full w-full [perspective:1200px]">
                   <span
                     className={cn(
-                      'relative block h-full w-full rounded-lg [transform-style:preserve-3d] transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
+                      'relative block h-full w-full rounded-lg [transform-style:preserve-3d] transition-transform duration-[650ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
                     )}
                     style={useFlipMotion ? { transform: isRevealed ? 'rotateY(180deg)' : 'rotateY(0deg)' } : undefined}
                   >
                     <span
                       className={cn(
-                        'absolute inset-0 flex h-full flex-col justify-between rounded-lg border border-neutral-700/80 bg-neutral-800 px-3 py-3 text-common-0 [backface-visibility:hidden] [-webkit-backface-visibility:hidden] transition-opacity duration-150 motion-reduce:transition-none',
+                        'absolute inset-0 flex h-full flex-col justify-between rounded-[8px] bg-neutral-600 px-2 py-3 text-common-0 [backface-visibility:hidden] [-webkit-backface-visibility:hidden] transition-opacity duration-2000 motion-reduce:transition-none',
                       )}
                       style={!useFlipMotion ? { opacity: isRevealed ? 0 : 1 } : undefined}
                     >
-                      <span className="text-xs font-medium leading-[16.32px] text-neutral-300">{rankLabel}</span>
+                      <span className="text-xs font-medium leading-[16.32px] text-neutral-200">{rankLabel}</span>
                       <span className="line-clamp-2 pr-8 text-base font-semibold leading-[23.68px]">{card.name}</span>
                     </span>
 
                     <span
                       className={cn(
-                        'absolute inset-0 flex h-full flex-col rounded-lg bg-primary-300 px-3 py-3 text-neutral-800 transition-opacity duration-150 motion-reduce:transition-none',
+                        'absolute inset-0 flex h-full flex-col rounded-lg bg-primary-300 px-3 py-3 text-neutral-800 transition-opacity duration-3000 ease-[cubic-bezier(0.4,1,0.56,1)] motion-reduce:transition-none',
                         useFlipMotion
                           ? '[transform:rotateY(180deg)] [backface-visibility:hidden] [-webkit-backface-visibility:hidden]'
                           : '',
@@ -218,12 +218,7 @@ function ResultIngredientCarousel({ cards }: ResultIngredientCarouselProps) {
         })}
       </Swiper>
 
-      <div
-        className={cn(
-          paginationClassName,
-          'mt-5 flex items-center justify-center gap-2 [&_.swiper-pagination-bullet]:m-0 [&_.swiper-pagination-bullet]:h-2 [&_.swiper-pagination-bullet]:w-2 [&_.swiper-pagination-bullet]:rounded-full [&_.swiper-pagination-bullet]:bg-neutral-200 [&_.swiper-pagination-bullet]:opacity-100 [&_.swiper-pagination-bullet-active]:bg-neutral-800',
-        )}
-      />
+
     </div>
   )
 }

@@ -1,3 +1,4 @@
+import AppLogo from '@/components/icons/AppLogo'
 import NavMenuDialog from '@/components/common/NavMenuDialog'
 import { cn } from '@/lib/utils'
 
@@ -6,11 +7,11 @@ const ROOT_CLASS =
 const TITLE_CLASS = 'text-[20px] font-medium leading-[27.6px]'
 
 interface PageHeaderProps {
-  title: string
+  title?: string
   className?: string
   isScrolled?: boolean
-  tone?: 'default' | 'dark'
-  hideTitle?: boolean
+  tone?: 'default' | 'dark' | 'light'
+  showLogo?: boolean
 }
 
 function PageHeader({
@@ -18,22 +19,36 @@ function PageHeader({
   className,
   isScrolled = false,
   tone = 'default',
-  hideTitle = false,
+  showLogo = false,
 }: PageHeaderProps) {
   const isDarkTone = tone === 'dark'
+  const isLightTone = tone === 'light'
+  const isWhiteContent = isDarkTone && !isScrolled
 
   return (
     <header
       className={cn(
         ROOT_CLASS,
-        isDarkTone && !isScrolled ? 'bg-gradient-to-b from-neutral-800/90 via-neutral-800/60 via-40% to-neutral-800/15' : isScrolled ? 'bg-common-0' : 'bg-primary-150',
+        isLightTone
+          ? 'bg-gradient-to-b from-[#F2FAFA] to-[#F2FAFA]/90 to-80%'
+          : isDarkTone && !isScrolled
+            ? 'bg-gradient-to-b from-neutral-800/90 via-neutral-800/60 via-40% to-neutral-800/15'
+            : isScrolled
+              ? 'bg-common-0'
+              : 'bg-primary-150',
         className,
       )}
     >
-      <h1 className={cn(TITLE_CLASS, isDarkTone && !isScrolled ? 'text-common-0' : 'text-neutral-800', hideTitle && 'invisible')}>
-        {title}
-      </h1>
-      <NavMenuDialog triggerClassName={isDarkTone && !isScrolled ? '[&>img]:brightness-0 [&>img]:invert' : undefined} />
+      {showLogo ? (
+        <AppLogo className={isWhiteContent ? 'text-common-0' : undefined} />
+      ) : (
+        <h1 className={cn(TITLE_CLASS, isWhiteContent ? 'text-common-0' : 'text-neutral-800')}>
+          {title}
+        </h1>
+      )}
+      <NavMenuDialog
+        triggerClassName={isWhiteContent ? '[&>img]:brightness-0 [&>img]:invert' : undefined}
+      />
     </header>
   )
 }

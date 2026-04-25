@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 
 import { cn } from '@/lib/utils'
-import BrandMenuHeader from './mobile-page/BrandMenuHeader'
+import PageHeader from './common/PageHeader'
 
 interface MobilePageProps {
   children: ReactNode
@@ -15,7 +15,7 @@ function MobilePage({
   children,
   className,
   mainClassName,
-  header = <BrandMenuHeader />,
+  header = <PageHeader showLogo className="bg-common-0" />,
   footer,
 }: MobilePageProps) {
   return (

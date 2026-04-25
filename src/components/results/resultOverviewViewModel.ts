@@ -1,7 +1,9 @@
-import resultSafeImage from '@/assets/images/result-safe.png'
 import type { PreviewResult, ResultDetail, ResultIngredientMeta, TopIngredientGroup } from '@/api/types'
+import safeguardImage from '@/assets/images/safeguard.png'
 import { INGREDIENT_GROUP_LABELS } from '@/domain/surveyConfig'
 import type { SkinType } from '@/types/domain'
+
+const RESULT_OVERVIEW_IMAGE_URL = safeguardImage
 
 interface ResultOverviewTopViewModel {
   diagnosedDate: string | null
@@ -161,7 +163,7 @@ export function fromResultDetail(result: ResultDetail): ResultOverviewViewModel 
       diagnosedDate: toDateLabel(result.diagnosedAt),
       title: result.typeName,
       summary: result.summary,
-      imageUrl: resultSafeImage,
+      imageUrl: RESULT_OVERVIEW_IMAGE_URL,
     },
     routine: {
       sectionTitle: RESULT_PAGE_COPY.routineSectionTitle,
@@ -186,7 +188,7 @@ export function fromPreviewResult(preview: PreviewResult): ResultOverviewViewMod
       diagnosedDate: null,
       title: SKIN_TYPE_TITLES[preview.skinType],
       summary: preview.summary,
-      imageUrl: resultSafeImage,
+      imageUrl: RESULT_OVERVIEW_IMAGE_URL,
     },
     routine: {
       sectionTitle: RESULT_PAGE_COPY.routineSectionTitle,
