@@ -20,5 +20,12 @@ function getOAuthBase(): string {
 export function buildOAuthStartUrl(provider: OAuthProvider): string {
   const base = getOAuthBase()
   const providerPath = AUTH_PROVIDERS[provider].providerPath
-  return `${base}/oauth2/authorization/${providerPath}`
+  const url = new URL(`${base}/oauth2/authorization/${providerPath}`)
+
+  // TODO: TEMPORARY — 백엔드가 redirect_uri 없이 동작하게 되면 아래 3줄 삭제
+  const redirectUri = `${window.location.origin}/oauth/callback`
+  url.searchParams.set('redirect_uri', redirectUri)
+  // END TEMPORARY
+
+  return url.toString()
 }
