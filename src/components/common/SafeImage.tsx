@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { ImgHTMLAttributes, SyntheticEvent } from 'react'
 
-import productPlaceholder from '@/assets/images/product-placeholder.svg'
+import resultSafeImage from '@/assets/images/result-safe.png'
 
 interface SafeImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, 'src'> {
   src?: string | null
@@ -20,7 +20,7 @@ function normalizeSrc(value?: string | null) {
 
 function SafeImage({
   src,
-  fallbackSrc = productPlaceholder,
+  fallbackSrc = resultSafeImage,
   fallbackAlt,
   alt,
   onError,

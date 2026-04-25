@@ -6,6 +6,7 @@ import SafeImage from '@/components/common/SafeImage'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
+import ResultIngredientCarousel from './ResultIngredientCarousel'
 import type { ResultOverviewViewModel } from './resultOverviewViewModel'
 
 const ROUTINE_HIGHLIGHT_STYLE_CLASS = [
@@ -109,35 +110,10 @@ function ResultOverviewLayout({ viewModel, onRoutineCta, onProductsCta, cardOver
                 </div>
               </div>
 
-              <div className="-mx-4 overflow-x-auto px-4">
-                <div className="flex min-w-max gap-2 pb-1">
-                  {viewModel.ingredients.cards.slice(0, 3).map((card) => (
-                    <article
-                      className={cn(
-                        'h-[170px] w-[149px] rounded-lg',
-                        card.isPrimary
-                          ? 'flex flex-col justify-between bg-primary-300 p-3 text-neutral-800'
-                          : 'flex flex-col gap-1 bg-neutral-600 px-2 py-3 text-common-0',
-                      )}
-                      key={`${card.rank}-${card.name}`}
-                    >
-                      {card.isPrimary ? (
-                        <>
-                          <p className="text-base font-semibold leading-[23.68px]">{card.name}</p>
-                          <p className="text-[10px] leading-[14px] text-neutral-700">{card.description}</p>
-                        </>
-                      ) : (
-                        <>
-                          <p className="text-xs font-medium leading-[16.32px] text-neutral-200">
-                            {String(card.rank).padStart(2, '0')}
-                          </p>
-                          <p className="text-base font-semibold leading-[23.68px]">{card.name}</p>
-                        </>
-                      )}
-                    </article>
-                  ))}
-                </div>
-              </div>
+              <ResultIngredientCarousel
+                cards={viewModel.ingredients.cards}
+                key={viewModel.ingredients.cards.map((card) => `${card.rank}-${card.name}-${card.isPrimary}`).join('|')}
+              />
 
               <Button
                 className="h-auto w-full rounded-lg px-5 py-2.5 text-[15px] font-medium leading-[22.2px]"
