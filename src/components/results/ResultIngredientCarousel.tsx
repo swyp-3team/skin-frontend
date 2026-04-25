@@ -168,10 +168,10 @@ function ResultIngredientCarousel({ cards }: ResultIngredientCarouselProps) {
                 aria-label={`${rankLabel} ${card.name}`}
                 aria-pressed={!supportsHover ? flippedIndex === index : undefined}
                 className={cn(
-                  'group relative block h-[170px] w-[158px] cursor-default rounded-lg text-left transition-transform opacity-100 shadow-none transition-transform duration-[650ms] ease-[cubic-bezier(0.22,1,0.36,1)]',
+                  'group relative block h-[170px] w-[158px] cursor-default rounded-lg text-left transition-transform opacity-100 shadow-none transition-transform ease-[cubic-bezier(0.22,1,0.36,1)]',
                   isEmphasized
-                    ? '-translate-y-3'
-                    : 'translate-y-0',
+                    ? '-translate-y-3 duration-[450ms]'
+                    : 'translate-y-0 duration-[500ms]',
                 )}
                 onBlur={() => handleCardBlur(index)}
                 onClick={() => handleCardClick(index)}
@@ -183,7 +183,7 @@ function ResultIngredientCarousel({ cards }: ResultIngredientCarouselProps) {
                 <span className="block h-full w-full [perspective:1200px]">
                   <span
                     className={cn(
-                      'relative block h-full w-full rounded-lg [transform-style:preserve-3d] transition-transform duration-[650ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
+                      'relative block h-full w-full rounded-lg [transform-style:preserve-3d] transition-transform duration-[550ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
                     )}
                     style={useFlipMotion ? { transform: isRevealed ? 'rotateY(180deg)' : 'rotateY(0deg)' } : undefined}
                   >
