@@ -3,6 +3,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import AppLayout from './AppLayout'
 import ProtectedRoute from './ProtectedRoute'
 import { APP_ROUTES } from './routes'
+import AuthCallbackPage from '../pages/auth/AuthCallbackPage'
 import HomePage from '../pages/HomePage'
 import MyPage from '../pages/MyPage'
 import NotFoundPage from '../pages/NotFoundPage'
@@ -22,6 +23,7 @@ function AppRouter() {
         <Route element={<AppLayout />} path={APP_ROUTES.home}>
           {/* 공개 라우트 */}
           <Route element={<HomePage />} index />
+          <Route element={<AuthCallbackPage />} path={APP_ROUTES.authCallback} />
           <Route element={<SurveyIntroPage />} path={APP_ROUTES.survey} />
           <Route element={<SurveyStepsPage />} path={APP_ROUTES.surveySteps} />
           <Route element={<SurveyResultPage />} path={APP_ROUTES.surveyResult} />

@@ -10,9 +10,12 @@ import { Button } from '@/components/ui/button'
 import { DrawerClose, DrawerContent, DrawerRoot, DrawerTrigger } from '@/components/ui/drawer'
 import { useLogout } from '@/hooks/useLogout'
 import { cn } from '@/lib/utils'
-import { usePromotePreview } from '@/pages/survey/result/usePromotePreview'
+import { saveIntent } from '@/auth/postLoginIntent'
+import { buildOAuthStartUrl } from '@/auth/oauthStartUrl'
+import type { OAuthProvider } from '@/constants/auth'
 import { selectIsAuthenticated, useAuthStore } from '@/stores/authStore'
 import { useSurveyResultStore } from '@/stores/surveyResultStore'
+import { AUTH_UI_TEXT } from '@/constants/auth'
 
 type MenuAction =
   | { type: 'navigate'; path: string }
@@ -27,8 +30,6 @@ const ALERT_MESSAGES = {
   loginRequired: '로그인 후 이용해주세요',
   surveyRequired: '먼저 피부 진단을 받아보세요',
 } as const
-
-const MOCK_USER_EMAIL = 'layerd@gmail.com'
 
 function createAuthGuardedAction(getPath: (id: number) => string): MenuItemConfig['resolveAction'] {
   return (isAuthenticated, latestResultId) => {
@@ -86,11 +87,9 @@ function NavMenuDialog({ triggerClassName }: NavMenuDialogProps) {
   const [loginDialogOpen, setLoginDialogOpen] = useState(false)
 
   const isAuthenticated = useAuthStore(selectIsAuthenticated)
-  const nickname = useAuthStore((s) => s.nickname)
-  const loginMock = useAuthStore((s) => s.loginMock)
+  const nickname = useAuthStore((s) => s.user?.nickname)
   const latestResultId = useSurveyResultStore((s) => s.latestResultId)
   const logout = useLogout()
-  const promoteMutation = usePromotePreview()
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -115,17 +114,13 @@ function NavMenuDialog({ triggerClassName }: NavMenuDialogProps) {
     setLoginDialogOpen(true)
   }
 
-  function handleLogin(providerLabel: string) {
-    loginMock(providerLabel)
-
-    if (location.pathname === APP_ROUTES.surveyResult) {
-      promoteMutation.mutate(undefined, {
-        onSuccess: () => setLoginDialogOpen(false),
-      })
-      return
-    }
-
-    setLoginDialogOpen(false)
+  function handleLogin(provider: OAuthProvider) {
+    const intent =
+      location.pathname === APP_ROUTES.surveyResult
+        ? { type: 'promote-preview' as const }
+        : { type: 'return' as const, returnTo: location.pathname }
+    saveIntent(intent)
+    window.location.href = buildOAuthStartUrl(provider)
   }
 
   function handleLogout() {
@@ -161,8 +156,7 @@ function NavMenuDialog({ triggerClassName }: NavMenuDialogProps) {
               <div className="flex items-center gap-3">
                 <UserAvatar nickname={nickname} />
                 <div className="flex flex-col gap-0.5">
-                  <span className="font-bold text-neutral-800">{nickname}</span>
-                  <span className="text-xs text-neutral-800">{MOCK_USER_EMAIL}</span>
+                  <span className="font-bold text-neutral-800">{nickname ?? AUTH_UI_TEXT.defaultNickname}</span>
                 </div>
               </div>
             ) : (
@@ -230,7 +224,7 @@ function NavMenuDialog({ triggerClassName }: NavMenuDialogProps) {
       </DrawerRoot>
 
       <LoginDialog
-        isPromoting={promoteMutation.isPending}
+        isPromoting={false}
         onLogin={handleLogin}
         onOpenChange={setLoginDialogOpen}
         open={loginDialogOpen}

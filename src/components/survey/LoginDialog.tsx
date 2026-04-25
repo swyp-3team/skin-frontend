@@ -5,7 +5,7 @@ import GoogleLogo from '@/components/icons/GoogleLogo'
 import KakaoLogo from '@/components/icons/KakaoLogo'
 import { DrawerClose, DrawerContentBottom, DrawerRoot } from '@/components/ui/drawer'
 import { AUTH_PROVIDERS, AUTH_UI_TEXT, LOGIN_DIALOG_COPY } from '@/constants/auth'
-import type { LoginDialogVariant } from '@/constants/auth'
+import type { LoginDialogVariant, OAuthProvider } from '@/constants/auth'
 import { Button } from '../ui/button'
 
 interface LoginDialogProps {
@@ -13,7 +13,7 @@ interface LoginDialogProps {
   variant: LoginDialogVariant
   isPromoting: boolean
   onOpenChange: (open: boolean) => void
-  onLogin: (providerLabel: string) => void
+  onLogin: (provider: OAuthProvider) => void
 }
 
 function LoginDialog({ open, variant, isPromoting, onOpenChange, onLogin }: LoginDialogProps) {
@@ -58,7 +58,7 @@ function LoginDialog({ open, variant, isPromoting, onOpenChange, onLogin }: Logi
               <Button
                 className="h-auto w-full rounded-lg py-3 text-sm font-medium"
                 disabled={isPromoting}
-                onClick={() => onLogin(AUTH_PROVIDERS.kakao.label)}
+                onClick={() => onLogin('kakao')}
                 size="page"
                 variant="kakao"
               >
@@ -72,7 +72,7 @@ function LoginDialog({ open, variant, isPromoting, onOpenChange, onLogin }: Logi
               <Button
                 className="h-auto w-full rounded-lg py-3 text-sm font-medium"
                 disabled={isPromoting}
-                onClick={() => onLogin(AUTH_PROVIDERS.google.label)}
+                onClick={() => onLogin('google')}
                 size="page"
                 variant="google"
               >

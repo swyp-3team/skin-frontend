@@ -5,11 +5,9 @@ import { APP_ROUTES } from '../app/routes'
 import AlertMessage from '../components/common/AlertMessage'
 import PageHeader from '../components/common/PageHeader'
 import MobilePage from '../components/MobilePage'
-import { Button, buttonVariants } from '../components/ui/button'
+import { buttonVariants } from '../components/ui/button'
 import { AUTH_UI_TEXT, isAuthRedirectState } from '../constants/auth'
-import { useLogout } from '../hooks/useLogout'
 import { cn } from '../lib/utils'
-import { selectIsAuthenticated, useAuthStore } from '../stores/authStore'
 import { HOME_CONTENT, type IngredientChipItem, INGREDIENT_MARQUEE_ROWS } from './home/homeContent'
 import './home/homepage.css'
 
@@ -56,9 +54,6 @@ function HomePage() {
   const authRedirectState = isAuthRedirectState(location.state) ? location.state : null
   const hasAuthRedirect = authRedirectState !== null
 
-  const isAuthenticated = useAuthStore(selectIsAuthenticated)
-  const loginMock = useAuthStore((state) => state.loginMock)
-  const logout = useLogout()
 
   return (
     <MobilePage className="bg-[#F2FAFA]" header={<PageHeader showLogo tone="light" />} mainClassName="px-0">
@@ -95,20 +90,6 @@ function HomePage() {
             {HOME_CONTENT.hero.primaryCta}
           </Link>
 
-          <Button
-            className="mt-3 h-11 w-full rounded-[10px] px-4 py-3 text-sm font-medium"
-            onClick={() => {
-              if (isAuthenticated) {
-                logout()
-                return
-              }
-              loginMock()
-            }}
-            type="button"
-            variant="tertiary"
-          >
-            {isAuthenticated ? AUTH_UI_TEXT.mockLogout : AUTH_UI_TEXT.mockLogin}
-          </Button>
         </section>
 
         <section className="space-y-10 px-5 py-10">

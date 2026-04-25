@@ -1,11 +1,13 @@
 import { isConcernCode, isSkinTypeCode } from '../domain/surveyCodes'
 import type { ProductCategory } from '../types/domain'
-import type { AuthState } from '../types/auth'
+import type { AuthState, AuthUser } from '../types/auth'
 import type { ApiClient } from './client'
 import type { ApiErrorPayload, ApiFieldError } from './contracts'
 import { ApiError } from './errors'
+import { useAuthStore } from '../stores/authStore'
 import type {
   PreviewApiData,
+  PreviewResult,
   ProductDetail,
   ResultDetail,
   ResultIngredientMeta,
@@ -188,6 +190,84 @@ async function requestApi<T>(url: string, init: RequestInit, token?: string): Pr
   return unwrapEnvelope<T>(body, response.status)
 }
 
+// ── 401 자동 재발급 인터셉터 ─────────────────────────────────────────────────
+
+interface QueueItem {
+  resolve: (token: string) => void
+  reject: (error: unknown) => void
+}
+
+let isRefreshing = false
+let failedQueue: QueueItem[] = []
+
+function processQueue(error: unknown, token: string | null): void {
+  for (const item of failedQueue) {
+    if (error) {
+      item.reject(error)
+    } else {
+      item.resolve(token!)
+    }
+  }
+  failedQueue = []
+}
+
+// requestWithAuth 팩토리: baseUrl을 클로저로 캡처하여 refresh 엔드포인트를 구성합니다.
+// requestApi와 동일한 시그니처이지만 401 발생 시 refresh 후 1회 재시도합니다.
+function createRequestWithAuth(baseUrl: string) {
+  return async function requestWithAuth<T>(url: string, init: RequestInit, token?: string): Promise<T> {
+    try {
+      return await requestApi<T>(url, init, token)
+    } catch (error) {
+      if (!(error instanceof ApiError) || error.status !== 401) {
+        throw error
+      }
+
+      // 이미 refresh 진행 중이면 큐에 추가하고 대기
+      if (isRefreshing) {
+        const newToken = await new Promise<string>((resolve, reject) => {
+          failedQueue.push({ resolve, reject })
+        })
+        return requestApi<T>(url, init, newToken)
+      }
+
+      isRefreshing = true
+
+      try {
+        const { refreshToken, clearAuth } = useAuthStore.getState()
+
+        if (!refreshToken) {
+          clearAuth()
+          processQueue(error, null)
+          throw error
+        }
+
+        const refreshBody = await requestApi<unknown>(
+          `${baseUrl}/auth/refresh`,
+          {
+            method: 'POST',
+            body: JSON.stringify({ refreshToken }),
+          },
+        )
+
+        const normalized = normalizeRefreshResponse(refreshBody)
+        const newAccessToken = normalized.accessToken
+        useAuthStore.getState().setTokens(newAccessToken, normalized.refreshToken ?? refreshToken)
+
+        processQueue(null, newAccessToken)
+        return requestApi<T>(url, init, newAccessToken)
+      } catch (refreshError) {
+        useAuthStore.getState().clearAuth()
+        processQueue(refreshError, null)
+        throw refreshError
+      } finally {
+        isRefreshing = false
+      }
+    }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 function normalizeOptionCode(value: unknown) {
   if (isSkinTypeCode(value) || isConcernCode(value)) {
     return value
@@ -270,6 +350,45 @@ function normalizeSurveyQuestions(payload: unknown): SurveyQuestion[] {
   }
 
   return questionsPayload.map(normalizeSurveyQuestion)
+}
+
+function normalizePreviewResult(payload: unknown): PreviewResult {
+  if (!isRecord(payload)) {
+    throw new ApiError('Preview response is invalid.', 500, 'INVALID_PREVIEW_FORMAT', payload)
+  }
+  if (typeof payload.diagnosedDate !== 'string') {
+    throw new ApiError('diagnosedDate is invalid.', 500, 'INVALID_PREVIEW_DIAGNOSED_DATE', payload)
+  }
+  if (typeof payload.typeName !== 'string') {
+    throw new ApiError('typeName is invalid.', 500, 'INVALID_PREVIEW_TYPE_NAME', payload)
+  }
+  if (typeof payload.subTitle !== 'string') {
+    throw new ApiError('subTitle is invalid.', 500, 'INVALID_PREVIEW_SUBTITLE', payload)
+  }
+  if (typeof payload.summary !== 'string') {
+    throw new ApiError('summary is invalid.', 500, 'INVALID_PREVIEW_SUMMARY', payload)
+  }
+
+  return {
+    diagnosedDate: payload.diagnosedDate,
+    typeName: payload.typeName,
+    subTitle: payload.subTitle,
+    summary: payload.summary,
+  }
+}
+
+function normalizePreviewApiData(payload: unknown): PreviewApiData {
+  if (!isRecord(payload)) {
+    throw new ApiError('Preview API data is invalid.', 500, 'INVALID_PREVIEW_API_DATA', payload)
+  }
+  if (typeof payload.previewToken !== 'string') {
+    throw new ApiError('previewToken is invalid.', 500, 'INVALID_PREVIEW_TOKEN', payload)
+  }
+
+  return {
+    preview: normalizePreviewResult(payload.preview),
+    previewToken: payload.previewToken,
+  }
 }
 
 function normalizeIngredientMeta(raw: unknown, index: number): ResultIngredientMeta {
@@ -494,7 +613,51 @@ function normalizeResultProductsPage(payload: unknown): ResultProductsPageData {
   }
 }
 
+function normalizeAuthUser(body: unknown): AuthUser {
+  if (!isRecord(body)) {
+    throw new ApiError('Auth user response is invalid.', 500, 'INVALID_AUTH_USER', body)
+  }
+  if (typeof body.userId !== 'number') {
+    throw new ApiError('userId is invalid.', 500, 'INVALID_AUTH_USER_ID', body)
+  }
+  if (typeof body.nickname !== 'string') {
+    throw new ApiError('nickname is invalid.', 500, 'INVALID_AUTH_NICKNAME', body)
+  }
+  if (typeof body.role !== 'string') {
+    throw new ApiError('role is invalid.', 500, 'INVALID_AUTH_ROLE', body)
+  }
+  return {
+    userId: body.userId,
+    nickname: body.nickname,
+    role: body.role,
+    profileImageUrl: typeof body.profileImageUrl === 'string' ? body.profileImageUrl : null,
+  }
+}
+
+// /me 응답은 envelope 또는 plain JSON 둘 다 수용합니다.
+function unwrapMeResponse(body: unknown): AuthUser {
+  if (isRecord(body) && typeof body.success === 'boolean') {
+    return normalizeAuthUser(isRecord(body.data) ? body.data : body)
+  }
+  return normalizeAuthUser(body)
+}
+
+function normalizeRefreshResponse(body: unknown): { accessToken: string; refreshToken?: string } {
+  if (isRecord(body) && typeof body.success === 'boolean') {
+    body = isRecord(body.data) ? body.data : body
+  }
+  if (!isRecord(body) || typeof body.accessToken !== 'string') {
+    throw new ApiError('Refresh response is invalid.', 500, 'INVALID_REFRESH_RESPONSE', body)
+  }
+  return {
+    accessToken: body.accessToken,
+    refreshToken: typeof body.refreshToken === 'string' ? body.refreshToken : undefined,
+  }
+}
+
 export function createLiveApiClient(baseUrl: string): ApiClient {
+  const requestWithAuth = createRequestWithAuth(baseUrl)
+
   return {
     async getSurveyQuestions() {
       const payload = await requestApi<unknown>(`${baseUrl}/surveys`, { method: 'GET' })
@@ -502,14 +665,15 @@ export function createLiveApiClient(baseUrl: string): ApiClient {
     },
 
     async submitSurveyPreview(payload: SurveySubmitPayload) {
-      return requestApi<PreviewApiData>(`${baseUrl}/results/preview`, {
+      const result = await requestApi<unknown>(`${baseUrl}/results/preview`, {
         method: 'POST',
         body: JSON.stringify(payload),
       })
+      return normalizePreviewApiData(result)
     },
 
     async submitSurveyResult(input: SurveyResultInput, authState: AuthState) {
-      const payload = await requestApi<unknown>(
+      const payload = await requestWithAuth<unknown>(
         `${baseUrl}/results`,
         {
           method: 'POST',
@@ -522,12 +686,16 @@ export function createLiveApiClient(baseUrl: string): ApiClient {
     },
 
     async getResult(resultId: number, authState: AuthState): Promise<ResultDetail> {
-      const payload = await requestApi<unknown>(`${baseUrl}/results/${resultId}`, { method: 'GET' }, authState.accessToken)
+      const payload = await requestWithAuth<unknown>(
+        `${baseUrl}/results/${resultId}`,
+        { method: 'GET' },
+        authState.accessToken,
+      )
       return normalizeResultDetail(payload, resultId)
     },
 
     async getRoutineGroup(resultId: number, authState: AuthState) {
-      const payload = await requestApi<unknown>(
+      const payload = await requestWithAuth<unknown>(
         `${baseUrl}/results/${resultId}/routine`,
         { method: 'GET' },
         authState.accessToken,
@@ -545,7 +713,7 @@ export function createLiveApiClient(baseUrl: string): ApiClient {
         params.append('category', category)
       })
 
-      const payload = await requestApi<unknown>(
+      const payload = await requestWithAuth<unknown>(
         `${baseUrl}/results/${query.resultId}/products?${params.toString()}`,
         { method: 'GET' },
         authState.accessToken,
@@ -556,6 +724,42 @@ export function createLiveApiClient(baseUrl: string): ApiClient {
 
     async getProductDetail(productId: number) {
       return requestApi<ProductDetail>(`${baseUrl}/products/${productId}`, { method: 'GET' })
+    },
+
+    async getMe(accessToken: string): Promise<AuthUser> {
+      const body = await requestApi<unknown>(`${baseUrl}/auth/me`, { method: 'GET' }, accessToken)
+      return unwrapMeResponse(body)
+    },
+
+    async refreshAccessToken(refreshToken: string) {
+      let response: Response
+      const headers = new Headers({ 'Content-Type': 'application/json' })
+      try {
+        response = await fetch(`${baseUrl}/auth/refresh`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ refreshToken }),
+        })
+      } catch (error) {
+        throw new ApiError('네트워크 요청에 실패했습니다. API 연결 상태를 확인해 주세요.', 0, 'NETWORK_ERROR', error)
+      }
+
+      let body: unknown
+      try {
+        body = await readBody(response)
+      } catch (error) {
+        throw new ApiError('Response body could not be parsed.', response.status, 'INVALID_RESPONSE_BODY', error)
+      }
+
+      if (!response.ok) {
+        throw toApiError(response.status, body)
+      }
+
+      return normalizeRefreshResponse(body)
+    },
+
+    async logout(accessToken: string): Promise<void> {
+      await requestApi<null>(`${baseUrl}/auth/logout`, { method: 'POST' }, accessToken)
     },
   }
 }

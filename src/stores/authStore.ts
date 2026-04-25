@@ -1,49 +1,48 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 
-import { AUTH_UI_TEXT, MOCK_ACCESS_TOKEN } from '../constants/auth'
 import { STORAGE_KEYS } from '../constants/storage'
-
-const STORAGE_KEY = STORAGE_KEYS.authSession
+import type { AuthUser } from '../types/auth'
 
 interface AuthStoreState {
   accessToken?: string
-  nickname?: string
+  refreshToken?: string
+  user?: AuthUser
 }
 
 interface AuthStoreActions {
-  loginMock: (nickname?: string) => void
-  logoutMock: () => void
+  setTokens: (accessToken: string, refreshToken: string) => void
+  setUser: (user: AuthUser) => void
+  clearAuth: () => void
 }
 
 export type AuthStore = AuthStoreState & AuthStoreActions
 
-export const selectIsAuthenticated = (state: { accessToken?: string }) => state.accessToken !== undefined
+export const selectIsAuthenticated = (state: AuthStoreState) => state.accessToken !== undefined
 
 export const useAuthStore = create<AuthStore>()(
   persist(
     (set) => ({
       accessToken: undefined,
-      nickname: undefined,
-      loginMock: (nickname = AUTH_UI_TEXT.defaultMockNickname) => {
-        set({
-          accessToken: MOCK_ACCESS_TOKEN,
-          nickname,
-        })
+      refreshToken: undefined,
+      user: undefined,
+      setTokens: (accessToken, refreshToken) => {
+        set({ accessToken, refreshToken })
       },
-      logoutMock: () => {
-        set({
-          accessToken: undefined,
-          nickname: undefined,
-        })
+      setUser: (user) => {
+        set({ user })
+      },
+      clearAuth: () => {
+        set({ accessToken: undefined, refreshToken: undefined, user: undefined })
       },
     }),
     {
-      name: STORAGE_KEY,
+      name: STORAGE_KEYS.authSession,
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         accessToken: state.accessToken,
-        nickname: state.nickname,
+        refreshToken: state.refreshToken,
+        user: state.user,
       }),
     }
   )

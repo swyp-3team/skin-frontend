@@ -1,4 +1,4 @@
-import type { AuthState } from '../types/auth'
+import type { AuthState, AuthUser } from '../types/auth'
 import type {
   PreviewApiData,
   ProductDetail,
@@ -19,4 +19,9 @@ export interface ApiClient {
   getRoutineGroup(resultId: number, authState: AuthState): Promise<RoutineGroup>
   getRecommendedProducts(query: ResultProductsQuery, authState: AuthState): Promise<ResultProductsPageData>
   getProductDetail(productId: number): Promise<ProductDetail>
+
+  // 인증 메서드
+  getMe(accessToken: string): Promise<AuthUser>
+  refreshAccessToken(refreshToken: string): Promise<{ accessToken: string; refreshToken?: string }>
+  logout(accessToken: string): Promise<void>
 }

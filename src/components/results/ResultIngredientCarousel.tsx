@@ -73,7 +73,7 @@ function ResultIngredientCarousel({ cards }: ResultIngredientCarouselProps) {
   const swiperRef = useRef<SwiperInstance | null>(null)
   const supportsHover = useMediaQuery(HOVER_MEDIA_QUERY)
   const prefersReducedMotion = useMediaQuery(REDUCED_MOTION_MEDIA_QUERY)
-  const [activeIndex, setActiveIndex] = useState(initialActiveIndex)
+  const [, setActiveIndex] = useState(initialActiveIndex)
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null)
   const [flippedIndex, setFlippedIndex] = useState<number | null>(null)

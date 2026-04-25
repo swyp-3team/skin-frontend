@@ -7,6 +7,9 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import './index.css'
 import './lib/env'
 import AppRouter from './app/router'
+
+// 구 mock 인증 세션 키 마이그레이션 — 1회성 정리
+localStorage.removeItem('auth.mockSession')
 import GlobalErrorFallback from './components/GlobalErrorFallback'
 import { Toaster } from './components/ui/sonner'
 import { queryClient } from './lib/queryClient'

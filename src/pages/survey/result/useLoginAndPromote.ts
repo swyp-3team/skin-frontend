@@ -1,25 +1,21 @@
 import { useState } from 'react'
-import { useShallow } from 'zustand/react/shallow'
 
-import { useAuthStore } from '../../../stores/authStore'
-import { usePromotePreview } from './usePromotePreview'
+import { saveIntent } from '../../../auth/postLoginIntent'
+import { buildOAuthStartUrl } from '../../../auth/oauthStartUrl'
+import type { OAuthProvider } from '../../../constants/auth'
 
 export function useLoginAndPromote() {
-  const { loginMock } = useAuthStore(useShallow((state) => ({ loginMock: state.loginMock })))
-  const promoteMutation = usePromotePreview()
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
 
-  const promoteToFullResult = (providerLabel: string) => {
-    loginMock(providerLabel)
-    promoteMutation.mutate(undefined, {
-      onSuccess: () => setIsLoginModalOpen(false),
-    })
+  const promoteToFullResult = (provider: OAuthProvider) => {
+    saveIntent({ type: 'promote-preview' })
+    window.location.href = buildOAuthStartUrl(provider)
   }
 
   return {
     isLoginModalOpen,
     setIsLoginModalOpen,
-    isPromoting: promoteMutation.isPending,
+    isPromoting: false,
     promoteToFullResult,
   }
 }

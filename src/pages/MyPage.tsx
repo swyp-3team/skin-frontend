@@ -13,6 +13,7 @@ import MobilePage from '../components/MobilePage'
 import PageHeader from '../components/common/PageHeader'
 import { buttonVariants } from '../components/ui/button'
 import { AUTH_UI_TEXT } from '../constants/auth'
+
 import { useLogout } from '../hooks/useLogout'
 import { queryKeys } from '../lib/queryKeys'
 import { cn } from '../lib/utils'
@@ -22,7 +23,6 @@ import { getResultDetailQueryOptions } from './results/useResultDetail'
 
 type MyPageViewState = 'diagnosis_routine' | 'diagnosis_only' | 'empty'
 
-const MOCK_USER_EMAIL = 'layerd@gmail.com'
 const PLACEHOLDER_HISTORY_TITLE = '피부 진단 결과'
 
 interface HistoryRowProps {
@@ -107,7 +107,7 @@ function toMonthDay(value: string): string {
 function MyPage() {
   const isAuthenticated = useAuthStore(selectIsAuthenticated)
   const accessToken = useAuthStore((state) => state.accessToken)
-  const nickname = useAuthStore((state) => state.nickname)
+  const user = useAuthStore((state) => state.user)
   const logout = useLogout()
 
   const latestResultId = useSurveyResultStore((state) => state.latestResultId)
@@ -165,9 +165,8 @@ function MyPage() {
       <section className="space-y-5 pb-8">
         <SurfaceCard className="rounded-xl bg-common-0 p-4">
           <p className="text-base font-semibold leading-[23.68px] text-neutral-800">
-            {nickname ?? AUTH_UI_TEXT.defaultMockNickname}
+            {user?.nickname ?? AUTH_UI_TEXT.defaultNickname}
           </p>
-          <p className="text-xs leading-[16.32px] text-neutral-800">{MOCK_USER_EMAIL}</p>
         </SurfaceCard>
 
         <SurfaceCard className="space-y-4 rounded-xl bg-common-0 p-4">

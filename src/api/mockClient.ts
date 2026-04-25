@@ -1,6 +1,6 @@
 import { MOCK_SURVEY_QUESTIONS } from '../constants/survey'
 import { CONCERN_STEP, SKIN_TYPE_STEP } from '../domain/surveyCodes'
-import type { AuthState } from '../types/auth'
+import type { AuthState, AuthUser } from '../types/auth'
 import type { Concern, IngredientGroup, SkinType } from '../types/domain'
 import type { ApiClient } from './client'
 import { ApiError } from './errors'
@@ -18,8 +18,15 @@ import type {
   SurveyQuestion,
   SurveyResultInput,
   SurveySubmitPayload,
-  TopIngredientGroup,
 } from './types'
+
+interface MockTopIngredientGroup {
+  group: IngredientGroup
+  score?: number
+  priority: number
+  ingredients: string[]
+  reason: string
+}
 
 const SKIN_TYPE_CODE_BY_OPTION_NUMBER: Record<number, SkinType> = {
   1: 'DRY',
@@ -315,7 +322,6 @@ const MOCK_PRODUCT_DETAILS = new Map<number, ProductDetail>(MOCK_CATALOG.map((it
 
 interface PreviewRecord {
   payload: SurveySubmitPayload
-  preview: PreviewResult
 }
 
 interface StoredResult {
@@ -382,7 +388,7 @@ function attachOptionCodes(questions: readonly (typeof MOCK_SURVEY_QUESTIONS)[nu
   }))
 }
 
-function buildTop3(skinType: SkinType, concerns: Concern[]): TopIngredientGroup[] {
+function buildTop3(skinType: SkinType, concerns: Concern[]): MockTopIngredientGroup[] {
   const primaryGroup = concerns[0] ? CONCERN_PRIMARY_GROUP[concerns[0]] : SKIN_TYPE_FALLBACK_GROUPS[skinType][0]
   const [fallback1, fallback2] = SKIN_TYPE_FALLBACK_GROUPS[skinType]
   const groups = [...new Set([primaryGroup, fallback1, fallback2])].slice(0, 3)
@@ -397,14 +403,21 @@ function buildTop3(skinType: SkinType, concerns: Concern[]): TopIngredientGroup[
 }
 
 function createPreviewResult(payload: SurveySubmitPayload): PreviewResult {
+  const copy = RESULT_COPY_BY_SKIN_TYPE[payload.skinType]
+  const today = new Date()
+  const yyyy = today.getFullYear()
+  const mm = String(today.getMonth() + 1).padStart(2, '0')
+  const dd = String(today.getDate()).padStart(2, '0')
+
   return {
-    skinType: payload.skinType,
-    summary: RESULT_COPY_BY_SKIN_TYPE[payload.skinType].summary,
-    top3: buildTop3(payload.skinType, payload.concerns),
+    diagnosedDate: `${yyyy}.${mm}.${dd}`,
+    typeName: copy.typeName,
+    subTitle: copy.subTitle,
+    summary: copy.summary,
   }
 }
 
-function toIngredientMetas(top3: TopIngredientGroup[]): ResultIngredientMeta[] {
+function toIngredientMetas(top3: MockTopIngredientGroup[]): ResultIngredientMeta[] {
   return top3.slice(0, 3).map((item) => ({
     name: item.ingredients[0] ?? INGREDIENT_GROUP_LABELS[item.group],
     description: item.reason,
@@ -419,8 +432,9 @@ function toConcernLabels(concerns: Concern[]): string[] {
   return concerns.slice(0, 3).map((concern) => CONCERN_LABELS[concern])
 }
 
-function createResultDetail(payload: SurveySubmitPayload, preview: PreviewResult, resultId: number): ResultDetail {
+function createResultDetail(payload: SurveySubmitPayload, resultId: number): ResultDetail {
   const copy = RESULT_COPY_BY_SKIN_TYPE[payload.skinType]
+  const top3 = buildTop3(payload.skinType, payload.concerns)
 
   return {
     resultId,
@@ -430,7 +444,7 @@ function createResultDetail(payload: SurveySubmitPayload, preview: PreviewResult
     summary: copy.summary,
     concerns: toConcernLabels(payload.concerns),
     subSummary: copy.subSummary,
-    ingredientMetas: toIngredientMetas(preview.top3),
+    ingredientMetas: toIngredientMetas(top3),
   }
 }
 
@@ -553,7 +567,7 @@ export const mockApiClient: ApiClient = {
   async submitSurveyPreview(payload: SurveySubmitPayload): Promise<PreviewApiData> {
     const preview = createPreviewResult(payload)
     const previewToken = crypto.randomUUID()
-    mockPreviewDb.set(previewToken, { payload, preview })
+    mockPreviewDb.set(previewToken, { payload })
     return withDelay({ preview, previewToken })
   },
 
@@ -567,7 +581,7 @@ export const mockApiClient: ApiClient = {
       }
 
       const resultId = createResultId()
-      const detail = createResultDetail(previewRecord.payload, previewRecord.preview, resultId)
+      const detail = createResultDetail(previewRecord.payload, resultId)
       mockResultsDb.set(resultId, {
         detail,
         skinType: previewRecord.payload.skinType,
@@ -576,9 +590,8 @@ export const mockApiClient: ApiClient = {
       return withDelay(detail)
     }
 
-    const preview = createPreviewResult(input)
     const resultId = createResultId()
-    const detail = createResultDetail(input, preview, resultId)
+    const detail = createResultDetail(input, resultId)
 
     mockResultsDb.set(resultId, {
       detail,
@@ -613,5 +626,25 @@ export const mockApiClient: ApiClient = {
     }
 
     return withDelay(product)
+  },
+
+  async getMe(accessToken: string): Promise<AuthUser> {
+    void accessToken
+    return withDelay({
+      userId: 1,
+      nickname: '레이어드 사용자',
+      role: 'USER',
+      profileImageUrl: null,
+    })
+  },
+
+  async refreshAccessToken(refreshToken: string) {
+    void refreshToken
+    return withDelay({ accessToken: 'mock-access-token-refreshed' })
+  },
+
+  async logout(accessToken: string): Promise<void> {
+    void accessToken
+    return withDelay(undefined as unknown as void)
   },
 }

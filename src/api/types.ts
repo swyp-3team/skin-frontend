@@ -1,4 +1,4 @@
-import type { Concern, IngredientGroup, ProductCategory, SkinType } from '../types/domain'
+import type { Concern, ProductCategory, SkinType } from '../types/domain'
 
 export interface SurveyOption {
   optionNumber: number
@@ -23,18 +23,11 @@ export interface SurveySubmitPayload {
   concerns: Concern[]
 }
 
-export interface TopIngredientGroup {
-  group: IngredientGroup
-  score?: number
-  priority: number
-  ingredients: string[]
-  reason: string
-}
-
 export interface PreviewResult {
-  skinType: SkinType
+  diagnosedDate: string
+  typeName: string
+  subTitle: string
   summary: string
-  top3: TopIngredientGroup[]
 }
 
 export interface PreviewApiData {

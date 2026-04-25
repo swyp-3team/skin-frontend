@@ -9,6 +9,7 @@ export const APP_ROUTES = {
   myPage: '/mypage',
   routineDetail: '/mypage/routines/:id',
   productDetail: '/products/:id',
+  authCallback: '/auth/callback/:provider',
 } as const
 
 export const createResultDetailPath = (id: string | number) => `/results/${id}`
