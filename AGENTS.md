@@ -5,7 +5,8 @@
 - 이 저장소는 피부 설문 기반 추천을 위한 React + TypeScript + Vite 프로젝트입니다.
 - 엔트리포인트는 `src/main.tsx`이며, `src/app/router.tsx`에서 라우팅을 구성합니다.
 - 현재 주요 라우트:
-  - `/`
+  - `/` (로그인 + 최근 진단 결과 사용자용 홈)
+  - `/landing` (기존 랜딩 페이지)
   - `/survey`
   - `/survey/steps`
   - `/survey/result`

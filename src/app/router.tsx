@@ -5,6 +5,7 @@ import ProtectedRoute from './ProtectedRoute'
 import { APP_ROUTES } from './routes'
 import AuthCallbackPage from '../pages/auth/AuthCallbackPage'
 import HomePage from '../pages/HomePage'
+import LandingPage from '../pages/LandingPage'
 import MyPage from '../pages/MyPage'
 import NotFoundPage from '../pages/NotFoundPage'
 import ProductDetailPage from '../pages/ProductDetailPage'
@@ -23,6 +24,7 @@ function AppRouter() {
         <Route element={<AppLayout />} path={APP_ROUTES.home}>
           {/* 공개 라우트 */}
           <Route element={<HomePage />} index />
+          <Route element={<LandingPage />} path={APP_ROUTES.landing} />
           <Route element={<AuthCallbackPage />} path={APP_ROUTES.authCallback} />
           <Route element={<SurveyIntroPage />} path={APP_ROUTES.survey} />
           <Route element={<SurveyStepsPage />} path={APP_ROUTES.surveySteps} />

@@ -1,190 +1,162 @@
-import type { CSSProperties } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { ChevronRight } from 'lucide-react'
+import { useEffect } from 'react'
+import { Link, Navigate } from 'react-router-dom'
 
-import { APP_ROUTES } from '../app/routes'
+import { ApiError } from '../api/errors'
+import { APP_ROUTES, createResultDetailPath } from '../app/routes'
 import AlertMessage from '../components/common/AlertMessage'
 import PageHeader from '../components/common/PageHeader'
 import MobilePage from '../components/MobilePage'
-import { buttonVariants } from '../components/ui/button'
-import { AUTH_UI_TEXT, isAuthRedirectState } from '../constants/auth'
 import { cn } from '../lib/utils'
-import { HOME_CONTENT, type IngredientChipItem, INGREDIENT_MARQUEE_ROWS } from './home/homeContent'
-import './home/homepage.css'
+import { selectIsAuthenticated, useAuthStore } from '../stores/authStore'
+import { useSurveyResultStore } from '../stores/surveyResultStore'
+import { useResultDetail } from './results/useResultDetail'
 
-const MARQUEE_DURATIONS = [34, 30, 36] as const
+function formatDateTime(value: string): { date: string; time: string } {
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) {
+    return { date: 'YYYY.MM.DD', time: '--:--' }
+  }
 
-interface IngredientChipProps {
-  item: IngredientChipItem
+  const year = parsed.getFullYear()
+  const month = String(parsed.getMonth() + 1).padStart(2, '0')
+  const day = String(parsed.getDate()).padStart(2, '0')
+  const hour = String(parsed.getHours()).padStart(2, '0')
+  const minute = String(parsed.getMinutes()).padStart(2, '0')
+
+  return {
+    date: `${year}.${month}.${day}`,
+    time: `${hour}:${minute}`,
+  }
 }
 
-function IngredientChip({ item }: IngredientChipProps) {
-  return (
-    <div className="h-[40px] inline-flex items-center gap-2 rounded-full px-[5px] py-[5px] outline outline-1 -outline-offset-1 outline-neutral-200">
-      <span className="rounded-full bg-primary-100 px-3 py-1 text-[12px] font-medium leading-[16.32px] text-primary-500">
-        {item.category}
-      </span>
-      <span className="pr-2 text-[13px] font-medium leading-[18.2px] text-neutral-50">{item.ingredient}</span>
-    </div>
-  )
-}
+function getElapsedDaysLabel(value: string): string {
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) {
+    return 'N일'
+  }
 
-interface IngredientMarqueeRowProps {
-  items: readonly IngredientChipItem[]
-  reverse?: boolean
-  durationSec: number
-}
+  const today = new Date()
+  const diagnosedDate = new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate())
+  const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+  const diffMs = todayDate.getTime() - diagnosedDate.getTime()
+  const days = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)))
 
-function IngredientMarqueeRow({ items, reverse = false, durationSec }: IngredientMarqueeRowProps) {
-  const style = { '--marquee-duration': `${durationSec}s` } as CSSProperties
-  const duplicatedItems = [...items, ...items]
-
-  return (
-    <div className="homepage-marquee-row">
-      <div className={cn('homepage-marquee-track', reverse && 'homepage-marquee-track--reverse')} style={style}>
-        {duplicatedItems.map((item, index) => (
-          <IngredientChip key={`${item.category}-${item.ingredient}-${index}`} item={item} />
-        ))}
-      </div>
-    </div>
-  )
+  return `${days}일`
 }
 
 function HomePage() {
-  const location = useLocation()
-  const authRedirectState = isAuthRedirectState(location.state) ? location.state : null
-  const hasAuthRedirect = authRedirectState !== null
+  const isAuthenticated = useAuthStore(selectIsAuthenticated)
+  const nickname = useAuthStore((state) => state.user?.nickname)
 
+  const latestResultId = useSurveyResultStore((state) => state.latestResultId)
+  const clearLatestResultId = useSurveyResultStore((state) => state.clearLatestResultId)
+  const clearSavedRoutine = useSurveyResultStore((state) => state.clearSavedRoutine)
+
+  const resultQuery = useResultDetail(isAuthenticated ? (latestResultId ?? -1) : -1)
+
+  const shouldRedirectToLanding = !isAuthenticated || latestResultId == null
+  const hasExpiredResultError =
+    resultQuery.error instanceof ApiError &&
+    (resultQuery.error.status === 401 || resultQuery.error.status === 404)
+
+  useEffect(() => {
+    if (!hasExpiredResultError) {
+      return
+    }
+
+    clearLatestResultId()
+    clearSavedRoutine()
+  }, [hasExpiredResultError, clearLatestResultId, clearSavedRoutine])
+
+  if (shouldRedirectToLanding || hasExpiredResultError) {
+    return <Navigate replace to={APP_ROUTES.landing} />
+  }
+
+  const result = resultQuery.data
+  const diagnosed = result ? formatDateTime(result.diagnosedAt) : { date: 'YYYY.MM.DD', time: '--:--' }
+  const elapsedDaysLabel = result ? getElapsedDaysLabel(result.diagnosedAt) : 'N일'
 
   return (
-    <MobilePage className="bg-[#F2FAFA]" header={<PageHeader showLogo tone="light" />} mainClassName="px-0">
-      <div className="flex flex-col pb-16">
-        <section className="px-5 pb-14 pt-18">
-          <div className="inline-flex items-center rounded-[4px] bg-primary-50 px-2 py-1">
-            <span className="text-[12px] font-medium leading-[16.32px] text-primary-500">{HOME_CONTENT.hero.badge}</span>
-          </div>
-
-          <h1 className="mt-5 flex flex-col gap-[5px]">
-            <span className="block text-[24px] font-bold leading-[32.4px] text-neutral-800">피부 고민을 입력하면</span>
-            <span className="block text-[24px] font-bold leading-[32.4px] text-primary-400">나에게 맞는</span>
-            <span className="block text-[24px] font-bold leading-[32.4px] text-neutral-800">성분과 루틴을 알려드려요</span>
-          </h1>
-
-          <p className="mt-5 whitespace-pre-line text-[15px] leading-[22.2px] text-neutral-600">
-            {HOME_CONTENT.hero.description}
+    <MobilePage className="bg-primary-50" header={<PageHeader showLogo className="bg-primary-50" />} mainClassName="px-5 py-4">
+      <div className="flex flex-col gap-6 pb-6">
+        <section className="space-y-2 pt-2">
+          <p className="text-[15px] font-semibold leading-[22.2px] text-neutral-500">
+            {nickname ?? '고객'}님 피부 리포트
           </p>
-
-          {hasAuthRedirect ? (
-            <AlertMessage className="mt-6" size="md" variant="warning">
-              {authRedirectState?.from ?? AUTH_UI_TEXT.protectedPageFallback}
-              {AUTH_UI_TEXT.protectedPageHintSuffix}
-            </AlertMessage>
-          ) : null}
-
-          <Link
-            className={cn(
-              buttonVariants({ variant: 'dark' }),
-              'mt-8 h-12 w-full rounded-full px-6 py-3 text-center text-base font-medium shadow-[var(--shadow-cta)]',
-            )}
-            to={APP_ROUTES.surveySteps}
-          >
-            {HOME_CONTENT.hero.primaryCta}
-          </Link>
-
+          <h1 className="text-[22px] font-bold leading-[29.7px] text-neutral-800">마지막 진단으로부터</h1>
+          <div className="flex items-center gap-1 text-[22px] font-bold leading-[29.7px]">
+            <span className="text-primary-400">{elapsedDaysLabel}</span>
+            <span className="text-neutral-800">지났어요.</span>
+          </div>
         </section>
 
-        <section className="space-y-10 px-5 py-10">
+        <section className="space-y-4">
           <div>
-            <span className="text-[13px] font-bold leading-[18.2px] text-primary-400">{HOME_CONTENT.howItWorks.eyebrow}</span>
-            <div className="mt-2 space-y-1">
-              {HOME_CONTENT.howItWorks.titleLines.map((line) => (
-                <h2 key={line} className="text-[24px] font-bold leading-[32.4px] text-neutral-800">
-                  {line}
-                </h2>
-              ))}
-            </div>
+            <p className="text-[14px] font-medium leading-[20.44px] text-neutral-600">최근 진단 결과</p>
           </div>
 
-          <div className="space-y-8">
-            {HOME_CONTENT.howItWorks.steps.map((step) => (
-              <article key={step.order} className="space-y-2">
-                <p className="text-[24px] font-bold leading-[32.4px] text-neutral-200">{step.order}</p>
-                <h3 className="text-[18px] font-bold leading-[25.56px] text-neutral-800">{step.title}</h3>
-                <p className="whitespace-pre-line text-[13px] leading-[18.2px] text-neutral-600">{step.description}</p>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className="space-y-13 bg-neutral-800 px-0 py-10 text-neutral-0">
-          <div className="space-y-4 px-5">
-            <span className="text-[13px] font-bold leading-[18.2px] text-primary-400">{HOME_CONTENT.ingredientEngine.eyebrow}</span>
+          <article className="rounded-lg border-t-2 border-primary-400 bg-common-0 px-4 pb-3 pt-4">
             <div className="space-y-1">
-              {HOME_CONTENT.ingredientEngine.titleLines.map((line) => (
-                <h2 key={line} className="text-[24px] font-bold leading-[32.4px] text-neutral-0">
-                  {line}
-                </h2>
-              ))}
+              <h2 className="text-[18px] font-bold leading-[25.56px] text-neutral-800">
+                {result?.typeName ?? '최근 진단 정보를 불러오는 중입니다.'}
+              </h2>
+              <p className="text-[12px] font-medium leading-[16.32px] text-primary-500">
+                {result?.subTitle ?? '잠시만 기다려주세요.'}
+              </p>
             </div>
-            <p className="text-[15px] leading-[22.2px] text-neutral-100">{HOME_CONTENT.ingredientEngine.description}</p>
-          </div>
 
-          <div className="w-full space-y-4">
-            {INGREDIENT_MARQUEE_ROWS.map((row, index) => (
-              <IngredientMarqueeRow
-                key={`ingredient-row-${index}`}
-                durationSec={MARQUEE_DURATIONS[index] ?? 32}
-                items={row}
-                reverse={index % 2 === 1}
-              />
-            ))}
-          </div>
-        </section>
-
-        <section className="space-y-10 bg-primary-50 px-5 py-10">
-          <div className="space-y-4">
-            <span className="text-[13px] font-bold leading-[18.2px] text-primary-400">{HOME_CONTENT.resultPreview.eyebrow}</span>
-            <div className="space-y-1">
-              {HOME_CONTENT.resultPreview.titleLines.map((line) => (
-                <h2 key={line} className="text-[24px] font-bold leading-[32.4px] text-neutral-800">
-                  {line}
-                </h2>
-              ))}
+            <div className="mt-4 border-b border-neutral-100 py-2">
+              <div className="inline-flex items-center gap-1 text-[12px] font-normal leading-[16.32px] text-neutral-400">
+                <span>{diagnosed.date}</span>
+                <span>{diagnosed.time}</span>
+              </div>
             </div>
-            <p className="text-[15px] leading-[22.2px] text-neutral-500">{HOME_CONTENT.resultPreview.description}</p>
-          </div>
+
+            <div className="mt-1 flex justify-end">
+              {result ? (
+                <Link
+                  className="inline-flex items-center gap-0.5 px-2 py-2 text-[12px] font-medium leading-[16.32px] text-primary-400"
+                  to={createResultDetailPath(latestResultId)}
+                >
+                  결과보기
+                  <ChevronRight className="size-4" strokeWidth={1.8} />
+                </Link>
+              ) : null}
+            </div>
+          </article>
 
           <Link
-            className={cn(
-              buttonVariants({ variant: 'dark' }),
-              'inline-flex h-12 min-w-[170px] rounded-full px-6 py-3 text-center text-base font-medium',
-            )}
+            className="inline-flex h-[40px] w-full items-center justify-center rounded-lg border border-neutral-100 bg-neutral-50 px-5 py-[9px] text-[15px] font-medium leading-[22.2px] text-neutral-600"
             to={APP_ROUTES.survey}
           >
-            {HOME_CONTENT.resultPreview.cta}
+            다시 진단하기
           </Link>
         </section>
 
-        <section className="px-5 py-12">
-          <div className="mx-auto flex max-w-[390px] flex-col items-center gap-3 text-center">
-            <div className="space-y-1">
-              {HOME_CONTENT.finalCta.titleLines.map((line) => (
-                <h2 key={line} className="text-[24px] font-bold leading-[32.4px] text-neutral-800">
-                  {line}
-                </h2>
-              ))}
-            </div>
-            <p className="text-[15px] leading-[22.2px] text-neutral-500">{HOME_CONTENT.finalCta.description}</p>
-          </div>
+        {resultQuery.error && !hasExpiredResultError ? (
+          <AlertMessage size="sm" variant="error">
+            최근 진단 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
+          </AlertMessage>
+        ) : null}
 
-          <Link
-            className={cn(
-              buttonVariants({ variant: 'dark' }),
-              'mx-auto mt-8 flex h-12 w-full max-w-[295px] items-center justify-center rounded-full px-6 py-3 text-center text-base font-medium',
-            )}
-            to={APP_ROUTES.survey}
-          >
-            {HOME_CONTENT.finalCta.cta}
-          </Link>
+        <section className="pt-1">
+          <div className="flex items-center justify-between rounded-lg bg-common-0 p-4">
+            <p className="text-[14px] font-medium leading-[20.44px] text-neutral-600">
+              전체 진단 내역과 루틴은
+              <br />
+              마이페이지에서 확인할 수 있어요!
+            </p>
+            <Link
+              className={cn(
+                'inline-flex items-center gap-0.5 px-2 py-2 text-[12px] font-medium leading-[16.32px] text-primary-400',
+              )}
+              to={APP_ROUTES.myPage}
+            >
+              마이페이지 가기
+              <ChevronRight className="size-4" strokeWidth={1.8} />
+            </Link>
+          </div>
         </section>
       </div>
     </MobilePage>

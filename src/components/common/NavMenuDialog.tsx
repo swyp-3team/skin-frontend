@@ -48,6 +48,10 @@ function createLoginRequiredAction(path: string): MenuItemConfig['resolveAction'
 
 const MENU_ITEMS: MenuItemConfig[] = [
   {
+    label: '홈페이지',
+    resolveAction: () => ({ type: 'navigate', path: APP_ROUTES.home }),
+  },
+  {
     label: '피부 진단하기',
     resolveAction: () => ({ type: 'navigate', path: APP_ROUTES.survey }),
   },

@@ -28,7 +28,8 @@
       "Bash(grep -r \"scrollbar\" C:/Users/dayou/skin-web/dist/assets/*.css)",
       "Bash(grep -o \"scrollbar[^}]*}\" C:/Users/dayou/skin-web/dist/assets/index-*.css)",
       "WebFetch(domain:localhost)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(git rm:*)"
     ]
   }
 }

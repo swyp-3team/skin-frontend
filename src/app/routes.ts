@@ -1,5 +1,6 @@
 export const APP_ROUTES = {
   home: '/',
+  landing: '/landing',
   survey: '/survey',
   surveySteps: '/survey/steps',
   surveyResult: '/survey/result',
@@ -9,7 +10,7 @@ export const APP_ROUTES = {
   myPage: '/mypage',
   routineDetail: '/mypage/routines/:id',
   productDetail: '/products/:id',
-  authCallback: '/auth/callback/:provider',
+  authCallback: '/oauth/callback',
 } as const
 
 export const createResultDetailPath = (id: string | number) => `/results/${id}`
