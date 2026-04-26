@@ -200,7 +200,7 @@ function ResultProductsSearchPage() {
   const showResults = hasSubmittedKeyword && searchedProducts.length > 0
   const showEmptyState = hasSubmittedKeyword && !isSearchLoading && !searchError && searchedProducts.length === 0
   const showLoading = hasSubmittedKeyword && isSearchLoading && !searchError
-  const isInputFocusStyle = isInputFocused && !hasSubmittedKeyword
+  const isInputFocusStyle = isInputFocused
 
   return (
     <MobilePage className="bg-neutral-0" header={<SearchHeader onBack={handleBack} />} mainClassName="bg-neutral-0 px-0">
