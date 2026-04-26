@@ -107,7 +107,7 @@ function AuthCallbackPage() {
 
       try {
         const profile = await apiClient.getProfile()
-        setLatestResultId(profile.skinResultId)
+        setLatestResultId(profile.resultId)
         navigate('/', { replace: true })
       } catch (error) {
         if (isApiError(error) && error.status === 404) {

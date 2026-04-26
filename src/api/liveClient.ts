@@ -719,8 +719,8 @@ function normalizeProfileData(payload: unknown): ProfileData {
   if (!isRecord(payload)) {
     throw new ApiError('Profile response is invalid.', 500, 'INVALID_PROFILE_FORMAT', payload)
   }
-  const skinResultId = toOptionalNumber(payload.skinResultId)
-  if (skinResultId === null) {
+  const resultId = toOptionalNumber(payload.resultId)
+  if (resultId === null) {
     throw new ApiError('skinResultId is invalid.', 500, 'INVALID_PROFILE_SKIN_RESULT_ID', payload)
   }
   if (typeof payload.diagnosedAt !== 'string') {
@@ -737,7 +737,7 @@ function normalizeProfileData(payload: unknown): ProfileData {
   }
 
   return {
-    skinResultId,
+    resultId: resultId,
     diagnosedAt: payload.diagnosedAt,
     skinType: payload.skinType,
     subtitle: payload.subtitle,

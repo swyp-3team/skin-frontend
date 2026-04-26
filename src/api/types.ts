@@ -179,7 +179,7 @@ export interface ResultProductsQuery {
 }
 
 export interface ProfileData {
-  skinResultId: number
+  resultId: number
   diagnosedAt: string
   skinType: string
   subtitle: string
