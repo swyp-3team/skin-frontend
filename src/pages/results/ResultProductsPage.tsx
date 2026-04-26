@@ -239,7 +239,7 @@ function ResultProductsPage() {
             isHeaderScrolled ? 'overflow-y-auto' : 'overflow-hidden',
           )}
         >
-          <div className="sticky top-0 z-9 bg-common-0/70 px-4 pt-4 pb-3">
+          <div className="sticky top-0 z-9 bg-gradient-to-b from-common-0 from-40% to-common-0/70 px-4 pt-4 pb-3">
             <div style={{width: '100%', height: '100%', justifyContent: 'flex-start', alignItems: 'flex-start', gap: 8, display: 'inline-flex', flexWrap: 'wrap', alignContent: 'flex-start'}}>
               {RESULT_PRODUCT_TABS.map((tab) => {
                 const isActive = activeTabId === tab.id
