@@ -101,6 +101,12 @@ function AuthCallbackPage() {
       }
 
       if (intent?.type === 'return') {
+        try {
+          const profile = await apiClient.getProfile()
+          setLatestResultId(profile.resultId)
+        } catch {
+          // 설문 미완료 또는 오류 시 무시
+        }
         navigate(intent.returnTo, { replace: true })
         return
       }
