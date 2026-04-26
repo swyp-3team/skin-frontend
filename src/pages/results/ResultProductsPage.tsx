@@ -98,12 +98,6 @@ function ResultProductsPage() {
     return () => observer.disconnect()
   }, [fetchNextPage, hasNextPage, isFetchingNextPage])
 
-  useEffect(() => {
-    if (!isHeaderScrolled && containerRef.current) {
-      containerRef.current.scrollTop = 0
-    }
-  }, [isHeaderScrolled])
-
   if (!id || Number.isNaN(resultId)) {
     return (
       <MobilePage>
