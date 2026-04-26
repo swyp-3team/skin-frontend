@@ -20,8 +20,8 @@ interface IngredientChipProps {
 
 function IngredientChip({ item }: IngredientChipProps) {
   return (
-    <div className="h-[40px] inline-flex items-center gap-2 rounded-full px-[5px] py-[5px] outline outline-1 -outline-offset-1 outline-neutral-200">
-      <span className="rounded-full bg-primary-100 px-3 py-1 text-[12px] font-medium leading-[16.32px] text-primary-500">
+    <div className="h-[34px] inline-flex items-center gap-2 rounded-[20px] px-[5px] py-[5px] outline outline-1 -outline-offset-1 outline-neutral-200">
+      <span className="rounded-[20px] bg-primary-100 px-3 py-1 text-[12px] font-medium leading-[16.32px] text-primary-500">
         {item.category}
       </span>
       <span className="pr-2 text-[13px] font-medium leading-[18.2px] text-neutral-50">{item.ingredient}</span>
@@ -55,22 +55,21 @@ function LandingPage() {
   const authRedirectState = isAuthRedirectState(location.state) ? location.state : null
   const hasAuthRedirect = authRedirectState !== null
 
-
   return (
     <MobilePage className="bg-[#F2FAFA]" header={<PageHeader showLogo tone="light" />} mainClassName="px-0">
       <div className="flex flex-col pb-16">
-        <section className="px-5 pb-14 pt-18">
+        <section className="px-5 pb-[90px] pt-[60px]">
           <div className="inline-flex items-center rounded-[4px] bg-primary-50 px-2 py-1">
             <span className="text-[12px] font-medium leading-[16.32px] text-primary-500">{HOME_CONTENT.hero.badge}</span>
           </div>
 
-          <h1 className="mt-5 flex flex-col gap-[5px]">
+          <h1 className="mt-[13px] flex flex-col gap-[5px]">
             <span className="block text-[24px] font-bold leading-[32.4px] text-neutral-800">피부 고민을 입력하면</span>
             <span className="block text-[24px] font-bold leading-[32.4px] text-primary-400">나에게 맞는</span>
             <span className="block text-[24px] font-bold leading-[32.4px] text-neutral-800">성분과 루틴을 알려드려요</span>
           </h1>
 
-          <p className="mt-5 whitespace-pre-line text-[15px] leading-[22.2px] text-neutral-600">
+          <p className="mt-[19px] whitespace-pre-line text-[15px] leading-[22.2px] text-neutral-600">
             {HOME_CONTENT.hero.description}
           </p>
 
@@ -84,7 +83,7 @@ function LandingPage() {
           <Link
             className={cn(
               buttonVariants({ variant: 'dark' }),
-              'mt-8 h-12 w-full rounded-full px-6 py-3 text-center text-base font-medium shadow-[var(--shadow-cta)]',
+              'mx-auto mt-[100px] flex h-12 w-[280px] rounded-full px-6 py-3 text-center text-base font-medium',
             )}
             to={APP_ROUTES.surveySteps}
           >
@@ -92,13 +91,14 @@ function LandingPage() {
           </Link>
 
           <MockLoginButton className="mt-3" />
-
         </section>
 
-        <section className="space-y-10 px-5 py-10">
+        <section className="flex flex-col gap-10 px-5 pb-20">
           <div>
-            <span className="text-[13px] font-bold leading-[18.2px] text-primary-400">{HOME_CONTENT.howItWorks.eyebrow}</span>
-            <div className="mt-2 space-y-1">
+            <div className="inline-flex py-2">
+              <span className="text-[13px] font-bold leading-[18.2px] text-primary-400">{HOME_CONTENT.howItWorks.eyebrow}</span>
+            </div>
+            <div className="space-y-1">
               {HOME_CONTENT.howItWorks.titleLines.map((line) => (
                 <h2 key={line} className="text-[24px] font-bold leading-[32.4px] text-neutral-800">
                   {line}
@@ -107,20 +107,20 @@ function LandingPage() {
             </div>
           </div>
 
-          <div className="space-y-8">
-            {HOME_CONTENT.howItWorks.steps.map((step) => (
-              <article key={step.order} className="space-y-2">
-                <p className="text-[24px] font-bold leading-[32.4px] text-neutral-200">{step.order}</p>
-                <h3 className="text-[18px] font-bold leading-[25.56px] text-neutral-800">{step.title}</h3>
-                <p className="whitespace-pre-line text-[13px] leading-[18.2px] text-neutral-600">{step.description}</p>
-              </article>
-            ))}
-          </div>
+          {HOME_CONTENT.howItWorks.steps.map((step) => (
+            <article key={step.order} className="space-y-2">
+              <p className="text-[24px] font-bold leading-[32.4px] text-neutral-200">{step.order}</p>
+              <h3 className="text-[18px] font-bold leading-[25.56px] text-neutral-800">{step.title}</h3>
+              <p className="whitespace-pre-line text-[13px] leading-[18.2px] text-neutral-600">{step.description}</p>
+            </article>
+          ))}
         </section>
 
-        <section className="space-y-13 bg-neutral-800 px-0 py-10 text-neutral-0">
-          <div className="space-y-4 px-5">
-            <span className="text-[13px] font-bold leading-[18.2px] text-primary-400">{HOME_CONTENT.ingredientEngine.eyebrow}</span>
+        <section className="flex flex-col gap-10 bg-neutral-800 px-5 pt-10 pb-3 text-neutral-0">
+          <div className="flex flex-col gap-2">
+            <div className="inline-flex py-2">
+              <span className="text-[13px] font-bold leading-[18.2px] text-primary-400">{HOME_CONTENT.ingredientEngine.eyebrow}</span>
+            </div>
             <div className="space-y-1">
               {HOME_CONTENT.ingredientEngine.titleLines.map((line) => (
                 <h2 key={line} className="text-[24px] font-bold leading-[32.4px] text-neutral-0">
@@ -128,24 +128,30 @@ function LandingPage() {
                 </h2>
               ))}
             </div>
-            <p className="text-[15px] leading-[22.2px] text-neutral-100">{HOME_CONTENT.ingredientEngine.description}</p>
+            <div className="py-2">
+              <p className="text-[15px] leading-[22.2px] text-neutral-100">{HOME_CONTENT.ingredientEngine.description}</p>
+            </div>
           </div>
 
-          <div className="w-full space-y-4">
-            {INGREDIENT_MARQUEE_ROWS.map((row, index) => (
-              <IngredientMarqueeRow
-                key={`ingredient-row-${index}`}
-                durationSec={MARQUEE_DURATIONS[index] ?? 32}
-                items={row}
-                reverse={index % 2 === 1}
-              />
-            ))}
+          <div className="-mx-5 overflow-hidden">
+            <div className="-ml-[100px] w-[507px] space-y-[8px] px-0">
+              {INGREDIENT_MARQUEE_ROWS.map((row, index) => (
+                <IngredientMarqueeRow
+                  key={`ingredient-row-${index}`}
+                  durationSec={MARQUEE_DURATIONS[index] ?? 32}
+                  items={row}
+                  reverse={index % 2 === 1}
+                />
+              ))}
+            </div>
           </div>
         </section>
 
-        <section className="space-y-10 bg-primary-50 px-5 py-10">
-          <div className="space-y-4">
-            <span className="text-[13px] font-bold leading-[18.2px] text-primary-400">{HOME_CONTENT.resultPreview.eyebrow}</span>
+        <section className="flex flex-col gap-10 bg-primary-50 px-5 py-20">
+          <div className="flex flex-col gap-2">
+            <div className="inline-flex py-2">
+              <span className="text-[13px] font-bold leading-[18.2px] text-primary-400">{HOME_CONTENT.resultPreview.eyebrow}</span>
+            </div>
             <div className="space-y-1">
               {HOME_CONTENT.resultPreview.titleLines.map((line) => (
                 <h2 key={line} className="text-[24px] font-bold leading-[32.4px] text-neutral-800">
@@ -153,13 +159,15 @@ function LandingPage() {
                 </h2>
               ))}
             </div>
-            <p className="text-[15px] leading-[22.2px] text-neutral-500">{HOME_CONTENT.resultPreview.description}</p>
+            <div className="pt-2">
+              <p className="text-[15px] leading-[22.2px] text-neutral-500">{HOME_CONTENT.resultPreview.description}</p>
+            </div>
           </div>
 
           <Link
             className={cn(
               buttonVariants({ variant: 'dark' }),
-              'inline-flex h-12 min-w-[170px] rounded-full px-6 py-3 text-center text-base font-medium',
+              'inline-flex h-12 min-w-[170px] w-fit rounded-full px-8 py-3 text-center text-base font-[500px]',
             )}
             to={APP_ROUTES.survey}
           >
@@ -167,8 +175,8 @@ function LandingPage() {
           </Link>
         </section>
 
-        <section className="px-5 py-12">
-          <div className="mx-auto flex max-w-[390px] flex-col items-center gap-3 text-center">
+        <section className="px-5 pt-30 pb-25">
+          <div className="mx-auto flex flex-col items-center gap-2 text-center">
             <div className="space-y-1">
               {HOME_CONTENT.finalCta.titleLines.map((line) => (
                 <h2 key={line} className="text-[24px] font-bold leading-[32.4px] text-neutral-800">
@@ -176,13 +184,15 @@ function LandingPage() {
                 </h2>
               ))}
             </div>
-            <p className="text-[15px] leading-[22.2px] text-neutral-500">{HOME_CONTENT.finalCta.description}</p>
+            <div className="py-2">
+              <p className="text-[15px] leading-[22.2px] text-neutral-500">{HOME_CONTENT.finalCta.description}</p>
+            </div>
           </div>
 
           <Link
             className={cn(
               buttonVariants({ variant: 'dark' }),
-              'mx-auto mt-8 flex h-12 w-full max-w-[295px] items-center justify-center rounded-full px-6 py-3 text-center text-base font-medium',
+              'mx-auto mt-[43px] flex h-12 w-[280px] items-center justify-center rounded-full px-6 py-3 text-center text-base font-medium',
             )}
             to={APP_ROUTES.survey}
           >
