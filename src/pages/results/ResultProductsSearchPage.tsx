@@ -203,8 +203,12 @@ function ResultProductsSearchPage() {
   const isInputFocusStyle = isInputFocused
 
   return (
-    <MobilePage className="bg-neutral-0" header={<SearchHeader onBack={handleBack} />} mainClassName="bg-neutral-0 px-0">
-      <section className="border-b border-neutral-200 px-5 py-5">
+    <MobilePage
+      className="bg-neutral-0"
+      header={<SearchHeader onBack={handleBack} />}
+      mainClassName="min-h-0 flex flex-col bg-neutral-0 px-0"
+    >
+      <section className="sticky top-12 z-9 border-b border-neutral-200 bg-neutral-0 px-5 py-5">
         <div
           className={cn(
             'inline-flex w-full items-center gap-2.5 rounded-lg border bg-common-0 p-2.5',
@@ -253,7 +257,7 @@ function ResultProductsSearchPage() {
       ) : null}
 
       {showLoading ? (
-        <section className="px-5 py-6">
+        <section className="px-5 py-6 pt-30">
           <p className="text-center text-sm text-neutral-400">{SEARCH_PAGE_COPY.searching}</p>
         </section>
       ) : null}
@@ -270,7 +274,7 @@ function ResultProductsSearchPage() {
       ) : null}
 
       {showEmptyState ? (
-        <section className="flex min-h-[calc(100dvh-152px)] flex-col items-center justify-center px-5 text-center">
+        <section className="flex flex-1 flex-col items-center px-5 pt-30 text-center">
           <p className="text-[20px] font-medium leading-[29px] text-neutral-800">{SEARCH_PAGE_COPY.emptyTitle}</p>
           <p className="mt-1 text-base font-normal leading-[23.68px] text-neutral-800">
             {SEARCH_PAGE_COPY.emptyDescriptionTop}
