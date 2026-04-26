@@ -218,7 +218,7 @@ function ResultRoutinePage() {
     )
   }
 
-  const skinResultId = recommendation.skinResultId
+  const skinResultId = recommendation.resultId
   const isRoutineSaved = savedResultId === skinResultId
   const routineNameLength = routineNameDraft.length
   const trimmedRoutineName = routineNameDraft.trim()

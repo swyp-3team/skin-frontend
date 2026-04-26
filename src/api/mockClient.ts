@@ -531,7 +531,7 @@ function createRoutineRecommendationWithToken(stored: StoredResult): RoutineReco
 
   return {
     recommendation: {
-      skinResultId: stored.detail.resultId,
+      resultId: stored.detail.resultId,
       skinType: copy.skinType,
       subtitle: copy.subtitle,
       routineSummary: copy.routineSummary,
@@ -707,7 +707,7 @@ export const mockApiClient: ApiClient = {
     }
     const copy = RESULT_COPY_BY_SKIN_TYPE[stored.skinType]
     return withDelay({
-      skinResultId: stored.detail.resultId,
+      resultId: stored.detail.resultId,
       diagnosedAt: stored.detail.diagnosedAt,
       skinType: copy.skinType,
       subtitle: copy.subtitle,
