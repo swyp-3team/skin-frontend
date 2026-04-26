@@ -121,7 +121,7 @@ export interface RoutineSection {
 }
 
 export interface RoutineRecommendation {
-  skinResultId: number
+  resultId: number
   skinType: string
   subtitle: string
   routineSummary: string

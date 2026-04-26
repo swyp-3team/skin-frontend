@@ -574,8 +574,8 @@ function normalizeRoutineRecommendation(payload: unknown): RoutineRecommendation
     throw new ApiError('Routine recommendation response is invalid.', 500, 'INVALID_ROUTINE_REC_FORMAT', payload)
   }
 
-  const skinResultId = toOptionalNumber(payload.skinResultId)
-  if (skinResultId === null) {
+  const resultId = toOptionalNumber(payload.resultId)
+  if (resultId === null) {
     throw new ApiError('skinResultId is invalid.', 500, 'INVALID_ROUTINE_REC_SKIN_RESULT_ID', payload)
   }
   if (typeof payload.skinType !== 'string') {
@@ -589,7 +589,7 @@ function normalizeRoutineRecommendation(payload: unknown): RoutineRecommendation
   }
 
   return {
-    skinResultId,
+    resultId,
     skinType: payload.skinType,
     subtitle: payload.subtitle,
     routineSummary: payload.routineSummary,
