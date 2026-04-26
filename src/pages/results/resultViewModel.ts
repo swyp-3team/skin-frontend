@@ -23,8 +23,9 @@ export function createResultHeaderViewModel(result: ResultDetail): ResultHeaderV
   return {
     diagnosisTitle: result.skinType,
     subtitle: result.subtitle,
-    summary: result.subSummary || result.subtitle || result.summary,
+    summary: result.summary,
     diagnosedAt: result.diagnosedAt,
+    subSummary: result.subSummary
   }
 }
 

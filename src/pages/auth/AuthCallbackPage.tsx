@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { useShallow } from 'zustand/react/shallow'
 
 import { apiClient } from '@/api'
+import { isApiError } from '@/api/errors'
 import { clearIntent, readIntent } from '@/auth/postLoginIntent'
-import { createResultDetailPath } from '@/app/routes'
+import { APP_ROUTES, createResultDetailPath } from '@/app/routes'
 import MobilePage from '@/components/MobilePage'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -106,7 +107,17 @@ function AuthCallbackPage() {
         return
       }
 
-      navigate('/', { replace: true })
+      try {
+        const profile = await apiClient.getProfile({})
+        setLatestResultId(profile.skinResultId)
+        navigate('/', { replace: true })
+      } catch (error) {
+        if (isApiError(error) && error.status === 404) {
+          navigate(APP_ROUTES.landing, { replace: true })
+        } else {
+          navigate('/', { replace: true })
+        }
+      }
     }
 
     handleCallback()

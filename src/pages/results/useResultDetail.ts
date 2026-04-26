@@ -2,7 +2,7 @@ import { queryOptions, useQuery } from '@tanstack/react-query'
 
 import { apiClient } from '../../api'
 import { ApiError } from '../../api/errors'
-import type { ResultDetail } from '../../api/types'
+import type { ProfileData, ResultDetail } from '../../api/types'
 import type { ResultHeaderViewModel } from '../../components/results/types'
 import { queryKeys } from '../../lib/queryKeys'
 import { useAuthStore } from '../../stores/authStore'
@@ -35,5 +35,28 @@ export function useResultHeader(resultId: number) {
   return useQuery<ResultDetail, ApiError, ResultHeaderViewModel>({
     ...getResultDetailQueryOptions(resultId, accessToken),
     select: createResultHeaderViewModel,
+  })
+}
+
+function profileToHeaderViewModel(data: ProfileData): ResultHeaderViewModel {
+  return {
+    diagnosisTitle: data.skinType,
+    subtitle: data.subtitle,
+    summary: data.summary,
+    diagnosedAt: data.diagnosedAt,
+    subSummary: '',
+  }
+}
+
+export function useProfileHeader() {
+  const accessToken = useAuthStore((state) => state.accessToken)
+
+  return useQuery<ProfileData, ApiError, ResultHeaderViewModel>({
+    queryKey: queryKeys.profile(),
+    queryFn: () => apiClient.getProfile({ accessToken }),
+    select: profileToHeaderViewModel,
+    retry: false,
+    staleTime: Infinity,
+    gcTime: Infinity,
   })
 }

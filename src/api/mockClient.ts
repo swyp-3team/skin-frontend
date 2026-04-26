@@ -8,6 +8,7 @@ import type {
   PreviewApiData,
   PreviewResult,
   ProductDetail,
+  ProfileData,
   ResultDetail,
   ResultIngredientMeta,
   ResultProductsFilterCategory,
@@ -15,6 +16,10 @@ import type {
   ResultProductsQuery,
   RoutineDetail,
   RoutineGroup,
+  RoutineRecommendationWithToken,
+  RoutineSection,
+  SaveRoutineRequest,
+  SaveRoutineResponse,
   SurveyQuestion,
   SurveyResultInput,
   SurveySubmitPayload,
@@ -485,6 +490,62 @@ function createRoutineProducts(
   })
 }
 
+interface MockRoutineProductSpec {
+  productId: number
+  productCategory: RoutineRecommendationWithToken['recommendation']['amRoutine']['products'][number]['productCategory']
+  routineStepCategory: RoutineRecommendationWithToken['recommendation']['amRoutine']['products'][number]['routineStepCategory']
+}
+
+function buildRoutineSection(
+  specs: MockRoutineProductSpec[],
+  type: 'AM' | 'PM',
+): RoutineSection {
+  return {
+    routineType: type,
+    products: specs.map((spec) => {
+      const item = MOCK_CATALOG_MAP.get(spec.productId)
+      if (!item) {
+        throw new ApiError(`Product not found. (ID: ${spec.productId})`, 404, 'PRODUCT_NOT_FOUND')
+      }
+      return {
+        productId: item.productId,
+        name: item.name,
+        productCategory: spec.productCategory,
+        imageUrl: item.imageUrl,
+        routineStepCategory: spec.routineStepCategory,
+      }
+    }),
+  }
+}
+
+function createRoutineRecommendationWithToken(stored: StoredResult): RoutineRecommendationWithToken {
+  const copy = RESULT_COPY_BY_SKIN_TYPE[stored.skinType]
+
+  const amSpecs: MockRoutineProductSpec[] = [
+    { productId: 202, productCategory: 'TONER', routineStepCategory: 'PREPARE' },
+    { productId: 204, productCategory: 'SERUM', routineStepCategory: 'INTENSIVE_CARE' },
+    { productId: 209, productCategory: 'SUN_CARE', routineStepCategory: 'SUN_CARE' },
+  ]
+
+  const pmSpecs: MockRoutineProductSpec[] = [
+    { productId: 202, productCategory: 'TONER', routineStepCategory: 'PREPARE' },
+    { productId: 205, productCategory: 'AMPOULE', routineStepCategory: 'INTENSIVE_CARE' },
+    { productId: 208, productCategory: 'CREAM', routineStepCategory: 'MOISTURIZER' },
+  ]
+
+  return {
+    recommendation: {
+      skinResultId: stored.detail.resultId,
+      skinType: copy.skinType,
+      subtitle: copy.subtitle,
+      routineSummary: copy.routineSummary,
+      amRoutine: buildRoutineSection(amSpecs, 'AM'),
+      pmRoutine: buildRoutineSection(pmSpecs, 'PM'),
+    },
+    previewToken: `mock-routine-token-${stored.detail.resultId}`,
+  }
+}
+
 function createRoutineGroup(resultId: number, stored: StoredResult): RoutineGroup {
   const copy = RESULT_COPY_BY_SKIN_TYPE[stored.skinType]
 
@@ -622,10 +683,48 @@ export const mockApiClient: ApiClient = {
     return withDelay(createRoutineGroup(resultId, stored))
   },
 
+  async getRoutineRecommendation(authState: AuthState): Promise<RoutineRecommendationWithToken> {
+    requireAuth(authState, 'Only authenticated users can fetch routine recommendations.')
+    const latestId = mockResultSequence
+    const stored = mockResultsDb.get(latestId)
+    if (!stored) {
+      throw new ApiError('No recommendation found. Please complete the survey first.', 404, 'RESULT_NOT_FOUND')
+    }
+    return withDelay(createRoutineRecommendationWithToken(stored))
+  },
+
+  async saveRoutine(request: SaveRoutineRequest, authState: AuthState): Promise<SaveRoutineResponse> {
+    requireAuth(authState, 'Only authenticated users can save routines.')
+    void request
+    const groupId = mockResultSequence * 100 + 1
+    return withDelay({
+      routineGroupId: groupId,
+      title: request.title,
+      message: '루틴이 저장되었습니다.',
+    })
+  },
+
   async getRecommendedProducts(query: ResultProductsQuery, authState: AuthState): Promise<ResultProductsPageData> {
     requireAuth(authState, 'Only authenticated users can fetch recommended products.')
     const stored = getStoredResult(query.skinResultId)
     return withDelay(createMockResultProductsPage(query, stored))
+  },
+
+  async getProfile(authState: AuthState): Promise<ProfileData> {
+    void authState
+    const latestId = mockResultSequence
+    const stored = mockResultsDb.get(latestId)
+    if (!stored) {
+      throw new ApiError('No profile found. Please complete the survey first.', 404, 'PROFILE_NOT_FOUND')
+    }
+    const copy = RESULT_COPY_BY_SKIN_TYPE[stored.skinType]
+    return withDelay({
+      skinResultId: stored.detail.resultId,
+      diagnosedAt: stored.detail.diagnosedAt,
+      skinType: copy.skinType,
+      subtitle: copy.subtitle,
+      summary: copy.summary,
+    })
   },
 
   async getProductDetail(productId: number): Promise<ProductDetail> {

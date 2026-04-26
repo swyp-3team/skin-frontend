@@ -43,23 +43,25 @@ const RESULT_PAGE_COPY = {
   productsCta: '피부에 맞는 제품 찾기',
 } as const
 
-const PREVIEW_PLACEHOLDER_HIGHLIGHTS = ['보습 케어', '장벽 케어', '진정 케어'] as const
+const PREVIEW_PLACEHOLDER_HIGHLIGHTS = ['예시1', '예시2', '예시3'] as const
+
+const PREVIEW_PLACEHOLDER_DESCRIPTIONS = "미리보기 화면입니다. 로그인 하고 모든 결과를 확인하세요. 미리보기 화면입니다. 로그인 하고 모든 결과를 확인하세요. 미리보기 화면입니다. 로그인 하고 모든 결과를 확인하세요. "
 
 const PREVIEW_PLACEHOLDER_CARDS = [
   {
-    name: '글리세린',
+    name: '성분1',
     description:
-      '피부에 수분을 끌어당겨 건조함을 줄이고, 일상적인 당김을 완화하는 데 도움을 줍니다.',
+      '미리보기 화면입니다. 로그인 하고 모든 결과를 확인하세요.',
   },
   {
-    name: '판테놀',
+    name: '성분1',
     description:
-      '피부 장벽을 보조하고 자극받은 피부를 진정시키는 데 도움을 줄 수 있습니다.',
+      '미리보기 화면입니다. 로그인 하고 모든 결과를 확인하세요.',
   },
   {
-    name: '세라마이드',
+    name: '성분1',
     description:
-      '수분 손실을 줄이고 피부 장벽을 보완해 건조로 인한 불편감을 완화하는 데 도움을 줍니다.',
+      '미리보기 화면입니다. 로그인 하고 모든 결과를 확인하세요.',
   },
 ] as const
 
@@ -126,7 +128,7 @@ export function fromResultDetail(result: ResultDetail): ResultOverviewViewModel 
     routine: {
       sectionTitle: RESULT_PAGE_COPY.routineSectionTitle,
       highlights: normalizeHighlights(result.concerns),
-      highlightDescription: result.subSummary || result.summary,
+      highlightDescription: result.subSummary,
       ctaLabel: RESULT_PAGE_COPY.routineCta,
     },
     ingredients: {
@@ -148,7 +150,7 @@ export function fromPreviewResult(preview: PreviewResult): ResultOverviewViewMod
     routine: {
       sectionTitle: RESULT_PAGE_COPY.routineSectionTitle,
       highlights: normalizeHighlights([...PREVIEW_PLACEHOLDER_HIGHLIGHTS]),
-      highlightDescription: preview.subtitle || preview.summary,
+      highlightDescription: PREVIEW_PLACEHOLDER_DESCRIPTIONS,
       ctaLabel: RESULT_PAGE_COPY.routineCta,
     },
     ingredients: {

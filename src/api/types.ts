@@ -92,6 +92,59 @@ export interface RoutineGroup {
   createdAt: string
 }
 
+// ── 루틴 추천 API 타입 ─────────────────────────────────────────────────────────
+
+export type RoutineProductCategory =
+  | 'SKIN'
+  | 'TONER'
+  | 'LOTION'
+  | 'EMULSION'
+  | 'ESSENCE'
+  | 'SERUM'
+  | 'AMPOULE'
+  | 'CREAM'
+  | 'SUN_CARE'
+
+export type RoutineStepCategory = 'PREPARE' | 'INTENSIVE_CARE' | 'MOISTURIZER' | 'SUN_CARE'
+
+export interface RoutineRecommendedProduct {
+  productId: number
+  name: string
+  productCategory: RoutineProductCategory
+  imageUrl: string | null
+  routineStepCategory: RoutineStepCategory
+}
+
+export interface RoutineSection {
+  routineType: 'AM' | 'PM'
+  products: RoutineRecommendedProduct[]
+}
+
+export interface RoutineRecommendation {
+  skinResultId: number
+  skinType: string
+  subtitle: string
+  routineSummary: string
+  amRoutine: RoutineSection
+  pmRoutine: RoutineSection
+}
+
+export interface RoutineRecommendationWithToken {
+  recommendation: RoutineRecommendation
+  previewToken: string
+}
+
+export interface SaveRoutineRequest {
+  title: string
+  previewToken: string
+}
+
+export interface SaveRoutineResponse {
+  routineGroupId: number
+  title: string
+  message: string
+}
+
 export interface ResultProductItem {
   productId: number
   name: string
@@ -124,6 +177,14 @@ export interface ResultProductsQuery {
   size: number
   cursor?: number
   categories?: ResultProductsFilterCategory[]
+}
+
+export interface ProfileData {
+  skinResultId: number
+  diagnosedAt: string
+  skinType: string
+  subtitle: string
+  summary: string
 }
 
 export type SurveyResultInput = SurveySubmitPayload | { previewToken: string }

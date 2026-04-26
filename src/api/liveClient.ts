@@ -9,6 +9,7 @@ import type {
   PreviewApiData,
   PreviewResult,
   ProductDetail,
+  ProfileData,
   ResultDetail,
   ResultIngredientMeta,
   ResultProductsPageData,
@@ -16,6 +17,14 @@ import type {
   RoutineDetail,
   RoutineGroup,
   RoutineProduct,
+  RoutineProductCategory,
+  RoutineRecommendation,
+  RoutineRecommendedProduct,
+  RoutineRecommendationWithToken,
+  RoutineSection,
+  RoutineStepCategory,
+  SaveRoutineRequest,
+  SaveRoutineResponse,
   SurveyQuestion,
   SurveyResultInput,
   SurveySubmitPayload,
@@ -25,12 +34,28 @@ type WireRecord = Record<string, unknown>
 
 const PRODUCT_CATEGORY_SET = new Set<ProductCategory>(['CLEANSER', 'TONER', 'SERUM', 'CREAM', 'SUNSCREEN'])
 
+const ROUTINE_PRODUCT_CATEGORY_SET = new Set<RoutineProductCategory>([
+  'SKIN', 'TONER', 'LOTION', 'EMULSION', 'ESSENCE', 'SERUM', 'AMPOULE', 'CREAM', 'SUN_CARE',
+])
+
+const ROUTINE_STEP_CATEGORY_SET = new Set<RoutineStepCategory>([
+  'PREPARE', 'INTENSIVE_CARE', 'MOISTURIZER', 'SUN_CARE',
+])
+
 function isRecord(value: unknown): value is WireRecord {
   return typeof value === 'object' && value !== null
 }
 
 function isProductCategory(value: unknown): value is ProductCategory {
   return typeof value === 'string' && PRODUCT_CATEGORY_SET.has(value as ProductCategory)
+}
+
+function isRoutineProductCategory(value: unknown): value is RoutineProductCategory {
+  return typeof value === 'string' && ROUTINE_PRODUCT_CATEGORY_SET.has(value as RoutineProductCategory)
+}
+
+function isRoutineStepCategory(value: unknown): value is RoutineStepCategory {
+  return typeof value === 'string' && ROUTINE_STEP_CATEGORY_SET.has(value as RoutineStepCategory)
 }
 
 function toOptionalNumber(value: unknown): number | null {
@@ -581,6 +606,108 @@ function normalizeRoutineGroup(payload: unknown, fallbackResultId: number): Rout
   }
 }
 
+function normalizeRoutineRecommendedProduct(raw: unknown, slot: string, index: number): RoutineRecommendedProduct {
+  if (!isRecord(raw)) {
+    throw new ApiError(`Routine recommended product is invalid. (${slot}[${index}])`, 500, 'INVALID_ROUTINE_REC_PRODUCT_FORMAT', raw)
+  }
+  if (typeof raw.productId !== 'number') {
+    throw new ApiError(`Routine recommended productId is invalid. (${slot}[${index}])`, 500, 'INVALID_ROUTINE_REC_PRODUCT_ID', raw)
+  }
+  if (typeof raw.name !== 'string') {
+    throw new ApiError(`Routine recommended product name is invalid. (${slot}[${index}])`, 500, 'INVALID_ROUTINE_REC_PRODUCT_NAME', raw)
+  }
+  if (!isRoutineProductCategory(raw.productCategory)) {
+    throw new ApiError(`Routine recommended productCategory is invalid. (${slot}[${index}])`, 500, 'INVALID_ROUTINE_REC_PRODUCT_CATEGORY', raw)
+  }
+  if (!isRoutineStepCategory(raw.routineStepCategory)) {
+    throw new ApiError(`Routine recommended routineStepCategory is invalid. (${slot}[${index}])`, 500, 'INVALID_ROUTINE_REC_STEP_CATEGORY', raw)
+  }
+
+  return {
+    productId: raw.productId,
+    name: raw.name,
+    productCategory: raw.productCategory,
+    imageUrl: typeof raw.imageUrl === 'string' ? raw.imageUrl : null,
+    routineStepCategory: raw.routineStepCategory,
+  }
+}
+
+function normalizeRoutineSection(raw: unknown, slot: 'amRoutine' | 'pmRoutine'): RoutineSection {
+  if (!isRecord(raw)) {
+    throw new ApiError(`Routine section is invalid. (${slot})`, 500, 'INVALID_ROUTINE_SECTION_FORMAT', raw)
+  }
+  if (!Array.isArray(raw.products)) {
+    throw new ApiError(`Routine section products are invalid. (${slot})`, 500, 'INVALID_ROUTINE_SECTION_PRODUCTS', raw)
+  }
+
+  const routineType = slot === 'amRoutine' ? 'AM' : 'PM'
+
+  return {
+    routineType,
+    products: raw.products.map((item, index) => normalizeRoutineRecommendedProduct(item, slot, index)),
+  }
+}
+
+function normalizeRoutineRecommendation(payload: unknown): RoutineRecommendation {
+  if (!isRecord(payload)) {
+    throw new ApiError('Routine recommendation response is invalid.', 500, 'INVALID_ROUTINE_REC_FORMAT', payload)
+  }
+
+  const skinResultId = toOptionalNumber(payload.skinResultId)
+  if (skinResultId === null) {
+    throw new ApiError('skinResultId is invalid.', 500, 'INVALID_ROUTINE_REC_SKIN_RESULT_ID', payload)
+  }
+  if (typeof payload.skinType !== 'string') {
+    throw new ApiError('Routine recommendation skinType is invalid.', 500, 'INVALID_ROUTINE_REC_SKIN_TYPE', payload)
+  }
+  if (typeof payload.subtitle !== 'string') {
+    throw new ApiError('Routine recommendation subtitle is invalid.', 500, 'INVALID_ROUTINE_REC_SUBTITLE', payload)
+  }
+  if (typeof payload.routineSummary !== 'string') {
+    throw new ApiError('Routine recommendation routineSummary is invalid.', 500, 'INVALID_ROUTINE_REC_SUMMARY', payload)
+  }
+
+  return {
+    skinResultId,
+    skinType: payload.skinType,
+    subtitle: payload.subtitle,
+    routineSummary: payload.routineSummary,
+    amRoutine: normalizeRoutineSection(payload.amRoutine, 'amRoutine'),
+    pmRoutine: normalizeRoutineSection(payload.pmRoutine, 'pmRoutine'),
+  }
+}
+
+function normalizeRoutineRecommendationWithToken(payload: unknown): RoutineRecommendationWithToken {
+  if (!isRecord(payload)) {
+    throw new ApiError('Routine recommendation with token response is invalid.', 500, 'INVALID_ROUTINE_REC_WITH_TOKEN', payload)
+  }
+  if (typeof payload.previewToken !== 'string') {
+    throw new ApiError('previewToken is invalid.', 500, 'INVALID_ROUTINE_REC_PREVIEW_TOKEN', payload)
+  }
+
+  return {
+    recommendation: normalizeRoutineRecommendation(payload.recommendation),
+    previewToken: payload.previewToken,
+  }
+}
+
+function normalizeSaveRoutineResponse(payload: unknown): SaveRoutineResponse {
+  if (!isRecord(payload)) {
+    throw new ApiError('Save routine response is invalid.', 500, 'INVALID_SAVE_ROUTINE_FORMAT', payload)
+  }
+
+  const routineGroupId = toOptionalNumber(payload.routineGroupId)
+  if (routineGroupId === null) {
+    throw new ApiError('routineGroupId is invalid.', 500, 'INVALID_SAVE_ROUTINE_GROUP_ID', payload)
+  }
+
+  return {
+    routineGroupId,
+    title: typeof payload.title === 'string' ? payload.title : '',
+    message: typeof payload.message === 'string' ? payload.message : '',
+  }
+}
+
 function normalizeResultProductItem(raw: unknown, index: number) {
   if (!isRecord(raw)) {
     throw new ApiError(`Result product is invalid. (products[${index}])`, 500, 'INVALID_RESULT_PRODUCT_FORMAT', raw)
@@ -683,6 +810,36 @@ function normalizeRefreshResponse(body: unknown): { accessToken: string; refresh
   }
 }
 
+function normalizeProfileData(payload: unknown): ProfileData {
+  if (!isRecord(payload)) {
+    throw new ApiError('Profile response is invalid.', 500, 'INVALID_PROFILE_FORMAT', payload)
+  }
+  const skinResultId = toOptionalNumber(payload.skinResultId)
+  if (skinResultId === null) {
+    throw new ApiError('skinResultId is invalid.', 500, 'INVALID_PROFILE_SKIN_RESULT_ID', payload)
+  }
+  if (typeof payload.diagnosedAt !== 'string') {
+    throw new ApiError('diagnosedAt is invalid.', 500, 'INVALID_PROFILE_DIAGNOSED_AT', payload)
+  }
+  if (typeof payload.skinType !== 'string') {
+    throw new ApiError('skinType is invalid.', 500, 'INVALID_PROFILE_SKIN_TYPE', payload)
+  }
+  if (typeof payload.subtitle !== 'string') {
+    throw new ApiError('subtitle is invalid.', 500, 'INVALID_PROFILE_SUBTITLE', payload)
+  }
+  if (typeof payload.summary !== 'string') {
+    throw new ApiError('summary is invalid.', 500, 'INVALID_PROFILE_SUMMARY', payload)
+  }
+
+  return {
+    skinResultId,
+    diagnosedAt: payload.diagnosedAt,
+    skinType: payload.skinType,
+    subtitle: payload.subtitle,
+    summary: payload.summary,
+  }
+}
+
 function normalizeProductDetail(payload: unknown): ProductDetail {
   if (!isRecord(payload)) {
     throw new ApiError('Product detail response is invalid.', 500, 'INVALID_PRODUCT_DETAIL_FORMAT', payload)
@@ -762,6 +919,29 @@ export function createLiveApiClient(baseUrl: string): ApiClient {
       return normalizeRoutineGroup(payload, resultId)
     },
 
+    async getRoutineRecommendation(authState: AuthState) {
+      const payload = await requestWithAuth<unknown>(
+        `${baseUrl}/routines/recommendation`,
+        { method: 'GET' },
+        authState.accessToken,
+      )
+
+      return normalizeRoutineRecommendationWithToken(payload)
+    },
+
+    async saveRoutine(request: SaveRoutineRequest, authState: AuthState) {
+      const payload = await requestWithAuth<unknown>(
+        `${baseUrl}/routines`,
+        {
+          method: 'POST',
+          body: JSON.stringify(request),
+        },
+        authState.accessToken,
+      )
+
+      return normalizeSaveRoutineResponse(payload)
+    },
+
     async getRecommendedProducts(query: ResultProductsQuery, authState: AuthState) {
       const params = new URLSearchParams({
         size: String(query.size),
@@ -789,6 +969,15 @@ export function createLiveApiClient(baseUrl: string): ApiClient {
     async getProductDetail(productId: number) {
       const payload = await requestApi<unknown>(`${baseUrl}/products/${productId}`, { method: 'GET' })
       return normalizeProductDetail(payload)
+    },
+
+    async getProfile(authState: AuthState) {
+      const payload = await requestWithAuth<unknown>(
+        `${baseUrl}/profile`,
+        { method: 'GET' },
+        authState.accessToken,
+      )
+      return normalizeProfileData(payload)
     },
 
     async getMe(accessToken?: string): Promise<AuthUser> {

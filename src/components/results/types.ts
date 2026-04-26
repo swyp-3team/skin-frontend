@@ -3,6 +3,7 @@ export interface ResultHeaderViewModel {
   subtitle: string
   summary: string
   diagnosedAt: string
+  subSummary: string
 }
 
 export type RoutineTabId = 'am' | 'pm'

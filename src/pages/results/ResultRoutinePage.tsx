@@ -4,7 +4,8 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useShallow } from 'zustand/react/shallow'
 
 import { APP_ROUTES, createProductDetailPath } from '../../app/routes'
-import type { RoutineProduct } from '../../api/types'
+import type { RoutineRecommendedProduct, RoutineStepCategory } from '../../api/types'
+import { apiClient } from '../../api'
 import AlertMessage from '../../components/common/AlertMessage'
 import SafeImage from '../../components/common/SafeImage'
 import MobilePage from '../../components/MobilePage'
@@ -13,15 +14,15 @@ import ResultTabBar from '../../components/results/ResultTabBar'
 import ResultTopSection from '../../components/results/ResultTopSection'
 import { DrawerContentBottom, DrawerRoot } from '../../components/ui/drawer'
 import { Input } from '../../components/ui/input'
-import { PRODUCT_CATEGORY_LABELS } from '../../domain/surveyConfig'
 import { useScrollCollapse } from '../../hooks/useScrollCollapse'
 import { useWindowSnapToElement } from '../../hooks/useWindowSnapToElement'
 import { notify } from '../../lib/notify'
 import { cn } from '../../lib/utils'
+import { useAuthStore } from '../../stores/authStore'
 import { useSurveyResultStore } from '../../stores/surveyResultStore'
 import type { RoutineTabId } from '../../components/results/types'
-import { useResultHeader } from './useResultDetail'
-import { useResultRoutine } from './useResultRoutine'
+import { useProfileHeader } from './useResultDetail'
+import { useRoutineRecommendation } from './useResultRoutine'
 
 type RoutineNameFieldState = 'placeholder' | 'focus' | 'typed'
 
@@ -64,36 +65,39 @@ const ROUTINE_TAB_ITEMS = [
 const HEADER_HEIGHT_PX = 48
 const WINDOW_SNAP_TRIGGER_PX = 80
 const FOOTER_SAFE_AREA_PADDING = 'calc(16px + env(safe-area-inset-bottom))'
-const ROUTINE_STEP_TITLE_BY_CATEGORY: Record<RoutineProduct['category'], string> = {
-  CLEANSER: '클렌징',
-  TONER: '수분 진정',
-  SERUM: '집중 케어',
-  CREAM: '보습 장벽',
-  SUNSCREEN: '자외선 차단',
+const ROUTINE_STEP_TITLE_BY_STEP_CATEGORY: Record<RoutineStepCategory, string> = {
+  PREPARE: '피부 결 정돈',
+  INTENSIVE_CARE: '집중 케어',
+  MOISTURIZER: '보습',
+  SUN_CARE: '자외선 차단',
+}
+
+const ROUTINE_PRODUCT_CATEGORY_LABELS: Record<RoutineRecommendedProduct['productCategory'], string> = {
+  SKIN: '스킨',
+  TONER: '토너',
+  LOTION: '로션',
+  EMULSION: '에멀전',
+  ESSENCE: '에센스',
+  SERUM: '세럼',
+  AMPOULE: '앰플',
+  CREAM: '크림',
+  SUN_CARE: '선케어',
 }
 
 interface RoutineStepCardProps {
   stepNumber: number
-  product: RoutineProduct
-}
-
-function formatPrice(price: number): string {
-  return new Intl.NumberFormat('ko-KR').format(price)
+  product: RoutineRecommendedProduct
 }
 
 function RoutineStepCard({ stepNumber, product }: RoutineStepCardProps) {
-  const stepDescription = product.reason.trim().length > 0 ? product.reason : product.note
-
   return (
     <article className={ROUTINE_CARD_CLASS}>
       <div className="inline-flex items-center gap-2">
         <span className={STEP_BADGE_CLASS}>{stepNumber}</span>
         <h3 className="text-base font-semibold leading-[23.68px] text-black">
-          {ROUTINE_STEP_TITLE_BY_CATEGORY[product.category]}
+          {ROUTINE_STEP_TITLE_BY_STEP_CATEGORY[product.routineStepCategory]}
         </h3>
       </div>
-
-      <p className="text-[13px] leading-[18.2px] text-black">{stepDescription}</p>
 
       <Link className={ROUTINE_PRODUCT_LINK_CLASS} to={createProductDetailPath(product.productId)}>
         <SafeImage
@@ -103,17 +107,9 @@ function RoutineStepCard({ stepNumber, product }: RoutineStepCardProps) {
           loading="lazy"
           src={product.imageUrl}
         />
-        <div className="inline-flex h-20 min-w-0 flex-1 flex-col justify-between">
-          <span className={PRODUCT_CATEGORY_CHIP_CLASS}>{PRODUCT_CATEGORY_LABELS[product.category]}</span>
+        <div className="inline-flex h-20 min-w-0 flex-1 flex-col justify-center gap-2">
+          <span className={PRODUCT_CATEGORY_CHIP_CLASS}>{ROUTINE_PRODUCT_CATEGORY_LABELS[product.productCategory]}</span>
           <p className="line-clamp-2 text-xs leading-[16.32px] text-neutral-800">{product.name}</p>
-          {product.price !== null ? (
-            <div className="inline-flex items-center">
-              <span className="text-xs font-bold leading-[16.32px] text-neutral-800">{formatPrice(product.price)}</span>
-              <span className="text-[11px] leading-[14.3px] text-neutral-800">원</span>
-            </div>
-          ) : (
-            <span className="text-[11px] leading-[14.3px] text-neutral-400">가격 정보 없음</span>
-          )}
         </div>
       </Link>
     </article>
@@ -151,6 +147,8 @@ function ResultRoutinePage() {
   const [isSaveSheetOpen, setIsSaveSheetOpen] = useState(false)
   const [routineNameDraft, setRoutineNameDraft] = useState('')
   const [isRoutineNameFocused, setIsRoutineNameFocused] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const accessToken = useAuthStore((state) => state.accessToken)
   const { savedResultId, savedRoutineName, markRoutineSavedByResultId } = useSurveyResultStore(
     useShallow((state) => ({
       savedResultId: state.savedResultId,
@@ -158,13 +156,15 @@ function ResultRoutinePage() {
       markRoutineSavedByResultId: state.markRoutineSavedByResultId,
     })),
   )
-  const { data: header, isLoading: isHeaderLoading, error: headerError } = useResultHeader(resultId)
-  const { data: routineGroup, isLoading: isRoutineLoading, error: routineError } = useResultRoutine(resultId)
+  const { data: header, isLoading: isHeaderLoading, error: headerError } = useProfileHeader()
+  const { data: routineData, isLoading: isRoutineLoading, error: routineError } = useRoutineRecommendation()
 
   const isLoading = isHeaderLoading || isRoutineLoading
   const error = headerError ?? routineError
-  const selectedRoutine = routineGroup ? (activeTabId === 'am' ? routineGroup.amRoutine : routineGroup.pmRoutine) : null
-  const sortedProducts = selectedRoutine ? [...selectedRoutine.products].sort((a, b) => a.sortOrder - b.sortOrder) : []
+  const recommendation = routineData?.recommendation ?? null
+  const previewToken = routineData?.previewToken ?? null
+  const selectedRoutine = recommendation ? (activeTabId === 'am' ? recommendation.amRoutine : recommendation.pmRoutine) : null
+  const products = selectedRoutine ? selectedRoutine.products : []
 
   const whiteShellRef = useRef<HTMLDivElement>(null)
   const whiteContainerRef = useRef<HTMLDivElement>(null)
@@ -210,7 +210,7 @@ function ResultRoutinePage() {
     )
   }
 
-  if (error || !routineGroup || !header) {
+  if (error || !recommendation || !header) {
     return (
       <MobilePage>
         <AlertMessage size="md" variant="error">
@@ -220,7 +220,8 @@ function ResultRoutinePage() {
     )
   }
 
-  const isRoutineSaved = savedResultId === resultId
+  const skinResultId = recommendation.skinResultId
+  const isRoutineSaved = savedResultId === skinResultId
   const routineNameLength = routineNameDraft.length
   const trimmedRoutineName = routineNameDraft.trim()
   const canSubmitRoutineName = trimmedRoutineName.length > 0
@@ -258,17 +259,26 @@ function ResultRoutinePage() {
     setIsSaveSheetOpen(true)
   }
 
-  function handleSaveRoutineSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSaveRoutineSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!canSubmitRoutineName) {
+    if (!canSubmitRoutineName || !previewToken || isSaving) {
       return
     }
 
-    markRoutineSavedByResultId(resultId, trimmedRoutineName)
-    setRoutineNameDraft(trimmedRoutineName)
-    setIsRoutineNameFocused(false)
-    setIsSaveSheetOpen(false)
-    showRoutineSavedToast()
+    setIsSaving(true)
+    try {
+      await apiClient.saveRoutine(
+        { title: trimmedRoutineName, previewToken },
+        { accessToken },
+      )
+      markRoutineSavedByResultId(skinResultId, trimmedRoutineName)
+      setRoutineNameDraft(trimmedRoutineName)
+      setIsRoutineNameFocused(false)
+      setIsSaveSheetOpen(false)
+      showRoutineSavedToast()
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const routineAction = !isRoutineSaved ? (
@@ -309,8 +319,8 @@ function ResultRoutinePage() {
               )}
             >
               <section className="space-y-5 px-4 pb-10 pt-5">
-                {sortedProducts.map((product, index) => (
-                  <RoutineStepCard key={`${product.productId}-${product.sortOrder}`} product={product} stepNumber={index + 1} />
+                {products.map((product, index) => (
+                  <RoutineStepCard key={product.productId} product={product} stepNumber={index + 1} />
                 ))}
               </section>
             </div>
@@ -386,12 +396,12 @@ function ResultRoutinePage() {
               <button
                 className={cn(
                   'inline-flex w-full min-w-[70px] items-center justify-center rounded-lg px-6 py-3 text-base font-medium leading-[23.68px] transition-colors',
-                  canSubmitRoutineName ? 'bg-neutral-800 text-common-0 hover:bg-neutral-900' : 'bg-neutral-100 text-neutral-300',
+                  canSubmitRoutineName && !isSaving ? 'bg-neutral-800 text-common-0 hover:bg-neutral-900' : 'bg-neutral-100 text-neutral-300',
                 )}
-                disabled={!canSubmitRoutineName}
+                disabled={!canSubmitRoutineName || isSaving}
                 type="submit"
               >
-                {ROUTINE_PAGE_COPY.saveSheetSubmit}
+                {isSaving ? '저장 중...' : ROUTINE_PAGE_COPY.saveSheetSubmit}
               </button>
             </div>
           </form>

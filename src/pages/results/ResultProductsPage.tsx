@@ -12,7 +12,7 @@ import type { ResultProductTabId } from '../../components/results/types'
 import { useScrollCollapse } from '../../hooks/useScrollCollapse'
 import { cn } from '../../lib/utils'
 import { RESULT_PRODUCT_TABS } from './resultViewModel'
-import { useResultHeader } from './useResultDetail'
+import { useProfileHeader } from './useResultDetail'
 import { useResultProductsInfinite } from './useResultProductsInfinite'
 
 const PRODUCTS_PAGE_COPY = {
@@ -78,7 +78,7 @@ function ResultProductsPage() {
     '-49px 0px 0px 0px',
   )
 
-  const { data: header, isLoading: isHeaderLoading, error: headerError } = useResultHeader(resultId)
+  const { data: header, isLoading: isHeaderLoading, error: headerError } = useProfileHeader()
   const {
     data: productsPages,
     isLoading: isProductsLoading,
