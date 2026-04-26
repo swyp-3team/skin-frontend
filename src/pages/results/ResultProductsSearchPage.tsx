@@ -115,10 +115,10 @@ function ResultProductsSearchPage() {
       apiClient.searchProducts({
         keyword: normalizedSubmittedKeyword,
         size: SEARCH_PAGE_SIZE,
-        cursor: typeof pageParam === 'number' ? pageParam : undefined,
+        cursor: typeof pageParam === 'number' ? pageParam : 0,
       }),
     enabled: isValidResultId(resultId) && hasSubmittedKeyword,
-    initialPageParam: undefined,
+    initialPageParam: 0,
     getNextPageParam: (lastPage) => (lastPage.hasNext ? lastPage.nextCursor ?? undefined : undefined),
     retry: false,
   })
