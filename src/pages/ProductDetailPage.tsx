@@ -1,3 +1,4 @@
+import { useLayoutEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { APP_ROUTES } from '../app/routes'
@@ -11,6 +12,10 @@ import { useProductDetail } from './product/useProductDetail'
 function ProductDetailPage() {
   const navigate = useNavigate()
   const { productId, data: product, isLoading, error } = useProductDetail()
+
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0)
+  }, [productId])
 
   if (isLoading) {
     return (

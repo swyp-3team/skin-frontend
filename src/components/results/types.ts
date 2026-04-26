@@ -1,7 +1,7 @@
 export interface ResultHeaderViewModel {
   diagnosisTitle: string
+  subtitle: string
   summary: string
-  tags: string[]
   diagnosedAt: string
 }
 

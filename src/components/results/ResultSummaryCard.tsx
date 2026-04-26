@@ -5,7 +5,7 @@ import ResultMiniTag from './ResultMiniTag'
 
 interface ResultSummaryCardProps {
   diagnosisTitle: string
-  tags: readonly string[]
+  subtitle: string
   summary: string
   diagnosedAt: string
   resultDetailPath: string
@@ -47,7 +47,7 @@ function toDiagnosedAtDisplay(value: string): DiagnosedAtDisplay {
 
 function ResultSummaryCard({
   diagnosisTitle,
-  tags,
+  subtitle,
   summary,
   diagnosedAt,
   resultDetailPath,
@@ -55,16 +55,17 @@ function ResultSummaryCard({
   className,
 }: ResultSummaryCardProps) {
   const diagnosedAtDisplay = toDiagnosedAtDisplay(diagnosedAt)
+  const subtitleTag = subtitle.trim()
 
   return (
     <article className={cn('gap-2 flex w-full flex-col rounded-2xl bg-common-0 p-4', className)}>
       <div className="flex items-start justify-between gap-2">
         <h3 className="text-[18px] font-bold leading-[25.56px] text-neutral-800">{diagnosisTitle}</h3>
-        <div className="flex flex-wrap justify-end gap-1">
-          {tags.map((tag) => (
-            <ResultMiniTag key={tag}>{tag}</ResultMiniTag>
-          ))}
-        </div>
+        {subtitleTag ? (
+          <div className="flex flex-wrap justify-end gap-1">
+            <ResultMiniTag>{subtitleTag}</ResultMiniTag>
+          </div>
+        ) : null}
       </div>
 
       <p

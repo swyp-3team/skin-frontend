@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import { createProductDetailPath } from '../../app/routes'
@@ -17,21 +17,34 @@ import { useResultProductsInfinite } from './useResultProductsInfinite'
 
 const PRODUCTS_PAGE_COPY = {
   title: '제품 추천받기',
-  intro: '진단 결과를 바탕으로\n제품을 골랐어요',
+  intro: '진단 결과를 바탕으로 제품을 골랐어요',
   searchPlaceholder: '브랜드, 제품명으로 검색해보세요',
 } as const
+
+interface ProductsPageScrollSnapshot {
+  scrollTop: number
+  tabId: ResultProductTabId
+  windowScrollY: number
+}
+
+const productsPageScrollSnapshots = new Map<number, ProductsPageScrollSnapshot>()
 
 function formatPrice(price: number): string {
   return new Intl.NumberFormat('ko-KR').format(price)
 }
 
+function isValidResultId(resultId: number): boolean {
+  return Number.isFinite(resultId) && resultId > 0
+}
+
 interface ResultProductGridCardProps {
+  onOpenProduct: () => void
   product: ResultProductItem
 }
 
-function ResultProductGridCard({ product }: ResultProductGridCardProps) {
+function ResultProductGridCard({ onOpenProduct, product }: ResultProductGridCardProps) {
   return (
-    <Link className="flex flex-col gap-3" to={createProductDetailPath(product.productId)}>
+    <Link className="flex flex-col gap-3" onClick={onOpenProduct} to={createProductDetailPath(product.productId)}>
       <div className="overflow-hidden rounded h-[159px] w-[159px] bg-common-0">
         <SafeImage
           alt={product.name}
@@ -56,9 +69,11 @@ function ResultProductGridCard({ product }: ResultProductGridCardProps) {
 function ResultProductsPage() {
   const { id } = useParams<{ id: string }>()
   const resultId = Number(id)
-  const [activeTabId, setActiveTabId] = useState<ResultProductTabId>('ALL')
+  const savedSnapshot = Number.isFinite(resultId) ? productsPageScrollSnapshots.get(resultId) : undefined
+  const [activeTabId, setActiveTabId] = useState<ResultProductTabId>(savedSnapshot?.tabId ?? 'ALL')
   const sentinelRef = useRef<HTMLDivElement | null>(null)
   const containerRef = useRef<HTMLDivElement | null>(null)
+  const didRestoreScrollRef = useRef(false)
   const { ref: whiteBoxSentinelRef, isCollapsed: isHeaderScrolled } = useScrollCollapse<HTMLDivElement>(
     '-49px 0px 0px 0px',
   )
@@ -73,6 +88,43 @@ function ResultProductsPage() {
     isFetchingNextPage,
     fetchNextPage,
   } = useResultProductsInfinite(resultId, activeTabId)
+
+  const saveScrollSnapshot = useCallback(() => {
+    if (!isValidResultId(resultId)) {
+      return
+    }
+
+    productsPageScrollSnapshots.set(resultId, {
+      scrollTop: containerRef.current?.scrollTop ?? 0,
+      tabId: activeTabId,
+      windowScrollY: window.scrollY,
+    })
+  }, [activeTabId, resultId])
+
+  useLayoutEffect(() => {
+    if (didRestoreScrollRef.current || !productsPages) {
+      return
+    }
+
+    const snapshot = productsPageScrollSnapshots.get(resultId)
+    if (!snapshot || snapshot.tabId !== activeTabId) {
+      didRestoreScrollRef.current = true
+      return
+    }
+
+    const container = containerRef.current
+    if (!container) {
+      return
+    }
+
+    window.scrollTo(0, snapshot.windowScrollY)
+    container.scrollTop = snapshot.scrollTop
+    requestAnimationFrame(() => {
+      container.scrollTop = snapshot.scrollTop
+    })
+    productsPageScrollSnapshots.delete(resultId)
+    didRestoreScrollRef.current = true
+  }, [activeTabId, productsPages, resultId])
 
   useEffect(() => {
     if (!hasNextPage || isFetchingNextPage) {
@@ -192,7 +244,7 @@ function ResultProductsPage() {
             {allProducts.length > 0 ? (
               <div className="grid grid-cols-2 gap-x-4 gap-y-6">
                 {allProducts.map((product) => (
-                  <ResultProductGridCard key={product.productId} product={product} />
+                  <ResultProductGridCard key={product.productId} onOpenProduct={saveScrollSnapshot} product={product} />
                 ))}
               </div>
             ) : (

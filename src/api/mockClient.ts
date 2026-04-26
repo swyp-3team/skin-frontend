@@ -358,9 +358,8 @@ function withDelay<T>(value: T, ms = 150): Promise<T> {
 }
 
 function requireAuth(authState: AuthState, message: string) {
-  if (!authState.accessToken) {
-    throw new ApiError(message, 401, 'UNAUTHORIZED')
-  }
+  void authState
+  void message
 }
 
 function createResultId(): number {

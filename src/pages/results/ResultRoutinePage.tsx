@@ -45,7 +45,7 @@ const ROUTINE_SAVED_TOAST_WRAPPER_CLASS = 'w-full rounded-[8px] border-0 bg-[#0D
 
 const ROUTINE_PAGE_COPY = {
   title: '루틴 추천받기',
-  intro: '아침과 저녁\n단계별 루틴을 안내해드려요.',
+  intro: '아침과 저녁, 단계별 루틴을 안내해드려요.',
   saveRoutine: '이 루틴 저장하기',
   goMyPage: '마이페이지 바로가기',
   saveSheetTitle: '루틴 저장',
