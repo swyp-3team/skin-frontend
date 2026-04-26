@@ -5,15 +5,11 @@ import { STORAGE_KEYS } from '../constants/storage'
 import type { AuthUser } from '../types/auth'
 
 interface AuthStoreState {
-  accessToken?: string
-  refreshToken?: string
   user?: AuthUser
   authCheckCompleted: boolean
 }
 
 interface AuthStoreActions {
-  setTokens: (accessToken: string, refreshToken: string) => void
-  clearTokens: () => void
   setUser: (user: AuthUser) => void
   setAuthCheckCompleted: (completed: boolean) => void
   clearAuth: () => void
@@ -21,21 +17,13 @@ interface AuthStoreActions {
 
 export type AuthStore = AuthStoreState & AuthStoreActions
 
-export const selectIsAuthenticated = (state: AuthStoreState) => state.user !== undefined || state.accessToken !== undefined
+export const selectIsAuthenticated = (state: AuthStoreState) => state.user !== undefined
 
 export const useAuthStore = create<AuthStore>()(
   persist(
     (set) => ({
-      accessToken: undefined,
-      refreshToken: undefined,
       user: undefined,
       authCheckCompleted: false,
-      setTokens: (accessToken, refreshToken) => {
-        set({ accessToken, refreshToken })
-      },
-      clearTokens: () => {
-        set({ accessToken: undefined, refreshToken: undefined })
-      },
       setUser: (user) => {
         set({ user })
       },
@@ -43,15 +31,13 @@ export const useAuthStore = create<AuthStore>()(
         set({ authCheckCompleted: completed })
       },
       clearAuth: () => {
-        set({ accessToken: undefined, refreshToken: undefined, user: undefined, authCheckCompleted: true })
+        set({ user: undefined, authCheckCompleted: true })
       },
     }),
     {
       name: STORAGE_KEYS.authSession,
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
-        accessToken: state.accessToken,
-        refreshToken: state.refreshToken,
         user: state.user,
       }),
     }

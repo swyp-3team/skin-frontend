@@ -1,7 +1,7 @@
 import { buttonVariants } from '../ui/button'
-import { env } from '../../lib/env'
 import { cn } from '../../lib/utils'
 import { selectIsAuthenticated, useAuthStore } from '../../stores/authStore'
+import { env } from '../../lib/env'
 
 interface MockLoginButtonProps {
   className?: string
@@ -14,7 +14,6 @@ interface MockLoginButtonProps {
 function MockLoginButton({ className }: MockLoginButtonProps) {
   const isMockMode = env.VITE_API_MODE === 'mock'
   const isAuthenticated = useAuthStore(selectIsAuthenticated)
-  const setTokens = useAuthStore((state) => state.setTokens)
   const setUser = useAuthStore((state) => state.setUser)
 
   if (!isMockMode) {
@@ -22,8 +21,6 @@ function MockLoginButton({ className }: MockLoginButtonProps) {
   }
 
   function handleMockLogin() {
-    const now = Date.now()
-    setTokens(`mock-access-token-${now}`, `mock-refresh-token-${now}`)
     setUser({
       userId: 1,
       nickname: 'Mock User',

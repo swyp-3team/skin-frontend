@@ -18,7 +18,6 @@ import { useScrollCollapse } from '../../hooks/useScrollCollapse'
 import { useWindowSnapToElement } from '../../hooks/useWindowSnapToElement'
 import { notify } from '../../lib/notify'
 import { cn } from '../../lib/utils'
-import { useAuthStore } from '../../stores/authStore'
 import { useSurveyResultStore } from '../../stores/surveyResultStore'
 import type { RoutineTabId } from '../../components/results/types'
 import { useProfileHeader } from './useResultDetail'
@@ -148,7 +147,6 @@ function ResultRoutinePage() {
   const [routineNameDraft, setRoutineNameDraft] = useState('')
   const [isRoutineNameFocused, setIsRoutineNameFocused] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
-  const accessToken = useAuthStore((state) => state.accessToken)
   const { savedResultId, savedRoutineName, markRoutineSavedByResultId } = useSurveyResultStore(
     useShallow((state) => ({
       savedResultId: state.savedResultId,
@@ -267,10 +265,7 @@ function ResultRoutinePage() {
 
     setIsSaving(true)
     try {
-      await apiClient.saveRoutine(
-        { title: trimmedRoutineName, previewToken },
-        { accessToken },
-      )
+      await apiClient.saveRoutine({ title: trimmedRoutineName, previewToken })
       markRoutineSavedByResultId(skinResultId, trimmedRoutineName)
       setRoutineNameDraft(trimmedRoutineName)
       setIsRoutineNameFocused(false)

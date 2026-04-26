@@ -1,10 +1,9 @@
 import { isConcernCode, isSkinTypeCode } from '../domain/surveyCodes'
 import type { ProductCategory } from '../types/domain'
-import type { AuthState, AuthUser } from '../types/auth'
+import type { AuthUser } from '../types/auth'
 import type { ApiClient } from './client'
 import type { ApiErrorPayload, ApiFieldError } from './contracts'
 import { ApiError } from './errors'
-import { useAuthStore } from '../stores/authStore'
 import type {
   PreviewApiData,
   PreviewResult,
@@ -234,84 +233,6 @@ async function requestApi<T>(url: string, init: RequestInit, _token?: string): P
   return unwrapEnvelope<T>(body, response.status)
 }
 
-// ── 401 자동 재발급 인터셉터 ─────────────────────────────────────────────────
-
-interface QueueItem {
-  resolve: (token: string) => void
-  reject: (error: unknown) => void
-}
-
-let isRefreshing = false
-let failedQueue: QueueItem[] = []
-
-function processQueue(error: unknown, token: string | null): void {
-  for (const item of failedQueue) {
-    if (error) {
-      item.reject(error)
-    } else {
-      item.resolve(token!)
-    }
-  }
-  failedQueue = []
-}
-
-// requestWithAuth 팩토리: baseUrl을 클로저로 캡처하여 refresh 엔드포인트를 구성합니다.
-// requestApi와 동일한 시그니처이지만 401 발생 시 refresh 후 1회 재시도합니다.
-function createRequestWithAuth(baseUrl: string) {
-  return async function requestWithAuth<T>(url: string, init: RequestInit, token?: string): Promise<T> {
-    try {
-      return await requestApi<T>(url, init, token)
-    } catch (error) {
-      if (!(error instanceof ApiError) || error.status !== 401) {
-        throw error
-      }
-
-      // 이미 refresh 진행 중이면 큐에 추가하고 대기
-      if (isRefreshing) {
-        const newToken = await new Promise<string>((resolve, reject) => {
-          failedQueue.push({ resolve, reject })
-        })
-        return requestApi<T>(url, init, newToken)
-      }
-
-      isRefreshing = true
-
-      try {
-        const { refreshToken } = useAuthStore.getState()
-
-        if (!refreshToken) {
-          // 쿠키 방식 인증에서는 refreshToken이 store에 없음.
-          // clearAuth()를 호출하지 않고 에러만 전파하여 세션 관리를 서버에 위임한다.
-          processQueue(error, null)
-          throw error
-        }
-
-        const refreshBody = await requestApi<unknown>(
-          `${baseUrl}/auth/refresh`,
-          {
-            method: 'POST',
-            body: JSON.stringify({ refreshToken }),
-          },
-        )
-
-        const normalized = normalizeRefreshResponse(refreshBody)
-        const newAccessToken = normalized.accessToken
-        useAuthStore.getState().setTokens(newAccessToken, normalized.refreshToken ?? refreshToken)
-
-        processQueue(null, newAccessToken)
-        return requestApi<T>(url, init, newAccessToken)
-      } catch (refreshError) {
-        useAuthStore.getState().clearAuth()
-        processQueue(refreshError, null)
-        throw refreshError
-      } finally {
-        isRefreshing = false
-      }
-    }
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 
 function normalizeOptionCode(value: unknown) {
   if (isSkinTypeCode(value) || isConcernCode(value)) {
@@ -797,19 +718,6 @@ function unwrapMeResponse(body: unknown): AuthUser {
   return normalizeAuthUser(body)
 }
 
-function normalizeRefreshResponse(body: unknown): { accessToken: string; refreshToken?: string } {
-  if (isRecord(body) && typeof body.success === 'boolean') {
-    body = isRecord(body.data) ? body.data : body
-  }
-  if (!isRecord(body) || typeof body.accessToken !== 'string') {
-    throw new ApiError('Refresh response is invalid.', 500, 'INVALID_REFRESH_RESPONSE', body)
-  }
-  return {
-    accessToken: body.accessToken,
-    refreshToken: typeof body.refreshToken === 'string' ? body.refreshToken : undefined,
-  }
-}
-
 function normalizeProfileData(payload: unknown): ProfileData {
   if (!isRecord(payload)) {
     throw new ApiError('Profile response is invalid.', 500, 'INVALID_PROFILE_FORMAT', payload)
@@ -866,14 +774,8 @@ function normalizeProductDetail(payload: unknown): ProductDetail {
 }
 
 export function createLiveApiClient(baseUrl: string): ApiClient {
-  const requestWithAuth = createRequestWithAuth(baseUrl)
-
-  async function getResultDetail(resultId: number, authState: AuthState): Promise<ResultDetail> {
-    const payload = await requestWithAuth<unknown>(
-      `${baseUrl}/results/${resultId}`,
-      { method: 'GET' },
-      authState.accessToken,
-    )
+  async function getResultDetail(resultId: number): Promise<ResultDetail> {
+    const payload = await requestApi<unknown>(`${baseUrl}/results/${resultId}`, { method: 'GET' })
     return normalizeResultDetail(payload, resultId)
   }
 
@@ -891,58 +793,45 @@ export function createLiveApiClient(baseUrl: string): ApiClient {
       return normalizePreviewApiData(result)
     },
 
-    async submitSurveyResult(input: SurveyResultInput, authState: AuthState) {
-      const payload = await requestWithAuth<unknown>(
-        `${baseUrl}/results`,
-        {
-          method: 'POST',
-          body: JSON.stringify(input),
-        },
-        authState.accessToken,
-      )
+    async submitSurveyResult(input: SurveyResultInput) {
+      const payload = await requestApi<unknown>(`${baseUrl}/results`, {
+        method: 'POST',
+        body: JSON.stringify(input),
+      })
 
       const resultId = normalizeCreatedResultId(payload)
-      return getResultDetail(resultId, authState)
+      return getResultDetail(resultId)
     },
 
-    async getResult(resultId: number, authState: AuthState): Promise<ResultDetail> {
-      return getResultDetail(resultId, authState)
+    async getResult(resultId: number): Promise<ResultDetail> {
+      return getResultDetail(resultId)
     },
 
-    async getRoutineGroup(resultId: number, authState: AuthState) {
-      const payload = await requestWithAuth<unknown>(
+    async getRoutineGroup(resultId: number) {
+      const payload = await requestApi<unknown>(
         `${baseUrl}/results/${resultId}/routine`,
         { method: 'GET' },
-        authState.accessToken,
       )
-
       return normalizeRoutineGroup(payload, resultId)
     },
 
-    async getRoutineRecommendation(authState: AuthState) {
-      const payload = await requestWithAuth<unknown>(
+    async getRoutineRecommendation() {
+      const payload = await requestApi<unknown>(
         `${baseUrl}/routines/recommendation`,
         { method: 'GET' },
-        authState.accessToken,
       )
-
       return normalizeRoutineRecommendationWithToken(payload)
     },
 
-    async saveRoutine(request: SaveRoutineRequest, authState: AuthState) {
-      const payload = await requestWithAuth<unknown>(
-        `${baseUrl}/routines`,
-        {
-          method: 'POST',
-          body: JSON.stringify(request),
-        },
-        authState.accessToken,
-      )
-
+    async saveRoutine(request: SaveRoutineRequest) {
+      const payload = await requestApi<unknown>(`${baseUrl}/routines`, {
+        method: 'POST',
+        body: JSON.stringify(request),
+      })
       return normalizeSaveRoutineResponse(payload)
     },
 
-    async getRecommendedProducts(query: ResultProductsQuery, authState: AuthState) {
+    async getRecommendedProducts(query: ResultProductsQuery) {
       const params = new URLSearchParams({
         size: String(query.size),
       })
@@ -957,12 +846,10 @@ export function createLiveApiClient(baseUrl: string): ApiClient {
         params.append('categories', category)
       })
 
-      const payload = await requestWithAuth<unknown>(
+      const payload = await requestApi<unknown>(
         `${baseUrl}/products/recommend?${params.toString()}`,
         { method: 'GET' },
-        authState.accessToken,
       )
-
       return normalizeResultProductsPage(payload)
     },
 
@@ -971,50 +858,18 @@ export function createLiveApiClient(baseUrl: string): ApiClient {
       return normalizeProductDetail(payload)
     },
 
-    async getProfile(authState: AuthState) {
-      const payload = await requestWithAuth<unknown>(
-        `${baseUrl}/profile`,
-        { method: 'GET' },
-        authState.accessToken,
-      )
+    async getProfile() {
+      const payload = await requestApi<unknown>(`${baseUrl}/profile`, { method: 'GET' })
       return normalizeProfileData(payload)
     },
 
-    async getMe(accessToken?: string): Promise<AuthUser> {
-      const body = await requestApi<unknown>(`${baseUrl}/auth/me`, { method: 'GET' }, accessToken)
+    async getMe(): Promise<AuthUser> {
+      const body = await requestApi<unknown>(`${baseUrl}/auth/me`, { method: 'GET' })
       return unwrapMeResponse(body)
     },
 
-    async refreshAccessToken(refreshToken: string) {
-      let response: Response
-      const headers = new Headers({ 'Content-Type': 'application/json' })
-      try {
-        response = await fetch(`${baseUrl}/auth/refresh`, {
-          method: 'POST',
-          headers,
-          credentials: 'include',
-          body: JSON.stringify({ refreshToken }),
-        })
-      } catch (error) {
-        throw new ApiError('네트워크 요청에 실패했습니다. API 연결 상태를 확인해 주세요.', 0, 'NETWORK_ERROR', error)
-      }
-
-      let body: unknown
-      try {
-        body = await readBody(response)
-      } catch (error) {
-        throw new ApiError('Response body could not be parsed.', response.status, 'INVALID_RESPONSE_BODY', error)
-      }
-
-      if (!response.ok) {
-        throw toApiError(response.status, body)
-      }
-
-      return normalizeRefreshResponse(body)
-    },
-
-    async logout(accessToken?: string): Promise<void> {
-      await requestApi<null>(`${baseUrl}/auth/logout`, { method: 'POST' }, accessToken)
+    async logout(): Promise<void> {
+      await requestApi<null>(`${baseUrl}/auth/logout`, { method: 'POST' })
     },
   }
 }

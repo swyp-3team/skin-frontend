@@ -106,7 +106,6 @@ function toMonthDay(value: string): string {
 
 function MyPage() {
   const isAuthenticated = useAuthStore(selectIsAuthenticated)
-  const accessToken = useAuthStore((state) => state.accessToken)
   const user = useAuthStore((state) => state.user)
   const logout = useLogout()
 
@@ -116,7 +115,7 @@ function MyPage() {
   const clearLatestResultId = useSurveyResultStore((state) => state.clearLatestResultId)
   const clearSavedRoutine = useSurveyResultStore((state) => state.clearSavedRoutine)
 
-  const resultQuery = useQuery<ResultDetail, ApiError>(getResultDetailQueryOptions(latestResultId ?? -1, accessToken))
+  const resultQuery = useQuery<ResultDetail, ApiError>(getResultDetailQueryOptions(latestResultId ?? -1))
 
   const shouldResetByResultError = shouldResetByError(resultQuery.error ?? null)
 
@@ -131,7 +130,7 @@ function MyPage() {
 
   const routineQuery = useQuery<RoutineGroup, ApiError>({
     queryKey: queryKeys.resultRoutine(latestResultId ?? -1),
-    queryFn: () => apiClient.getRoutineGroup(latestResultId!, { accessToken }),
+    queryFn: () => apiClient.getRoutineGroup(latestResultId!),
     enabled: isAuthenticated && latestResultId != null && hasDiagnosis && hasSavedRoutine,
     retry: false,
   })

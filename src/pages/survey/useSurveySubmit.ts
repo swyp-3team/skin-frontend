@@ -10,7 +10,6 @@ import { queryKeys } from '../../lib/queryKeys'
 import { useAuthStore } from '../../stores/authStore'
 import { useSurveyProgressStore } from '../../stores/surveyProgressStore'
 import { useSurveyResultStore } from '../../stores/surveyResultStore'
-import type { AuthState } from '../../types/auth'
 
 interface BuildSurveySubmitPayloadInput {
   answersByStep: Record<number, number>
@@ -99,8 +98,8 @@ export function useSurveySubmit() {
     })),
   )
 
-  return useMutation<SubmitOutcome, ApiError, AuthState>({
-    mutationFn: async (authState) => {
+  return useMutation<SubmitOutcome, ApiError, void>({
+    mutationFn: async () => {
       const questions = await queryClient.ensureQueryData({
         queryKey: SURVEY_QUERY_KEYS.questions,
         queryFn: () => apiClient.getSurveyQuestions(),
@@ -110,8 +109,8 @@ export function useSurveySubmit() {
       const payload = buildSurveySubmitPayload({ answersByStep, questions })
 
       const { user } = useAuthStore.getState()
-      if (authState.accessToken || user) {
-        const result = await apiClient.submitSurveyResult(payload, authState)
+      if (user) {
+        const result = await apiClient.submitSurveyResult(payload)
         return { kind: 'full', result }
       }
 

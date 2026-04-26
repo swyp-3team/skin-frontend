@@ -4,9 +4,3 @@ export interface AuthUser {
   role: string
   profileImageUrl: string | null
 }
-
-export interface AuthState {
-  accessToken?: string
-  refreshToken?: string
-  user?: AuthUser
-}

@@ -49,10 +49,9 @@ function AuthCallbackPage() {
   const navigate = useNavigate()
   const handledRef = useRef(false)
 
-  const { setUser, clearTokens, clearAuth, setAuthCheckCompleted } = useAuthStore(
+  const { setUser, clearAuth, setAuthCheckCompleted } = useAuthStore(
     useShallow((state) => ({
       setUser: state.setUser,
-      clearTokens: state.clearTokens,
       clearAuth: state.clearAuth,
       setAuthCheckCompleted: state.setAuthCheckCompleted,
     })),
@@ -74,7 +73,6 @@ function AuthCallbackPage() {
     const handleCallback = async () => {
       try {
         const user = await apiClient.getMe()
-        clearTokens()
         setUser(user)
         setAuthCheckCompleted(true)
         queryClient.invalidateQueries()
@@ -91,7 +89,7 @@ function AuthCallbackPage() {
 
       if (intent?.type === 'promote-preview' && previewToken) {
         try {
-          const result = await apiClient.submitSurveyResult({ previewToken }, {})
+          const result = await apiClient.submitSurveyResult({ previewToken })
           setLatestResultId(result.resultId)
           clearPreviewResult()
           clearSavedRoutine()
@@ -108,7 +106,7 @@ function AuthCallbackPage() {
       }
 
       try {
-        const profile = await apiClient.getProfile({})
+        const profile = await apiClient.getProfile()
         setLatestResultId(profile.skinResultId)
         navigate('/', { replace: true })
       } catch (error) {
@@ -125,7 +123,6 @@ function AuthCallbackPage() {
     clearAuth,
     clearPreviewResult,
     clearSavedRoutine,
-    clearTokens,
     navigate,
     previewToken,
     setAuthCheckCompleted,

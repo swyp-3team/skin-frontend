@@ -1,6 +1,6 @@
 import { MOCK_SURVEY_QUESTIONS } from '../constants/survey'
 import { CONCERN_STEP, SKIN_TYPE_STEP } from '../domain/surveyCodes'
-import type { AuthState, AuthUser } from '../types/auth'
+import type { AuthUser } from '../types/auth'
 import type { Concern, IngredientGroup, ProductCategory, SkinType } from '../types/domain'
 import type { ApiClient } from './client'
 import { ApiError } from './errors'
@@ -362,10 +362,6 @@ function withDelay<T>(value: T, ms = 150): Promise<T> {
   })
 }
 
-function requireAuth(authState: AuthState, message: string) {
-  void authState
-  void message
-}
 
 function createResultId(): number {
   mockResultSequence += 1
@@ -641,8 +637,7 @@ export const mockApiClient: ApiClient = {
     return withDelay({ preview, previewToken })
   },
 
-  async submitSurveyResult(input: SurveyResultInput, authState: AuthState): Promise<ResultDetail> {
-    requireAuth(authState, 'Only authenticated users can fetch full results.')
+  async submitSurveyResult(input: SurveyResultInput): Promise<ResultDetail> {
 
     if ('previewToken' in input) {
       const previewRecord = mockPreviewDb.get(input.previewToken)
@@ -672,19 +667,16 @@ export const mockApiClient: ApiClient = {
     return withDelay(detail)
   },
 
-  async getResult(resultId: number, authState: AuthState): Promise<ResultDetail> {
-    requireAuth(authState, 'Only authenticated users can fetch full results.')
+  async getResult(resultId: number): Promise<ResultDetail> {
     return withDelay(getStoredResult(resultId).detail)
   },
 
-  async getRoutineGroup(resultId: number, authState: AuthState): Promise<RoutineGroup> {
-    requireAuth(authState, 'Only authenticated users can fetch routine groups.')
+  async getRoutineGroup(resultId: number): Promise<RoutineGroup> {
     const stored = getStoredResult(resultId)
     return withDelay(createRoutineGroup(resultId, stored))
   },
 
-  async getRoutineRecommendation(authState: AuthState): Promise<RoutineRecommendationWithToken> {
-    requireAuth(authState, 'Only authenticated users can fetch routine recommendations.')
+  async getRoutineRecommendation(): Promise<RoutineRecommendationWithToken> {
     const latestId = mockResultSequence
     const stored = mockResultsDb.get(latestId)
     if (!stored) {
@@ -693,8 +685,7 @@ export const mockApiClient: ApiClient = {
     return withDelay(createRoutineRecommendationWithToken(stored))
   },
 
-  async saveRoutine(request: SaveRoutineRequest, authState: AuthState): Promise<SaveRoutineResponse> {
-    requireAuth(authState, 'Only authenticated users can save routines.')
+  async saveRoutine(request: SaveRoutineRequest): Promise<SaveRoutineResponse> {
     void request
     const groupId = mockResultSequence * 100 + 1
     return withDelay({
@@ -704,14 +695,12 @@ export const mockApiClient: ApiClient = {
     })
   },
 
-  async getRecommendedProducts(query: ResultProductsQuery, authState: AuthState): Promise<ResultProductsPageData> {
-    requireAuth(authState, 'Only authenticated users can fetch recommended products.')
+  async getRecommendedProducts(query: ResultProductsQuery): Promise<ResultProductsPageData> {
     const stored = getStoredResult(query.skinResultId)
     return withDelay(createMockResultProductsPage(query, stored))
   },
 
-  async getProfile(authState: AuthState): Promise<ProfileData> {
-    void authState
+  async getProfile(): Promise<ProfileData> {
     const latestId = mockResultSequence
     const stored = mockResultsDb.get(latestId)
     if (!stored) {
@@ -736,8 +725,7 @@ export const mockApiClient: ApiClient = {
     return withDelay(item.detail)
   },
 
-  async getMe(accessToken?: string): Promise<AuthUser> {
-    void accessToken
+  async getMe(): Promise<AuthUser> {
     return withDelay({
       userId: 1,
       nickname: '레이어드 사용자',
@@ -746,13 +734,7 @@ export const mockApiClient: ApiClient = {
     })
   },
 
-  async refreshAccessToken(refreshToken: string) {
-    void refreshToken
-    return withDelay({ accessToken: 'mock-access-token-refreshed' })
-  },
-
-  async logout(accessToken?: string): Promise<void> {
-    void accessToken
+  async logout(): Promise<void> {
     return withDelay(undefined as unknown as void)
   },
 }

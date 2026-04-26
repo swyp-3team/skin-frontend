@@ -1,4 +1,4 @@
-import type { AuthState, AuthUser } from '../types/auth'
+import type { AuthUser } from '../types/auth'
 import type {
   PreviewApiData,
   ProductDetail,
@@ -18,17 +18,16 @@ import type {
 export interface ApiClient {
   getSurveyQuestions(): Promise<SurveyQuestion[]>
   submitSurveyPreview(payload: SurveySubmitPayload): Promise<PreviewApiData>
-  submitSurveyResult(input: SurveyResultInput, authState: AuthState): Promise<ResultDetail>
-  getResult(resultId: number, authState: AuthState): Promise<ResultDetail>
-  getRoutineGroup(resultId: number, authState: AuthState): Promise<RoutineGroup>
-  getRoutineRecommendation(authState: AuthState): Promise<RoutineRecommendationWithToken>
-  saveRoutine(request: SaveRoutineRequest, authState: AuthState): Promise<SaveRoutineResponse>
-  getRecommendedProducts(query: ResultProductsQuery, authState: AuthState): Promise<ResultProductsPageData>
+  submitSurveyResult(input: SurveyResultInput): Promise<ResultDetail>
+  getResult(resultId: number): Promise<ResultDetail>
+  getRoutineGroup(resultId: number): Promise<RoutineGroup>
+  getRoutineRecommendation(): Promise<RoutineRecommendationWithToken>
+  saveRoutine(request: SaveRoutineRequest): Promise<SaveRoutineResponse>
+  getRecommendedProducts(query: ResultProductsQuery): Promise<ResultProductsPageData>
   getProductDetail(productId: number): Promise<ProductDetail>
-  getProfile(authState: AuthState): Promise<ProfileData>
+  getProfile(): Promise<ProfileData>
 
   // 인증 메서드
-  getMe(accessToken?: string): Promise<AuthUser>
-  refreshAccessToken(refreshToken: string): Promise<{ accessToken: string; refreshToken?: string }>
-  logout(accessToken?: string): Promise<void>
+  getMe(): Promise<AuthUser>
+  logout(): Promise<void>
 }

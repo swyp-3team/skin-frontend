@@ -32,12 +32,12 @@ export function usePromotePreview() {
         throw new ApiError('Preview token is missing.', 400, 'MISSING_PREVIEW_TOKEN')
       }
 
-      const { accessToken, user } = useAuthStore.getState()
-      if (!accessToken && !user) {
+      const { user } = useAuthStore.getState()
+      if (!user) {
         throw new ApiError('Authenticated session is missing.', 401, 'UNAUTHORIZED')
       }
 
-      return apiClient.submitSurveyResult({ previewToken }, { accessToken, user })
+      return apiClient.submitSurveyResult({ previewToken })
     },
     onSuccess: (result) => {
       queryClient.setQueryData(queryKeys.result(result.resultId), result)

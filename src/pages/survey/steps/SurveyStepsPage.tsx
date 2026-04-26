@@ -14,7 +14,6 @@ import {
   SURVEY_VALIDATION_MESSAGES,
 } from '../../../constants/survey'
 import { notify } from '../../../lib/notify'
-import { useAuthStore } from '../../../stores/authStore'
 import { useSurveyProgressStore } from '../../../stores/surveyProgressStore'
 import { useSurveySubmit } from '../useSurveySubmit'
 import SurveyStepActions from './SurveyStepActions'
@@ -26,12 +25,6 @@ const MILESTONE_TOAST_BY_STEP = new Map(SURVEY_STEP_MILESTONE_TOASTS.map((item) 
 
 function SurveyStepsPage() {
   const navigate = useNavigate()
-  const authState = useAuthStore(
-    useShallow((state) => ({
-      accessToken: state.accessToken,
-      user: state.user,
-    })),
-  )
 
   const { currentStep, answersByStep, setStepAnswer, nextStep, prevStep, goToStep } = useSurveyProgressStore(
     useShallow((state) => ({
@@ -139,9 +132,7 @@ function SurveyStepsPage() {
       return
     }
 
-    submitMutation.mutate(
-      authState,
-      {
+    submitMutation.mutate(undefined, {
         onSuccess: (outcome) => {
           if (outcome.kind === 'full') {
             navigate(createResultDetailPath(outcome.result.resultId))

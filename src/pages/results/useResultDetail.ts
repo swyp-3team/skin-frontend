@@ -5,17 +5,16 @@ import { ApiError } from '../../api/errors'
 import type { ProfileData, ResultDetail } from '../../api/types'
 import type { ResultHeaderViewModel } from '../../components/results/types'
 import { queryKeys } from '../../lib/queryKeys'
-import { useAuthStore } from '../../stores/authStore'
 import { createResultHeaderViewModel } from './resultViewModel'
 
 function isValidResultId(resultId: number): boolean {
   return Number.isFinite(resultId) && resultId > 0
 }
 
-export function getResultDetailQueryOptions(resultId: number, accessToken?: string) {
+export function getResultDetailQueryOptions(resultId: number) {
   return queryOptions<ResultDetail, ApiError>({
     queryKey: queryKeys.result(resultId),
-    queryFn: () => apiClient.getResult(resultId, { accessToken }),
+    queryFn: () => apiClient.getResult(resultId),
     enabled: isValidResultId(resultId),
     retry: false,
     staleTime: Infinity,
@@ -24,16 +23,12 @@ export function getResultDetailQueryOptions(resultId: number, accessToken?: stri
 }
 
 export function useResultDetail(resultId: number) {
-  const accessToken = useAuthStore((state) => state.accessToken)
-
-  return useQuery(getResultDetailQueryOptions(resultId, accessToken))
+  return useQuery(getResultDetailQueryOptions(resultId))
 }
 
 export function useResultHeader(resultId: number) {
-  const accessToken = useAuthStore((state) => state.accessToken)
-
   return useQuery<ResultDetail, ApiError, ResultHeaderViewModel>({
-    ...getResultDetailQueryOptions(resultId, accessToken),
+    ...getResultDetailQueryOptions(resultId),
     select: createResultHeaderViewModel,
   })
 }
@@ -49,11 +44,9 @@ function profileToHeaderViewModel(data: ProfileData): ResultHeaderViewModel {
 }
 
 export function useProfileHeader() {
-  const accessToken = useAuthStore((state) => state.accessToken)
-
   return useQuery<ProfileData, ApiError, ResultHeaderViewModel>({
     queryKey: queryKeys.profile(),
-    queryFn: () => apiClient.getProfile({ accessToken }),
+    queryFn: () => apiClient.getProfile(),
     select: profileToHeaderViewModel,
     retry: false,
     staleTime: Infinity,
