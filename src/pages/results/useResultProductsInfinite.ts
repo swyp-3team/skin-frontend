@@ -31,7 +31,7 @@ export function useResultProductsInfinite(resultId: number, tabId: ResultProduct
         { accessToken },
       ),
     enabled: isValidResultId(resultId),
-    initialPageParam: undefined as number | undefined,
+    initialPageParam: 0,
     getNextPageParam: (lastPage) => (lastPage.hasNext ? lastPage.nextCursor ?? undefined : undefined),
     placeholderData: keepPreviousData,
     retry: false,
