@@ -1,7 +1,7 @@
 import { MOCK_SURVEY_QUESTIONS } from '../constants/survey'
 import { CONCERN_STEP, SKIN_TYPE_STEP } from '../domain/surveyCodes'
 import type { AuthState, AuthUser } from '../types/auth'
-import type { Concern, IngredientGroup, SkinType } from '../types/domain'
+import type { Concern, IngredientGroup, ProductCategory, SkinType } from '../types/domain'
 import type { ApiClient } from './client'
 import { ApiError } from './errors'
 import type {
@@ -166,7 +166,14 @@ const RESULT_COPY_BY_SKIN_TYPE: Record<
   },
 }
 
-type MockCatalogItem = ResultProductsPageData['products'][number] & {
+type MockCatalogItem = {
+  productId: number
+  name: string
+  brand: string
+  price: number
+  imageUrl: string | null
+  category: ProductCategory
+  reason: string
   categories: ResultProductsFilterCategory[]
   detail: ProductDetail
 }
@@ -176,15 +183,14 @@ const MOCK_CATALOG: MockCatalogItem[] = [
     {
       productId: 201,
       name: 'Daily Skin Prep Water',
-      category: 'TONER',
-      brandName: 'Skin Lab',
+      brand: 'Skin Lab',
       imageUrl: 'https://cdn.example.com/products/201.png',
-      reason: 'A lightweight first layer that helps soften the skin without heaviness.',
-      price: 21000,
-      priceAsOf: '2026-04-24',
-      featureTags: ['Prep', 'Hydrate', 'Daily'],
       description: 'A watery prep step designed for comfortable daily layering.',
+      createdDate: '2026-04-24',
       purchaseUrl: 'https://example.com/products/201',
+      price: 21000,
+      category: 'TONER',
+      reason: 'A lightweight first layer that helps soften the skin without heaviness.',
     },
     ['SKIN']
   ),
@@ -192,15 +198,14 @@ const MOCK_CATALOG: MockCatalogItem[] = [
     {
       productId: 202,
       name: 'Calm Reset Toner',
-      category: 'TONER',
-      brandName: 'Skin Lab',
+      brand: 'Skin Lab',
       imageUrl: 'https://cdn.example.com/products/202.png',
-      reason: 'Helps cool down reactivity and prep the skin for the next step.',
-      price: 22000,
-      priceAsOf: '2026-04-24',
-      featureTags: ['Calming', 'Water', 'Daily'],
       description: 'A calming toner that keeps the texture light and easy to layer.',
+      createdDate: '2026-04-24',
       purchaseUrl: 'https://example.com/products/202',
+      price: 22000,
+      category: 'TONER',
+      reason: 'Helps cool down reactivity and prep the skin for the next step.',
     },
     ['TONER']
   ),
@@ -208,15 +213,14 @@ const MOCK_CATALOG: MockCatalogItem[] = [
     {
       productId: 203,
       name: 'Barrier Essence Shot',
-      category: 'SERUM',
-      brandName: 'Skin Lab',
+      brand: 'Skin Lab',
       imageUrl: 'https://cdn.example.com/products/203.png',
-      reason: 'A cushioning essence step that supports hydration before serum.',
-      price: 28000,
-      priceAsOf: '2026-04-24',
-      featureTags: ['Essence', 'Barrier', 'Layering'],
       description: 'An essence-style treatment for reinforcing hydration and comfort.',
+      createdDate: '2026-04-24',
       purchaseUrl: 'https://example.com/products/203',
+      price: 28000,
+      category: 'SERUM',
+      reason: 'A cushioning essence step that supports hydration before serum.',
     },
     ['ESSENCE']
   ),
@@ -224,15 +228,14 @@ const MOCK_CATALOG: MockCatalogItem[] = [
     {
       productId: 204,
       name: 'Repair Balance Serum',
-      category: 'SERUM',
-      brandName: 'Skin Lab',
+      brand: 'Skin Lab',
       imageUrl: 'https://cdn.example.com/products/204.png',
-      reason: 'A focused serum step that targets barrier support and texture balance.',
-      price: 32000,
-      priceAsOf: '2026-04-24',
-      featureTags: ['Serum', 'Repair', 'Balance'],
       description: 'A concentrated serum for daily barrier support and skin balance.',
+      createdDate: '2026-04-24',
       purchaseUrl: 'https://example.com/products/204',
+      price: 32000,
+      category: 'SERUM',
+      reason: 'A focused serum step that targets barrier support and texture balance.',
     },
     ['SERUM']
   ),
@@ -240,15 +243,14 @@ const MOCK_CATALOG: MockCatalogItem[] = [
     {
       productId: 205,
       name: 'Cica Recovery Ampoule',
-      category: 'SERUM',
-      brandName: 'Skin Lab',
+      brand: 'Skin Lab',
       imageUrl: 'https://cdn.example.com/products/205.png',
-      reason: 'A richer treatment texture for nights when the skin needs extra support.',
-      price: 34000,
-      priceAsOf: '2026-04-24',
-      featureTags: ['Ampoule', 'Cica', 'Night'],
       description: 'An ampoule-style treatment for comfort-focused evening care.',
+      createdDate: '2026-04-24',
       purchaseUrl: 'https://example.com/products/205',
+      price: 34000,
+      category: 'SERUM',
+      reason: 'A richer treatment texture for nights when the skin needs extra support.',
     },
     ['AMPOULE']
   ),
@@ -256,15 +258,14 @@ const MOCK_CATALOG: MockCatalogItem[] = [
     {
       productId: 206,
       name: 'Light Balance Lotion',
-      category: 'CREAM',
-      brandName: 'Skin Lab',
+      brand: 'Skin Lab',
       imageUrl: 'https://cdn.example.com/products/206.png',
-      reason: 'A light lotion finish that keeps the skin comfortable without weight.',
-      price: 26000,
-      priceAsOf: '2026-04-24',
-      featureTags: ['Lotion', 'Light', 'Comfort'],
       description: 'A lightweight emollient finish for balanced daily use.',
+      createdDate: '2026-04-24',
       purchaseUrl: 'https://example.com/products/206',
+      price: 26000,
+      category: 'CREAM',
+      reason: 'A light lotion finish that keeps the skin comfortable without weight.',
     },
     ['LOTION']
   ),
@@ -272,15 +273,14 @@ const MOCK_CATALOG: MockCatalogItem[] = [
     {
       productId: 207,
       name: 'Moisture Shield Emulsion',
-      category: 'CREAM',
-      brandName: 'Skin Lab',
+      brand: 'Skin Lab',
       imageUrl: 'https://cdn.example.com/products/207.png',
-      reason: 'Adds a flexible moisture layer that still feels easy to wear.',
-      price: 27000,
-      priceAsOf: '2026-04-24',
-      featureTags: ['Emulsion', 'Soft', 'Moisture'],
       description: 'An emulsion texture that bridges hydration and sealing care.',
+      createdDate: '2026-04-24',
       purchaseUrl: 'https://example.com/products/207',
+      price: 27000,
+      category: 'CREAM',
+      reason: 'Adds a flexible moisture layer that still feels easy to wear.',
     },
     ['EMULSION']
   ),
@@ -288,15 +288,14 @@ const MOCK_CATALOG: MockCatalogItem[] = [
     {
       productId: 208,
       name: 'Ceramide Comfort Cream',
-      category: 'CREAM',
-      brandName: 'Skin Lab',
+      brand: 'Skin Lab',
       imageUrl: 'https://cdn.example.com/products/208.png',
-      reason: 'A richer cream finish that helps reduce overnight dryness.',
-      price: 30000,
-      priceAsOf: '2026-04-24',
-      featureTags: ['Cream', 'Ceramide', 'Barrier'],
       description: 'A barrier-focused cream for a more sealed finish.',
+      createdDate: '2026-04-24',
       purchaseUrl: 'https://example.com/products/208',
+      price: 30000,
+      category: 'CREAM',
+      reason: 'A richer cream finish that helps reduce overnight dryness.',
     },
     ['CREAM']
   ),
@@ -304,21 +303,20 @@ const MOCK_CATALOG: MockCatalogItem[] = [
     {
       productId: 209,
       name: 'Soft UV Guard',
-      category: 'SUNSCREEN',
-      brandName: 'Skin Lab',
+      brand: 'Skin Lab',
       imageUrl: 'https://cdn.example.com/products/209.png',
-      reason: 'Daily UV protection with a comfortable finish and low-white-cast texture.',
-      price: 24000,
-      priceAsOf: '2026-04-24',
-      featureTags: ['SPF', 'Daily', 'Comfort'],
       description: 'A daily sunscreen designed to sit comfortably under makeup.',
+      createdDate: '2026-04-24',
       purchaseUrl: 'https://example.com/products/209',
+      price: 24000,
+      category: 'SUNSCREEN',
+      reason: 'Daily UV protection with a comfortable finish and low-white-cast texture.',
     },
     ['SUN_CARE']
   ),
 ]
 
-const MOCK_PRODUCT_DETAILS = new Map<number, ProductDetail>(MOCK_CATALOG.map((item) => [item.productId, item.detail]))
+const MOCK_CATALOG_MAP = new Map<number, MockCatalogItem>(MOCK_CATALOG.map((item) => [item.productId, item]))
 
 interface PreviewRecord {
   payload: SurveySubmitPayload
@@ -335,13 +333,19 @@ let mockResultSequence = 700
 const mockPreviewDb = new Map<string, PreviewRecord>()
 const mockResultsDb = new Map<number, StoredResult>()
 
-function createCatalogItem(detail: ProductDetail, categories: ResultProductsFilterCategory[]): MockCatalogItem {
+function createCatalogItem(
+  spec: ProductDetail & { price: number; category: ProductCategory; reason: string },
+  categories: ResultProductsFilterCategory[]
+): MockCatalogItem {
+  const { price, category, reason, ...detail } = spec
   return {
     productId: detail.productId,
     name: detail.name,
-    brand: detail.brandName,
-    price: detail.price,
+    brand: detail.brand,
+    price,
     imageUrl: detail.imageUrl,
+    category,
+    reason,
     categories,
     detail,
   }
@@ -463,21 +467,21 @@ function createRoutineProducts(
   notes: string[],
 ): RoutineDetail['products'] {
   return productIds.map((productId, index) => {
-    const detail = MOCK_PRODUCT_DETAILS.get(productId)
-    if (!detail) {
+    const item = MOCK_CATALOG_MAP.get(productId)
+    if (!item) {
       throw new ApiError(`Product not found. (ID: ${productId})`, 404, 'PRODUCT_NOT_FOUND')
     }
 
     return {
-      productId: detail.productId,
-      name: detail.name,
-      brand: detail.brandName,
-      category: detail.category,
-      imageUrl: detail.imageUrl,
+      productId: item.productId,
+      name: item.name,
+      brand: item.brand,
+      category: item.category,
+      imageUrl: item.imageUrl,
       sortOrder: index + 1,
-      reason: reasons[index] ?? detail.reason,
+      reason: reasons[index] ?? item.reason,
       note: notes[index] ?? 'Use a thin, even layer and adjust by skin condition.',
-      price: detail.price,
+      price: item.price,
     }
   })
 }
@@ -626,12 +630,12 @@ export const mockApiClient: ApiClient = {
   },
 
   async getProductDetail(productId: number): Promise<ProductDetail> {
-    const product = MOCK_PRODUCT_DETAILS.get(productId)
-    if (!product) {
+    const item = MOCK_CATALOG_MAP.get(productId)
+    if (!item) {
       throw new ApiError(`Product not found. (ID: ${productId})`, 404, 'PRODUCT_NOT_FOUND')
     }
 
-    return withDelay(product)
+    return withDelay(item.detail)
   },
 
   async getMe(accessToken?: string): Promise<AuthUser> {

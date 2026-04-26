@@ -683,6 +683,31 @@ function normalizeRefreshResponse(body: unknown): { accessToken: string; refresh
   }
 }
 
+function normalizeProductDetail(payload: unknown): ProductDetail {
+  if (!isRecord(payload)) {
+    throw new ApiError('Product detail response is invalid.', 500, 'INVALID_PRODUCT_DETAIL_FORMAT', payload)
+  }
+  if (typeof payload.productId !== 'number') {
+    throw new ApiError('Product productId is invalid.', 500, 'INVALID_PRODUCT_ID', payload)
+  }
+  if (typeof payload.name !== 'string') {
+    throw new ApiError('Product name is invalid.', 500, 'INVALID_PRODUCT_NAME', payload)
+  }
+  if (typeof payload.brand !== 'string') {
+    throw new ApiError('Product brand is invalid.', 500, 'INVALID_PRODUCT_BRAND', payload)
+  }
+
+  return {
+    productId: payload.productId,
+    name: payload.name,
+    brand: payload.brand,
+    imageUrl: typeof payload.imageUrl === 'string' ? payload.imageUrl : null,
+    description: typeof payload.description === 'string' ? payload.description : '',
+    createdDate: typeof payload.createdDate === 'string' ? payload.createdDate : '',
+    purchaseUrl: typeof payload.purchaseUrl === 'string' ? payload.purchaseUrl : '',
+  }
+}
+
 export function createLiveApiClient(baseUrl: string): ApiClient {
   const requestWithAuth = createRequestWithAuth(baseUrl)
 
@@ -762,7 +787,8 @@ export function createLiveApiClient(baseUrl: string): ApiClient {
     },
 
     async getProductDetail(productId: number) {
-      return requestApi<ProductDetail>(`${baseUrl}/products/${productId}`, { method: 'GET' })
+      const payload = await requestApi<unknown>(`${baseUrl}/products/${productId}`, { method: 'GET' })
+      return normalizeProductDetail(payload)
     },
 
     async getMe(accessToken?: string): Promise<AuthUser> {

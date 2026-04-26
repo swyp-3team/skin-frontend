@@ -35,20 +35,13 @@ export interface PreviewApiData {
   previewToken: string
 }
 
-export interface RecommendedProduct {
+export interface ProductDetail {
   productId: number
   name: string
-  category: ProductCategory
+  brand: string
   imageUrl: string | null
-  reason: string
-}
-
-export interface ProductDetail extends RecommendedProduct {
-  brandName: string
-  price: number
-  priceAsOf: string
-  featureTags: [string, string, string]
   description: string
+  createdDate: string
   purchaseUrl: string
 }
 
