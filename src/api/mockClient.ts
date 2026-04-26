@@ -617,7 +617,6 @@ function createMockResultProductsPage(query: ResultProductsQuery, stored: Stored
   const lastProduct = pageItems.at(-1)
 
   return {
-    tags: stored.detail.concerns,
     skinResultDate: stored.detail.diagnosedAt.slice(0, 10),
     products: pageItems,
     hasNext: endIndex < filteredProducts.length,

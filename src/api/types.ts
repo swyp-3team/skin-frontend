@@ -165,7 +165,6 @@ export type ResultProductsFilterCategory =
   | 'SUN_CARE'
 
 export interface ResultProductsPageData {
-  tags: string[]
   skinResultDate: string
   products: ResultProductItem[]
   hasNext: boolean

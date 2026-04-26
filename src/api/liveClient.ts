@@ -678,10 +678,7 @@ function normalizeResultProductsPage(payload: unknown): ResultProductsPageData {
     throw new ApiError('Products nextCursor is invalid.', 500, 'INVALID_PRODUCTS_NEXT_CURSOR', payload)
   }
 
-  const tags = Array.isArray(payload.tags) ? payload.tags.filter((tag): tag is string => typeof tag === 'string') : []
-
   return {
-    tags,
     skinResultDate: typeof payload.skinResultDate === 'string' ? payload.skinResultDate : '',
     products: payload.products.map((item, index) => normalizeResultProductItem(item, index)),
     hasNext: payload.hasNext,
