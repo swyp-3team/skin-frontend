@@ -116,18 +116,20 @@ export type ResultProductsFilterCategory =
   | 'LOTION'
   | 'EMULSION'
   | 'CREAM'
-  | 'SUNCARE'
+  | 'SUN_CARE'
 
 export interface ResultProductsPageData {
   tags: string[]
   skinResultDate: string
   products: ResultProductItem[]
   hasNext: boolean
+  nextCursor: number | null
 }
 
 export interface ResultProductsQuery {
-  resultId: number
-  page: number
+  skinResultId: number
+  size: number
+  cursor?: number
   categories?: ResultProductsFilterCategory[]
 }
 

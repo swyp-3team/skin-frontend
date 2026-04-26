@@ -314,7 +314,7 @@ const MOCK_CATALOG: MockCatalogItem[] = [
       description: 'A daily sunscreen designed to sit comfortably under makeup.',
       purchaseUrl: 'https://example.com/products/209',
     },
-    ['SUNCARE']
+    ['SUN_CARE']
   ),
 ]
 
@@ -532,17 +532,21 @@ function createRoutineGroup(resultId: number, stored: StoredResult): RoutineGrou
   }
 }
 
-const RESULT_PRODUCTS_PAGE_SIZE = 4
-
 function createMockResultProductsPage(query: ResultProductsQuery, stored: StoredResult): ResultProductsPageData {
-  const page = Math.max(1, query.page)
   const filteredProducts =
     query.categories && query.categories.length > 0
       ? MOCK_CATALOG.filter((product) => query.categories?.some((category) => product.categories.includes(category)))
       : MOCK_CATALOG
 
-  const startIndex = (page - 1) * RESULT_PRODUCTS_PAGE_SIZE
-  const endIndex = startIndex + RESULT_PRODUCTS_PAGE_SIZE
+  const pageSize = Math.max(1, query.size)
+  const startIndex =
+    query.cursor === undefined
+      ? 0
+      : Math.max(
+          filteredProducts.findIndex((product) => product.productId === query.cursor) + 1,
+          0,
+        )
+  const endIndex = startIndex + pageSize
   const pageItems = filteredProducts.slice(startIndex, endIndex).map((product) => ({
     productId: product.productId,
     name: product.name,
@@ -550,12 +554,14 @@ function createMockResultProductsPage(query: ResultProductsQuery, stored: Stored
     price: product.price,
     imageUrl: product.imageUrl,
   }))
+  const lastProduct = pageItems.at(-1)
 
   return {
     tags: stored.detail.concerns,
     skinResultDate: stored.detail.diagnosedAt.slice(0, 10),
     products: pageItems,
     hasNext: endIndex < filteredProducts.length,
+    nextCursor: lastProduct ? lastProduct.productId : null,
   }
 }
 
@@ -615,7 +621,7 @@ export const mockApiClient: ApiClient = {
 
   async getRecommendedProducts(query: ResultProductsQuery, authState: AuthState): Promise<ResultProductsPageData> {
     requireAuth(authState, 'Only authenticated users can fetch recommended products.')
-    const stored = getStoredResult(query.resultId)
+    const stored = getStoredResult(query.skinResultId)
     return withDelay(createMockResultProductsPage(query, stored))
   },
 

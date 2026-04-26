@@ -171,15 +171,13 @@ function unwrapEnvelope<T>(body: unknown, status: number): T {
   return body.data as T
 }
 
-async function requestApi<T>(url: string, init: RequestInit, token?: string): Promise<T> {
+async function requestApi<T>(url: string, init: RequestInit, _token?: string): Promise<T> {
+  void _token
+
   const headers = new Headers(init.headers)
 
   if (init.body !== undefined && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json')
-  }
-
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`)
   }
 
   let response: Response
@@ -624,6 +622,13 @@ function normalizeResultProductsPage(payload: unknown): ResultProductsPageData {
   if (typeof payload.hasNext !== 'boolean') {
     throw new ApiError('Products hasNext is invalid.', 500, 'INVALID_PRODUCTS_HAS_NEXT', payload)
   }
+  if (
+    payload.nextCursor !== null &&
+    payload.nextCursor !== undefined &&
+    (typeof payload.nextCursor !== 'number' || !Number.isFinite(payload.nextCursor))
+  ) {
+    throw new ApiError('Products nextCursor is invalid.', 500, 'INVALID_PRODUCTS_NEXT_CURSOR', payload)
+  }
 
   const tags = Array.isArray(payload.tags) ? payload.tags.filter((tag): tag is string => typeof tag === 'string') : []
 
@@ -632,6 +637,7 @@ function normalizeResultProductsPage(payload: unknown): ResultProductsPageData {
     skinResultDate: typeof payload.skinResultDate === 'string' ? payload.skinResultDate : '',
     products: payload.products.map((item, index) => normalizeResultProductItem(item, index)),
     hasNext: payload.hasNext,
+    nextCursor: typeof payload.nextCursor === 'number' ? payload.nextCursor : null,
   }
 }
 
@@ -733,15 +739,21 @@ export function createLiveApiClient(baseUrl: string): ApiClient {
 
     async getRecommendedProducts(query: ResultProductsQuery, authState: AuthState) {
       const params = new URLSearchParams({
-        page: String(query.page),
+        size: String(query.size),
       })
 
+      params.set('skinResultId', String(query.skinResultId))
+
+      if (query.cursor !== undefined) {
+        params.set('cursor', String(query.cursor))
+      }
+
       query.categories?.forEach((category) => {
-        params.append('category', category)
+        params.append('categories', category)
       })
 
       const payload = await requestWithAuth<unknown>(
-        `${baseUrl}/results/${query.resultId}/products?${params.toString()}`,
+        `${baseUrl}/products/recommend?${params.toString()}`,
         { method: 'GET' },
         authState.accessToken,
       )

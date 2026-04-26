@@ -8,6 +8,8 @@ import { queryKeys } from '../../lib/queryKeys'
 import { useAuthStore } from '../../stores/authStore'
 import { getResultProductsCategoriesByTab } from './resultViewModel'
 
+const RECOMMENDED_PRODUCTS_PAGE_SIZE = 10
+
 function isValidResultId(resultId: number): boolean {
   return Number.isFinite(resultId) && resultId > 0
 }
@@ -21,15 +23,16 @@ export function useResultProductsInfinite(resultId: number, tabId: ResultProduct
     queryFn: ({ pageParam }) =>
       apiClient.getRecommendedProducts(
         {
-          resultId,
-          page: Number(pageParam),
+          skinResultId: resultId,
+          size: RECOMMENDED_PRODUCTS_PAGE_SIZE,
+          cursor: typeof pageParam === 'number' ? pageParam : undefined,
           categories: categories.length > 0 ? [...categories] : undefined,
         },
         { accessToken },
       ),
     enabled: isValidResultId(resultId),
-    initialPageParam: 1,
-    getNextPageParam: (lastPage, allPages) => (lastPage.hasNext ? allPages.length + 1 : undefined),
+    initialPageParam: undefined as number | undefined,
+    getNextPageParam: (lastPage) => (lastPage.hasNext ? lastPage.nextCursor ?? undefined : undefined),
     placeholderData: keepPreviousData,
     retry: false,
   })

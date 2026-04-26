@@ -7,7 +7,7 @@ const RESULT_PRODUCT_CATEGORIES_BY_TAB: Record<ResultProductTabId, readonly Resu
   ESSENCE_SERUM_AMPOULE: ['ESSENCE', 'SERUM', 'AMPOULE'],
   LOTION_EMULSION: ['LOTION', 'EMULSION'],
   CREAM: ['CREAM'],
-  SUNCARE: ['SUNCARE'],
+  SUNCARE: ['SUN_CARE'],
 }
 
 export const RESULT_PRODUCT_TABS: readonly ResultProductTabItem[] = [
