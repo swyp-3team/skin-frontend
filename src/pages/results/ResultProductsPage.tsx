@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 
-import { createProductDetailPath } from '../../app/routes'
+import searchIcon from '../../assets/icons/mobile-page/search.svg'
+import { createProductDetailPath, createResultProductsSearchPath } from '../../app/routes'
 import type { ResultProductItem } from '../../api/types'
 import AlertMessage from '../../components/common/AlertMessage'
 import SafeImage from '../../components/common/SafeImage'
@@ -25,6 +26,7 @@ interface ProductsPageScrollSnapshot {
   scrollTop: number
   tabId: ResultProductTabId
   windowScrollY: number
+  isHeaderScrolled: boolean
 }
 
 const productsPageScrollSnapshots = new Map<number, ProductsPageScrollSnapshot>()
@@ -67,15 +69,18 @@ function ResultProductGridCard({ onOpenProduct, product }: ResultProductGridCard
 }
 
 function ResultProductsPage() {
+  const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
   const resultId = Number(id)
   const savedSnapshot = Number.isFinite(resultId) ? productsPageScrollSnapshots.get(resultId) : undefined
+  const initialHeaderScrolled = savedSnapshot?.isHeaderScrolled ?? false
   const [activeTabId, setActiveTabId] = useState<ResultProductTabId>(savedSnapshot?.tabId ?? 'ALL')
   const sentinelRef = useRef<HTMLDivElement | null>(null)
   const containerRef = useRef<HTMLDivElement | null>(null)
   const didRestoreScrollRef = useRef(false)
   const { ref: whiteBoxSentinelRef, isCollapsed: isHeaderScrolled } = useScrollCollapse<HTMLDivElement>(
     '-49px 0px 0px 0px',
+    initialHeaderScrolled,
   )
 
   const { data: header, isLoading: isHeaderLoading, error: headerError } = useProfileHeader()
@@ -98,8 +103,18 @@ function ResultProductsPage() {
       scrollTop: containerRef.current?.scrollTop ?? 0,
       tabId: activeTabId,
       windowScrollY: window.scrollY,
+      isHeaderScrolled,
     })
-  }, [activeTabId, resultId])
+  }, [activeTabId, isHeaderScrolled, resultId])
+
+  const handleSearchClick = useCallback(() => {
+    if (!isValidResultId(resultId)) {
+      return
+    }
+
+    saveScrollSnapshot()
+    navigate(createResultProductsSearchPath(resultId))
+  }, [navigate, resultId, saveScrollSnapshot])
 
   useLayoutEffect(() => {
     if (didRestoreScrollRef.current || !productsPages) {
@@ -120,6 +135,7 @@ function ResultProductsPage() {
     window.scrollTo(0, snapshot.windowScrollY)
     container.scrollTop = snapshot.scrollTop
     requestAnimationFrame(() => {
+      window.scrollTo(0, snapshot.windowScrollY)
       container.scrollTop = snapshot.scrollTop
     })
     productsPageScrollSnapshots.delete(resultId)
@@ -184,9 +200,36 @@ function ResultProductsPage() {
   const isTabSwitching = isProductsFetching && !isFetchingNextPage
 
   return (
-    <MobilePage header={<PageHeader isScrolled={isHeaderScrolled} title={PRODUCTS_PAGE_COPY.title} />}>
+    <MobilePage
+      header={
+        <PageHeader
+          actionSlot={
+            <button
+              type="button"
+              aria-label="제품 검색 페이지 열기"
+              className={cn(
+                'inline-flex size-7 shrink-0 items-center justify-center overflow-hidden transition-transform duration-300',
+                isHeaderScrolled
+                  ? 'pointer-events-auto translate-y-0'
+                  : 'pointer-events-none -translate-y-10',
+              )}
+              onClick={handleSearchClick}
+            >
+              <img alt="" aria-hidden className="size-7" src={searchIcon} />
+            </button>
+          }
+          isScrolled={isHeaderScrolled}
+          title={PRODUCTS_PAGE_COPY.title}
+        />
+      }
+    >
       <section className="space-y-0">
-        <ResultTopSection header={header} intro={PRODUCTS_PAGE_COPY.intro} resultId={resultId} />
+        <ResultTopSection
+          header={header}
+          intro={PRODUCTS_PAGE_COPY.intro}
+          resultId={resultId}
+          initialCollapsed={initialHeaderScrolled}
+        />
         <div ref={whiteBoxSentinelRef} aria-hidden className="h-px" />
 
         <div
@@ -196,14 +239,7 @@ function ResultProductsPage() {
             isHeaderScrolled ? 'overflow-y-auto' : 'overflow-hidden',
           )}
         >
-          <div className="sticky top-0 z-9 space-y-5 bg-gradient-to-b from-common-0 via-common-0 to-transparent px-4 pt-5">
-            <div className="inline-flex w-full items-center gap-2 rounded-lg border border-neutral-150 bg-neutral-50/50 px-3 py-3 text-sm font-light leading-[20.44px] text-neutral-300">
-              <span aria-hidden className="text-base">
-                ⌕
-              </span>
-              <span>{PRODUCTS_PAGE_COPY.searchPlaceholder}</span>
-            </div>
-
+          <div className="sticky top-0 z-9 bg-common-0/70 px-4 pt-4 pb-3">
             <div style={{width: '100%', height: '100%', justifyContent: 'flex-start', alignItems: 'flex-start', gap: 8, display: 'inline-flex', flexWrap: 'wrap', alignContent: 'flex-start'}}>
               {RESULT_PRODUCT_TABS.map((tab) => {
                 const isActive = activeTabId === tab.id
@@ -219,7 +255,7 @@ function ResultProductsPage() {
                       paddingRight: 8,
                       paddingTop: 6,
                       paddingBottom: 6,
-                      height: 32,
+                      height: 31,
                       background: isActive ? 'var(--Neutral-800, #1A1C18)' : 'var(--Common-0, white)',
                       borderRadius: 8,
                       outline: isActive ? undefined : '1px var(--Neutral-150, #E0E2E0) solid',
@@ -231,7 +267,7 @@ function ResultProductsPage() {
                       cursor: 'pointer',
                     }}
                   >
-                    <div style={{textAlign: 'center', color: isActive ? 'var(--Common-0, white)' : 'var(--Neutral-300, #A4AAA6)', fontSize: 14, fontFamily: 'Pretendard', fontWeight: '500', lineHeight: '20.44px', wordWrap: 'break-word'}}>
+                    <div style={{textAlign: 'center', color: isActive ? 'var(--Common-0, white)' : 'var(--Neutral-300, #A4AAA6)', fontSize: 14, fontFamily: 'Pretendard', fontWeight: 500, lineHeight: '20.44px', wordWrap: 'break-word'}}>
                       {tab.label}
                     </div>
                   </div>

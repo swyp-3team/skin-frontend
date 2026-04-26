@@ -12,6 +12,7 @@ import ProductDetailPage from '../pages/ProductDetailPage'
 import RoutineDetailPage from '../pages/RoutineDetailPage'
 import ResultDetailPage from '../pages/results/ResultDetailPage'
 import ResultProductsPage from '../pages/results/ResultProductsPage'
+import ResultProductsSearchPage from '../pages/results/ResultProductsSearchPage'
 import ResultRoutinePage from '../pages/results/ResultRoutinePage'
 import SurveyIntroPage from '../pages/survey/SurveyIntroPage'
 import SurveyResultPage from '../pages/survey/result/SurveyResultPage'
@@ -36,6 +37,7 @@ function AppRouter() {
             <Route element={<ResultDetailPage />} path={APP_ROUTES.resultDetail} />
             <Route element={<ResultRoutinePage />} path={APP_ROUTES.resultRoutine} />
             <Route element={<ResultProductsPage />} path={APP_ROUTES.resultProducts} />
+            <Route element={<ResultProductsSearchPage />} path={APP_ROUTES.resultProductsSearch} />
             <Route element={<MyPage />} path={APP_ROUTES.myPage} />
             <Route element={<RoutineDetailPage />} path={APP_ROUTES.routineDetail} />
           </Route>

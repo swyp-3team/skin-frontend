@@ -5,6 +5,8 @@ import type { Concern, IngredientGroup, ProductCategory, SkinType } from '../typ
 import type { ApiClient } from './client'
 import { ApiError } from './errors'
 import type {
+  ProductSearchPageData,
+  ProductSearchQuery,
   PreviewApiData,
   PreviewResult,
   ProductDetail,
@@ -623,6 +625,46 @@ function createMockResultProductsPage(query: ResultProductsQuery, stored: Stored
   }
 }
 
+function createMockProductSearchPage(query: ProductSearchQuery): ProductSearchPageData {
+  const keyword = query.keyword.trim().toLowerCase()
+  if (keyword.length === 0) {
+    return {
+      products: [],
+      hasNext: false,
+      nextCursor: null,
+    }
+  }
+
+  const filteredProducts = MOCK_CATALOG.filter((product) => {
+    const normalizedName = product.name.toLowerCase()
+    const normalizedBrand = product.brand.toLowerCase()
+    return normalizedName.includes(keyword) || normalizedBrand.includes(keyword)
+  })
+
+  const pageSize = Math.max(1, query.size)
+  const startIndex =
+    query.cursor === undefined
+      ? 0
+      : Math.max(
+          filteredProducts.findIndex((product) => product.productId === query.cursor) + 1,
+          0,
+        )
+  const endIndex = startIndex + pageSize
+  const pageItems = filteredProducts.slice(startIndex, endIndex).map((product) => ({
+    productId: product.productId,
+    name: product.name,
+    price: product.price,
+    imageUrl: product.imageUrl,
+  }))
+  const lastProduct = pageItems.at(-1)
+
+  return {
+    products: pageItems,
+    hasNext: endIndex < filteredProducts.length,
+    nextCursor: lastProduct ? lastProduct.productId : null,
+  }
+}
+
 export const mockApiClient: ApiClient = {
   async getSurveyQuestions() {
     return withDelay(attachOptionCodes(MOCK_SURVEY_QUESTIONS))
@@ -696,6 +738,10 @@ export const mockApiClient: ApiClient = {
   async getRecommendedProducts(query: ResultProductsQuery): Promise<ResultProductsPageData> {
     const stored = getStoredResult(query.skinResultId)
     return withDelay(createMockResultProductsPage(query, stored))
+  },
+
+  async searchProducts(query: ProductSearchQuery): Promise<ProductSearchPageData> {
+    return withDelay(createMockProductSearchPage(query))
   },
 
   async getProfile(): Promise<ProfileData> {

@@ -1,5 +1,7 @@
 import type { AuthUser } from '../types/auth'
 import type {
+  ProductSearchPageData,
+  ProductSearchQuery,
   PreviewApiData,
   ProductDetail,
   ProfileData,
@@ -24,6 +26,7 @@ export interface ApiClient {
   getRoutineRecommendation(): Promise<RoutineRecommendationWithToken>
   saveRoutine(request: SaveRoutineRequest): Promise<SaveRoutineResponse>
   getRecommendedProducts(query: ResultProductsQuery): Promise<ResultProductsPageData>
+  searchProducts(query: ProductSearchQuery): Promise<ProductSearchPageData>
   getProductDetail(productId: number): Promise<ProductDetail>
   getProfile(): Promise<ProfileData>
 

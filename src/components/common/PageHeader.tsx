@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react'
+
 import AppLogo from '@/components/icons/AppLogo'
 import NavMenuDialog from '@/components/common/NavMenuDialog'
 import { cn } from '@/lib/utils'
@@ -12,6 +14,7 @@ interface PageHeaderProps {
   isScrolled?: boolean
   tone?: 'default' | 'dark' | 'light'
   showLogo?: boolean
+  actionSlot?: ReactNode
 }
 
 function PageHeader({
@@ -20,6 +23,7 @@ function PageHeader({
   isScrolled = false,
   tone = 'default',
   showLogo = false,
+  actionSlot = null,
 }: PageHeaderProps) {
   const isDarkTone = tone === 'dark'
   const isLightTone = tone === 'light'
@@ -46,9 +50,12 @@ function PageHeader({
           {title}
         </h1>
       )}
-      <NavMenuDialog
-        triggerClassName={isWhiteContent ? '[&>img]:brightness-0 [&>img]:invert' : undefined}
-      />
+      <div className="flex items-center gap-4">
+        {actionSlot}
+        <NavMenuDialog
+          triggerClassName={isWhiteContent ? '[&>img]:brightness-0 [&>img]:invert' : undefined}
+        />
+      </div>
     </header>
   )
 }

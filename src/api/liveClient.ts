@@ -5,6 +5,8 @@ import type { ApiClient } from './client'
 import type { ApiErrorPayload, ApiFieldError } from './contracts'
 import { ApiError } from './errors'
 import type {
+  ProductSearchPageData,
+  ProductSearchQuery,
   PreviewApiData,
   PreviewResult,
   ProductDetail,
@@ -682,6 +684,16 @@ function normalizeResultProductsPage(payload: unknown): ResultProductsPageData {
   }
 }
 
+function normalizeProductSearchPage(payload: unknown): ProductSearchPageData {
+  const normalized = normalizeResultProductsPage(payload)
+
+  return {
+    products: normalized.products,
+    hasNext: normalized.hasNext,
+    nextCursor: normalized.nextCursor,
+  }
+}
+
 function normalizeAuthUser(body: unknown): AuthUser {
   if (!isRecord(body)) {
     throw new ApiError('Auth user response is invalid.', 500, 'INVALID_AUTH_USER', body)
@@ -844,6 +856,20 @@ export function createLiveApiClient(baseUrl: string): ApiClient {
         { method: 'GET' },
       )
       return normalizeResultProductsPage(payload)
+    },
+
+    async searchProducts(query: ProductSearchQuery) {
+      const params = new URLSearchParams({
+        keyword: query.keyword,
+        size: String(query.size),
+      })
+
+      if (query.cursor !== undefined) {
+        params.set('cursor', String(query.cursor))
+      }
+
+      const payload = await requestApi<unknown>(`${baseUrl}/products/search?${params.toString()}`, { method: 'GET' })
+      return normalizeProductSearchPage(payload)
     },
 
     async getProductDetail(productId: number) {

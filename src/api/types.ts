@@ -177,6 +177,18 @@ export interface ResultProductsQuery {
   categories?: ResultProductsFilterCategory[]
 }
 
+export interface ProductSearchQuery {
+  keyword: string
+  size: number
+  cursor?: number
+}
+
+export interface ProductSearchPageData {
+  products: ResultProductItem[]
+  hasNext: boolean
+  nextCursor: number | null
+}
+
 export interface ProfileData {
   resultId: number
   diagnosedAt: string

@@ -9,10 +9,11 @@ interface ResultTopSectionProps {
   intro: string
   resultId: number
   header: ResultHeaderViewModel
+  initialCollapsed?: boolean
 }
 
-function ResultTopSection({ intro, resultId, header }: ResultTopSectionProps) {
-  const { ref: sentinelRef, isCollapsed } = useScrollCollapse<HTMLDivElement>(HEADER_ROOT_MARGIN)
+function ResultTopSection({ intro, resultId, header, initialCollapsed = false }: ResultTopSectionProps) {
+  const { ref: sentinelRef, isCollapsed } = useScrollCollapse<HTMLDivElement>(HEADER_ROOT_MARGIN, initialCollapsed)
 
   return (
     <>
