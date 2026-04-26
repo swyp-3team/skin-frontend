@@ -104,10 +104,11 @@ function AuthCallbackPage() {
         try {
           const profile = await apiClient.getProfile()
           setLatestResultId(profile.resultId)
+          navigate('/', { replace: true })
         } catch {
-          // 설문 미완료 또는 오류 시 무시
+          // 설문 미완료 또는 오류 시 원래 페이지로 복귀
+          navigate(intent.returnTo, { replace: true })
         }
-        navigate(intent.returnTo, { replace: true })
         return
       }
 
