@@ -148,7 +148,6 @@ export interface SaveRoutineResponse {
 export interface ResultProductItem {
   productId: number
   name: string
-  brand: string
   price: number
   imageUrl: string | null
 }

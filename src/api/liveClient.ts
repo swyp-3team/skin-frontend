@@ -640,9 +640,6 @@ function normalizeResultProductItem(raw: unknown, index: number) {
   if (typeof raw.name !== 'string') {
     throw new ApiError(`Result product name is invalid. (products[${index}])`, 500, 'INVALID_RESULT_PRODUCT_NAME', raw)
   }
-  if (typeof raw.brand !== 'string') {
-    throw new ApiError(`Result product brand is invalid. (products[${index}])`, 500, 'INVALID_RESULT_PRODUCT_BRAND', raw)
-  }
   if (typeof raw.price !== 'number') {
     throw new ApiError(`Result product price is invalid. (products[${index}])`, 500, 'INVALID_RESULT_PRODUCT_PRICE', raw)
   }
@@ -653,7 +650,6 @@ function normalizeResultProductItem(raw: unknown, index: number) {
   return {
     productId: raw.productId,
     name: raw.name,
-    brand: raw.brand,
     price: raw.price,
     imageUrl: typeof raw.imageUrl === 'string' ? raw.imageUrl : null,
   }

@@ -610,7 +610,6 @@ function createMockResultProductsPage(query: ResultProductsQuery, stored: Stored
   const pageItems = filteredProducts.slice(startIndex, endIndex).map((product) => ({
     productId: product.productId,
     name: product.name,
-    brand: product.brand,
     price: product.price,
     imageUrl: product.imageUrl,
   }))
