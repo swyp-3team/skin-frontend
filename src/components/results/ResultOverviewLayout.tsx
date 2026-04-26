@@ -19,10 +19,11 @@ interface ResultOverviewLayoutProps {
   viewModel: ResultOverviewViewModel
   onRoutineCta: () => void
   onProductsCta: () => void
-  cardOverlay?: ReactNode
+  routineOverlay?: ReactNode
+  ingredientsOverlay?: ReactNode
 }
 
-function ResultOverviewLayout({ viewModel, onRoutineCta, onProductsCta, cardOverlay }: ResultOverviewLayoutProps) {
+function ResultOverviewLayout({ viewModel, onRoutineCta, onProductsCta, routineOverlay, ingredientsOverlay }: ResultOverviewLayoutProps) {
   return (
     <MobilePage
       className="bg-neutral-800"
@@ -58,7 +59,7 @@ function ResultOverviewLayout({ viewModel, onRoutineCta, onProductsCta, cardOver
         <section className="relative -mt-[246px] mx-3 rounded-t-2xl bg-common-0 px-4 pb-30 pt-6 text-neutral-800">
           <div className="space-y-25">
             {/* 루틴 섹션 */}
-            <section className="space-y-6">
+            <section>
               <div className="pb-3 text-[20px] font-bold leading-[27.6px] tracking-[-0.02em] text-neutral-800">
                 <div>지금 피부에</div>
                 <div className="relative w-fit">
@@ -70,36 +71,40 @@ function ResultOverviewLayout({ viewModel, onRoutineCta, onProductsCta, cardOver
                 </div>
               </div>
 
-              <div className="relative left-1 h-[218px]">
-                {viewModel.routine.highlights.slice(0, 3).map((highlight, index) => (
-                  <div
-                    className={cn(
-                      'absolute inline-flex items-center justify-center rounded-full text-center font-medium',
-                      ROUTINE_HIGHLIGHT_STYLE_CLASS[index] ?? ROUTINE_HIGHLIGHT_STYLE_CLASS[0],
-                    )}
-                    key={`${highlight}-${index}`}
-                  >
-                    {highlight}
-                  </div>
-                ))}
-              </div>
+              <div className="relative mt-6 space-y-6">
+                <div className="relative left-1 h-[218px]">
+                  {viewModel.routine.highlights.slice(0, 3).map((highlight, index) => (
+                    <div
+                      className={cn(
+                        'absolute inline-flex items-center justify-center rounded-full text-center font-medium',
+                        ROUTINE_HIGHLIGHT_STYLE_CLASS[index] ?? ROUTINE_HIGHLIGHT_STYLE_CLASS[0],
+                      )}
+                      key={`${highlight}-${index}`}
+                    >
+                      {highlight}
+                    </div>
+                  ))}
+                </div>
 
-              <div className="rounded-lg bg-neutral-50 p-4">
-                <p className="text-sm leading-[20.44px] text-neutral-800">{viewModel.routine.highlightDescription}</p>
-              </div>
+                <div className="rounded-lg bg-neutral-50 p-4">
+                  <p className="text-sm leading-[20.44px] text-neutral-800">{viewModel.routine.highlightDescription}</p>
+                </div>
 
-              <Button
-                className="h-auto w-full rounded-lg px-5 py-2.5 text-[15px] font-medium leading-[22.2px]"
-                onClick={onRoutineCta}
-                type="button"
-                variant="dark"
-              >
-                {viewModel.routine.ctaLabel}
-              </Button>
+                <Button
+                  className="h-auto w-full rounded-lg px-5 py-2.5 text-[15px] font-medium leading-[22.2px]"
+                  onClick={onRoutineCta}
+                  type="button"
+                  variant="dark"
+                >
+                  {viewModel.routine.ctaLabel}
+                </Button>
+
+                {routineOverlay}
+              </div>
             </section>
 
             {/* 성분 섹션 */}
-            <section className="space-y-10">
+            <section>
               <div className="text-[20px] font-bold leading-[27.6px] tracking-[-0.02em] text-neutral-800">
                 <div className="inline-flex items-end">
                   <div className="relative w-fit">
@@ -110,23 +115,25 @@ function ResultOverviewLayout({ viewModel, onRoutineCta, onProductsCta, cardOver
                 </div>
               </div>
 
-              <ResultIngredientCarousel
-                cards={viewModel.ingredients.cards}
-                key={viewModel.ingredients.cards.map((card) => `${card.rank}-${card.name}-${card.isPrimary}`).join('|')}
-              />
+              <div className="relative mt-10 space-y-10">
+                <ResultIngredientCarousel
+                  cards={viewModel.ingredients.cards}
+                  key={viewModel.ingredients.cards.map((card) => `${card.rank}-${card.name}-${card.isPrimary}`).join('|')}
+                />
 
-              <Button
-                className="h-auto w-full rounded-lg px-5 py-2.5 text-[15px] font-medium leading-[22.2px]"
-                onClick={onProductsCta}
-                type="button"
-                variant="dark"
-              >
-                {viewModel.ingredients.ctaLabel}
-              </Button>
+                <Button
+                  className="h-auto w-full rounded-lg px-5 py-2.5 text-[15px] font-medium leading-[22.2px]"
+                  onClick={onProductsCta}
+                  type="button"
+                  variant="dark"
+                >
+                  {viewModel.ingredients.ctaLabel}
+                </Button>
+
+                {ingredientsOverlay}
+              </div>
             </section>
           </div>
-
-          {cardOverlay}
         </section>
       </section>
     </MobilePage>

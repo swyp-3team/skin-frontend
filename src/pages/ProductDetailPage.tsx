@@ -93,6 +93,7 @@ function ProductDetailPage() {
               </div>
 
               <div className="space-y-4 px-4 py-5">
+                <h2 className="text-[24px] font-bold leading-[32.4px] text-neutral-800">레이어드가 알려드리는<br /> 제품 특징</h2>
                 <p className="py-5 text-base leading-[23.68px] text-neutral-800">{product.description || '.'}</p>
               </div>
             </div>

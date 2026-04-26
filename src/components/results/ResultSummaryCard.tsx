@@ -59,13 +59,9 @@ function ResultSummaryCard({
 
   return (
     <article className={cn('gap-2 flex w-full flex-col rounded-2xl bg-common-0 p-4', className)}>
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex flex-col justify-end gap-2">
+        <ResultMiniTag>{subtitleTag}</ResultMiniTag>
         <h3 className="text-[18px] font-bold leading-[25.56px] text-neutral-800">{diagnosisTitle}</h3>
-        {subtitleTag ? (
-          <div className="flex flex-wrap justify-end gap-1">
-            <ResultMiniTag>{subtitleTag}</ResultMiniTag>
-          </div>
-        ) : null}
       </div>
 
       <p
