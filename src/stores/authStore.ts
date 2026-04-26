@@ -13,6 +13,7 @@ interface AuthStoreState {
 
 interface AuthStoreActions {
   setTokens: (accessToken: string, refreshToken: string) => void
+  clearTokens: () => void
   setUser: (user: AuthUser) => void
   setAuthCheckCompleted: (completed: boolean) => void
   clearAuth: () => void
@@ -31,6 +32,9 @@ export const useAuthStore = create<AuthStore>()(
       authCheckCompleted: false,
       setTokens: (accessToken, refreshToken) => {
         set({ accessToken, refreshToken })
+      },
+      clearTokens: () => {
+        set({ accessToken: undefined, refreshToken: undefined })
       },
       setUser: (user) => {
         set({ user })

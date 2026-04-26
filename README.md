@@ -51,10 +51,10 @@ npm run dev
 ## 환경 변수
 
 - `VITE_API_MODE`: `mock`(기본) | `live`
-- `VITE_API_BASE_URL`: live 모드 API base (기본 `/api/v1`)
-  - 개발 서버(`npm run dev`)에서는 `/api/*` 요청이 Vite proxy를 통해 `https://api.layerd.co.kr`로 전달됩니다.
-  - 따라서 로컬 개발에서 Layerd API를 사용하려면 `VITE_API_MODE=live`, `VITE_API_BASE_URL=/api/v1` 조합을 사용하세요.
-  - 프런트/백엔드가 다른 도메인인 배포 환경에서는 반드시 전체 URL(예: `https://api.example.com/v1`)로 지정하세요.
+- `VITE_API_BASE_URL`: live 모드 API base (기본 `https://api.layerd.co.kr/api/v1`)
+  - 로그인 쿠키가 `api.layerd.co.kr` 도메인에 저장되므로, 인증 API는 `https://api.layerd.co.kr/api/v1`로 직접 호출합니다.
+  - `credentials: 'include'` 요청이 동작하려면 백엔드 CORS가 `https://layerd.co.kr` Origin과 credential 포함 요청을 허용해야 합니다.
+  - `/api/v1` 프록시 경로는 공개 API 확인에는 사용할 수 있지만, `api.layerd.co.kr` 쿠키 인증에는 적합하지 않습니다.
 
 ## 설문 상태 저장 규칙
 

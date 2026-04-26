@@ -7,6 +7,7 @@ import type { SubmitOutcome, SurveyAnswer, SurveyQuestion, SurveySubmitPayload }
 import { SURVEY_QUERY_KEYS } from '../../constants/survey'
 import { CONCERN_STEP, SKIN_TYPE_STEP, isConcernCode, isSkinTypeCode } from '../../domain/surveyCodes'
 import { queryKeys } from '../../lib/queryKeys'
+import { useAuthStore } from '../../stores/authStore'
 import { useSurveyProgressStore } from '../../stores/surveyProgressStore'
 import { useSurveyResultStore } from '../../stores/surveyResultStore'
 import type { AuthState } from '../../types/auth'
@@ -108,7 +109,8 @@ export function useSurveySubmit() {
 
       const payload = buildSurveySubmitPayload({ answersByStep, questions })
 
-      if (authState.accessToken) {
+      const { user } = useAuthStore.getState()
+      if (authState.accessToken || user) {
         const result = await apiClient.submitSurveyResult(payload, authState)
         return { kind: 'full', result }
       }

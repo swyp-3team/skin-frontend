@@ -254,10 +254,11 @@ function createRequestWithAuth(baseUrl: string) {
       isRefreshing = true
 
       try {
-        const { refreshToken, clearAuth } = useAuthStore.getState()
+        const { refreshToken } = useAuthStore.getState()
 
         if (!refreshToken) {
-          clearAuth()
+          // 쿠키 방식 인증에서는 refreshToken이 store에 없음.
+          // clearAuth()를 호출하지 않고 에러만 전파하여 세션 관리를 서버에 위임한다.
           processQueue(error, null)
           throw error
         }

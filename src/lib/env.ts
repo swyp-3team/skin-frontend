@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 const envSchema = z.object({
   VITE_API_MODE: z.enum(['mock', 'live']).default('mock'),
-  VITE_API_BASE_URL: z.string().default('/api/v1'),
+  VITE_API_BASE_URL: z.string().default('https://api.layerd.co.kr/api/v1'),
   VITE_OAUTH_BASE_URL: z.string().optional(),
 })
 

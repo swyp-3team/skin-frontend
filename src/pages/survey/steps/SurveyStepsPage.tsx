@@ -26,7 +26,12 @@ const MILESTONE_TOAST_BY_STEP = new Map(SURVEY_STEP_MILESTONE_TOASTS.map((item) 
 
 function SurveyStepsPage() {
   const navigate = useNavigate()
-  const accessToken = useAuthStore((state) => state.accessToken)
+  const authState = useAuthStore(
+    useShallow((state) => ({
+      accessToken: state.accessToken,
+      user: state.user,
+    })),
+  )
 
   const { currentStep, answersByStep, setStepAnswer, nextStep, prevStep, goToStep } = useSurveyProgressStore(
     useShallow((state) => ({
@@ -135,7 +140,7 @@ function SurveyStepsPage() {
     }
 
     submitMutation.mutate(
-      { accessToken },
+      authState,
       {
         onSuccess: (outcome) => {
           if (outcome.kind === 'full') {

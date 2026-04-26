@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useShallow } from 'zustand/react/shallow'
 
 import { apiClient } from '@/api'
 import { clearIntent, readIntent } from '@/auth/postLoginIntent'
 import { createResultDetailPath } from '@/app/routes'
 import MobilePage from '@/components/MobilePage'
-import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import { queryClient } from '@/lib/queryClient'
 import { useAuthStore } from '@/stores/authStore'
 import { useSurveyProgressStore } from '@/stores/surveyProgressStore'
@@ -46,13 +46,12 @@ function AuthCallbackError({ onGoHome }: { onGoHome: () => void }) {
 function AuthCallbackPage() {
   const [hasError, setHasError] = useState(false)
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
   const handledRef = useRef(false)
 
-  const { setTokens, setUser, clearAuth, setAuthCheckCompleted } = useAuthStore(
+  const { setUser, clearTokens, clearAuth, setAuthCheckCompleted } = useAuthStore(
     useShallow((state) => ({
-      setTokens: state.setTokens,
       setUser: state.setUser,
+      clearTokens: state.clearTokens,
       clearAuth: state.clearAuth,
       setAuthCheckCompleted: state.setAuthCheckCompleted,
     })),
@@ -72,17 +71,9 @@ function AuthCallbackPage() {
     handledRef.current = true
 
     const handleCallback = async () => {
-      const accessToken = searchParams.get('accessToken')
-      const refreshToken = searchParams.get('refreshToken')
-      const hasQueryTokens = Boolean(accessToken && refreshToken)
-
       try {
-        // 토큰 쿼리 방식(기존)과 HttpOnly 쿠키 방식(임시)을 모두 허용한다.
-        if (accessToken && refreshToken) {
-          setTokens(accessToken, refreshToken)
-        }
-
-        const user = await apiClient.getMe(accessToken ?? undefined)
+        const user = await apiClient.getMe()
+        clearTokens()
         setUser(user)
         setAuthCheckCompleted(true)
         queryClient.invalidateQueries()
@@ -99,10 +90,7 @@ function AuthCallbackPage() {
 
       if (intent?.type === 'promote-preview' && previewToken) {
         try {
-          const result = await apiClient.submitSurveyResult(
-            { previewToken },
-            hasQueryTokens && accessToken ? { accessToken } : {},
-          )
+          const result = await apiClient.submitSurveyResult({ previewToken }, {})
           setLatestResultId(result.resultId)
           clearPreviewResult()
           clearSavedRoutine()
@@ -126,12 +114,11 @@ function AuthCallbackPage() {
     clearAuth,
     clearPreviewResult,
     clearSavedRoutine,
+    clearTokens,
     navigate,
     previewToken,
-    searchParams,
     setAuthCheckCompleted,
     setLatestResultId,
-    setTokens,
     setUser,
   ])
 
