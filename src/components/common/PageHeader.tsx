@@ -30,7 +30,7 @@ function PageHeader({
       className={cn(
         ROOT_CLASS,
         isLightTone
-          ? 'bg-gradient-to-b from-[#F2FAFA] to-[#F2FAFA]/90 to-80%'
+          ? 'bg-[#F2FAFA]'
           : isDarkTone && !isScrolled
             ? 'bg-gradient-to-b from-neutral-800/90 via-neutral-800/60 via-40% to-neutral-800/15'
             : isScrolled

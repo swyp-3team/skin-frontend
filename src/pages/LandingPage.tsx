@@ -116,7 +116,7 @@ function LandingPage() {
           ))}
         </section>
 
-        <section className="flex flex-col gap-10 bg-neutral-800 px-5 pt-10 pb-3 text-neutral-0">
+        <section className="flex flex-col gap-10 bg-neutral-800 px-5 pt-10 pb-7 text-neutral-0">
           <div className="flex flex-col gap-2">
             <div className="inline-flex py-2">
               <span className="text-[13px] font-bold leading-[18.2px] text-primary-400">{HOME_CONTENT.ingredientEngine.eyebrow}</span>
@@ -147,7 +147,7 @@ function LandingPage() {
           </div>
         </section>
 
-        <section className="flex flex-col gap-10 bg-primary-50 px-5 py-20">
+        <section className="flex flex-col gap-10 bg-primary-50 px-5 py-13">
           <div className="flex flex-col gap-2">
             <div className="inline-flex py-2">
               <span className="text-[13px] font-bold leading-[18.2px] text-primary-400">{HOME_CONTENT.resultPreview.eyebrow}</span>

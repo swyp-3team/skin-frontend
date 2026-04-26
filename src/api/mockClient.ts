@@ -110,8 +110,8 @@ const SKIN_TYPE_FALLBACK_GROUPS: Record<SkinType, [IngredientGroup, IngredientGr
 const RESULT_COPY_BY_SKIN_TYPE: Record<
   SkinType,
   {
-    typeName: string
-    subTitle: string
+    skinType: string
+    subtitle: string
     summary: string
     subSummary: string
     routineTitle: string
@@ -120,8 +120,8 @@ const RESULT_COPY_BY_SKIN_TYPE: Record<
   }
 > = {
   DRY: {
-    typeName: 'Dry Skin Recovery Guide',
-    subTitle: 'Hydration-first daily care',
+    skinType: 'Dry Skin Recovery Guide',
+    subtitle: 'Hydration-first daily care',
     summary: 'Your skin is showing low hydration and a weaker moisture barrier. A cushioning hydration routine will keep the surface more comfortable throughout the day.',
     subSummary: 'Stack hydration first, then lock it in with a barrier-focused finish.',
     routineTitle: 'Dry Skin Recovery Routine',
@@ -129,8 +129,8 @@ const RESULT_COPY_BY_SKIN_TYPE: Record<
     caution: 'Keep exfoliating acids to a low frequency until dryness improves.',
   },
   OILY: {
-    typeName: 'Oily Skin Balance Guide',
-    subTitle: 'Lightweight oil-control routine',
+    skinType: 'Oily Skin Balance Guide',
+    subtitle: 'Lightweight oil-control routine',
     summary: 'Your skin is producing excess oil and can feel congested quickly. A lighter routine with calming oil-control steps is the safer baseline.',
     subSummary: 'Keep the texture light, reduce congestion, and avoid over-stripping.',
     routineTitle: 'Oily Skin Balance Routine',
@@ -138,8 +138,8 @@ const RESULT_COPY_BY_SKIN_TYPE: Record<
     caution: 'Avoid stacking multiple high-strength actives on the same night.',
   },
   COMBINATION: {
-    typeName: 'Combination Skin Balance Guide',
-    subTitle: 'Hydration and oil balance together',
+    skinType: 'Combination Skin Balance Guide',
+    subtitle: 'Hydration and oil balance together',
     summary: 'Your skin needs hydration support in some areas and oil control in others. A balanced routine helps reduce uneven texture without overloading the T-zone.',
     subSummary: 'Use flexible layers that hydrate dry areas while keeping the center of the face balanced.',
     routineTitle: 'Combination Skin Balance Routine',
@@ -147,8 +147,8 @@ const RESULT_COPY_BY_SKIN_TYPE: Record<
     caution: 'Adjust the amount of cream by zone instead of applying the same amount everywhere.',
   },
   SENSITIVE: {
-    typeName: 'Sensitive Skin Comfort Guide',
-    subTitle: 'Low-irritation soothing routine',
+    skinType: 'Sensitive Skin Comfort Guide',
+    subtitle: 'Low-irritation soothing routine',
     summary: 'Your skin is reacting easily to daily triggers. A gentle soothing routine with barrier support is the safest path to better day-to-day comfort.',
     subSummary: 'Calm the skin first, then build a simple barrier-supporting routine around it.',
     routineTitle: 'Sensitive Skin Comfort Routine',
@@ -156,8 +156,8 @@ const RESULT_COPY_BY_SKIN_TYPE: Record<
     caution: 'Introduce any new active step slowly and patch test first.',
   },
   UNKNOWN: {
-    typeName: 'Balanced Skin Support Guide',
-    subTitle: 'Steady everyday maintenance',
+    skinType: 'Balanced Skin Support Guide',
+    subtitle: 'Steady everyday maintenance',
     summary: 'Your current answers do not point strongly to one skin type, so the safer baseline is a balanced routine that maintains hydration and barrier comfort.',
     subSummary: 'Start with a balanced daily routine and adjust once your skin pattern becomes clearer.',
     routineTitle: 'Balanced Skin Support Routine',
@@ -411,8 +411,8 @@ function createPreviewResult(payload: SurveySubmitPayload): PreviewResult {
 
   return {
     diagnosedDate: `${yyyy}.${mm}.${dd}`,
-    typeName: copy.typeName,
-    subTitle: copy.subTitle,
+    skinType: copy.skinType,
+    subtitle: copy.subtitle,
     summary: copy.summary,
   }
 }
@@ -439,8 +439,8 @@ function createResultDetail(payload: SurveySubmitPayload, resultId: number): Res
   return {
     resultId,
     diagnosedAt: new Date().toISOString(),
-    typeName: copy.typeName,
-    subTitle: copy.subTitle,
+    skinType: copy.skinType,
+    subtitle: copy.subtitle,
     summary: copy.summary,
     concerns: toConcernLabels(payload.concerns),
     subSummary: copy.subSummary,

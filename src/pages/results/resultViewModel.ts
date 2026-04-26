@@ -21,8 +21,8 @@ export const RESULT_PRODUCT_TABS: readonly ResultProductTabItem[] = [
 
 export function createResultHeaderViewModel(result: ResultDetail): ResultHeaderViewModel {
   return {
-    diagnosisTitle: result.typeName,
-    summary: result.subSummary || result.subTitle || result.summary,
+    diagnosisTitle: result.skinType,
+    summary: result.subSummary || result.subtitle || result.summary,
     tags: result.concerns,
     diagnosedAt: result.diagnosedAt,
   }

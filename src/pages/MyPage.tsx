@@ -258,7 +258,7 @@ function MyPage() {
                 date={historyDateTime.date}
                 resultDetailPath={latestResultId != null ? createResultDetailPath(latestResultId) : undefined}
                 time={historyDateTime.time}
-                title={summary.typeName}
+                title={summary.skinType}
               />
               <HistoryRow date="YYYY.MM.DD" time="HH:MM" title={PLACEHOLDER_HISTORY_TITLE} />
               <HistoryRow date="YYYY.MM.DD" time="HH:MM" title={PLACEHOLDER_HISTORY_TITLE} />

@@ -25,8 +25,8 @@ export interface SurveySubmitPayload {
 
 export interface PreviewResult {
   diagnosedDate: string
-  typeName: string
-  subTitle: string
+  skinType: string
+  subtitle: string
   summary: string
 }
 
@@ -60,8 +60,8 @@ export interface ResultIngredientMeta {
 export interface ResultDetail {
   resultId: number
   diagnosedAt: string
-  typeName: string
-  subTitle: string
+  skinType: string
+  subtitle: string
   summary: string
   concerns: string[]
   subSummary: string

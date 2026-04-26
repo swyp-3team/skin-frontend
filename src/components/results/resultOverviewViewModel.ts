@@ -119,7 +119,7 @@ export function fromResultDetail(result: ResultDetail): ResultOverviewViewModel 
   return {
     top: {
       diagnosedDate: toDateLabel(result.diagnosedAt),
-      title: result.typeName,
+      title: result.skinType,
       summary: result.summary,
       imageUrl: RESULT_OVERVIEW_IMAGE_URL,
     },
@@ -141,14 +141,14 @@ export function fromPreviewResult(preview: PreviewResult): ResultOverviewViewMod
   return {
     top: {
       diagnosedDate: toDateLabel(preview.diagnosedDate),
-      title: preview.typeName,
+      title: preview.skinType,
       summary: preview.summary,
       imageUrl: RESULT_OVERVIEW_IMAGE_URL,
     },
     routine: {
       sectionTitle: RESULT_PAGE_COPY.routineSectionTitle,
       highlights: normalizeHighlights([...PREVIEW_PLACEHOLDER_HIGHLIGHTS]),
-      highlightDescription: preview.subTitle || preview.summary,
+      highlightDescription: preview.subtitle || preview.summary,
       ctaLabel: RESULT_PAGE_COPY.routineCta,
     },
     ingredients: {

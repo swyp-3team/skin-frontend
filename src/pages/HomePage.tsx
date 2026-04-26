@@ -99,10 +99,10 @@ function HomePage() {
           <article className="rounded-lg border-t-2 border-primary-400 bg-common-0 px-4 pb-3 pt-4">
             <div className="space-y-1">
               <h2 className="text-[18px] font-bold leading-[25.56px] text-neutral-800">
-                {result?.typeName ?? '최근 진단 정보를 불러오는 중입니다.'}
+                {result?.skinType ?? '최근 진단 정보를 불러오는 중입니다.'}
               </h2>
               <p className="text-[12px] font-medium leading-[16.32px] text-primary-500">
-                {result?.subTitle ?? '잠시만 기다려주세요.'}
+                {result?.subtitle ?? '잠시만 기다려주세요.'}
               </p>
             </div>
 

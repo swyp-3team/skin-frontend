@@ -68,7 +68,7 @@ function normalizeFieldError(raw: unknown): ApiFieldError | null {
     return null
   }
 
-  const fieldCandidate = raw.field
+  const fieldCandidate = raw.field ?? raw.filed
   const reasonCandidate = raw.reason
 
   if (typeof fieldCandidate !== 'string' || typeof reasonCandidate !== 'string') {
@@ -97,15 +97,23 @@ function parseApiErrorPayload(raw: unknown): ApiErrorPayload | undefined {
 
   const codeCandidate = raw.code
   const messageCandidate = raw.message
+  const errorCandidate = raw.error
+  const statusCandidate = raw.status
   const fieldErrors = normalizeFieldErrors(raw.fieldErrors)
+  const message =
+    typeof messageCandidate === 'string'
+      ? messageCandidate
+      : typeof errorCandidate === 'string'
+        ? errorCandidate
+        : undefined
 
-  if (typeof codeCandidate !== 'string' && typeof messageCandidate !== 'string' && !fieldErrors) {
+  if (typeof codeCandidate !== 'string' && !message && !fieldErrors) {
     return undefined
   }
 
   return {
-    code: typeof codeCandidate === 'string' ? codeCandidate : 'UNKNOWN_API_ERROR',
-    message: typeof messageCandidate === 'string' ? messageCandidate : 'Request processing failed.',
+    code: typeof codeCandidate === 'string' ? codeCandidate : typeof statusCandidate === 'number' ? `HTTP_${statusCandidate}` : 'UNKNOWN_API_ERROR',
+    message: message ?? 'Request processing failed.',
     fieldErrors,
   }
 }
@@ -132,6 +140,19 @@ function toApiError(status: number, body: unknown): ApiError {
   }
 
   return new ApiError('Request processing failed.', status, undefined, body)
+}
+
+function normalizeCreatedResultId(payload: unknown): number {
+  if (!isRecord(payload)) {
+    throw new ApiError('Create result response is invalid.', 500, 'INVALID_CREATE_RESULT_FORMAT', payload)
+  }
+
+  const resultId = toOptionalNumber(payload.resultId)
+  if (resultId === null) {
+    throw new ApiError('resultId is invalid.', 500, 'INVALID_CREATE_RESULT_ID', payload)
+  }
+
+  return resultId
 }
 
 function unwrapEnvelope<T>(body: unknown, status: number): T {
@@ -359,11 +380,11 @@ function normalizePreviewResult(payload: unknown): PreviewResult {
   if (typeof payload.diagnosedDate !== 'string') {
     throw new ApiError('diagnosedDate is invalid.', 500, 'INVALID_PREVIEW_DIAGNOSED_DATE', payload)
   }
-  if (typeof payload.typeName !== 'string') {
-    throw new ApiError('typeName is invalid.', 500, 'INVALID_PREVIEW_TYPE_NAME', payload)
+  if (typeof payload.skinType !== 'string') {
+    throw new ApiError('skinType is invalid.', 500, 'INVALID_PREVIEW_SKIN_TYPE', payload)
   }
-  if (typeof payload.subTitle !== 'string') {
-    throw new ApiError('subTitle is invalid.', 500, 'INVALID_PREVIEW_SUBTITLE', payload)
+  if (typeof payload.subtitle !== 'string') {
+    throw new ApiError('subtitle is invalid.', 500, 'INVALID_PREVIEW_SUBTITLE', payload)
   }
   if (typeof payload.summary !== 'string') {
     throw new ApiError('summary is invalid.', 500, 'INVALID_PREVIEW_SUMMARY', payload)
@@ -371,8 +392,8 @@ function normalizePreviewResult(payload: unknown): PreviewResult {
 
   return {
     diagnosedDate: payload.diagnosedDate,
-    typeName: payload.typeName,
-    subTitle: payload.subTitle,
+    skinType: payload.skinType,
+    subtitle: payload.subtitle,
     summary: payload.summary,
   }
 }
@@ -427,11 +448,11 @@ function normalizeResultDetail(payload: unknown, fallbackResultId?: number): Res
   if (typeof payload.diagnosedAt !== 'string') {
     throw new ApiError('diagnosedAt is invalid.', 500, 'INVALID_RESULT_DIAGNOSED_AT', payload)
   }
-  if (typeof payload.typeName !== 'string') {
-    throw new ApiError('typeName is invalid.', 500, 'INVALID_RESULT_TYPE_NAME', payload)
+  if (typeof payload.skinType !== 'string') {
+    throw new ApiError('skinType is invalid.', 500, 'INVALID_RESULT_SKIN_TYPE', payload)
   }
-  if (typeof payload.subTitle !== 'string') {
-    throw new ApiError('subTitle is invalid.', 500, 'INVALID_RESULT_SUBTITLE', payload)
+  if (typeof payload.subtitle !== 'string') {
+    throw new ApiError('subtitle is invalid.', 500, 'INVALID_RESULT_SUBTITLE', payload)
   }
   if (typeof payload.summary !== 'string') {
     throw new ApiError('summary is invalid.', 500, 'INVALID_RESULT_SUMMARY', payload)
@@ -448,8 +469,8 @@ function normalizeResultDetail(payload: unknown, fallbackResultId?: number): Res
   return {
     resultId,
     diagnosedAt: payload.diagnosedAt,
-    typeName: payload.typeName,
-    subTitle: payload.subTitle,
+    skinType: payload.skinType,
+    subtitle: payload.subtitle,
     summary: payload.summary,
     concerns,
     subSummary: typeof payload.subSummary === 'string' ? payload.subSummary : '',
@@ -658,6 +679,15 @@ function normalizeRefreshResponse(body: unknown): { accessToken: string; refresh
 export function createLiveApiClient(baseUrl: string): ApiClient {
   const requestWithAuth = createRequestWithAuth(baseUrl)
 
+  async function getResultDetail(resultId: number, authState: AuthState): Promise<ResultDetail> {
+    const payload = await requestWithAuth<unknown>(
+      `${baseUrl}/results/${resultId}`,
+      { method: 'GET' },
+      authState.accessToken,
+    )
+    return normalizeResultDetail(payload, resultId)
+  }
+
   return {
     async getSurveyQuestions() {
       const payload = await requestApi<unknown>(`${baseUrl}/surveys`, { method: 'GET' })
@@ -682,16 +712,12 @@ export function createLiveApiClient(baseUrl: string): ApiClient {
         authState.accessToken,
       )
 
-      return normalizeResultDetail(payload)
+      const resultId = normalizeCreatedResultId(payload)
+      return getResultDetail(resultId, authState)
     },
 
     async getResult(resultId: number, authState: AuthState): Promise<ResultDetail> {
-      const payload = await requestWithAuth<unknown>(
-        `${baseUrl}/results/${resultId}`,
-        { method: 'GET' },
-        authState.accessToken,
-      )
-      return normalizeResultDetail(payload, resultId)
+      return getResultDetail(resultId, authState)
     },
 
     async getRoutineGroup(resultId: number, authState: AuthState) {
