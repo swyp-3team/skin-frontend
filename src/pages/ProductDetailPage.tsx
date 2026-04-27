@@ -168,8 +168,8 @@ function ProductDetailPage() {
             loading="eager"
             src={product.imageUrl}
           />
-          <div className="absolute inset-x-0 bottom-0 z-0 h-[250px] overflow-hidden">
-            <div className="absolute inset-x-0 bottom-0 h-[1px] origin-bottom scale-y-[250] overflow-hidden">
+          <div className="absolute inset-x-0 bottom-0 z-0 h-[250px]">
+            <div className="absolute inset-x-0 bottom-0 h-[1px] origin-bottom scale-y-[260] overflow-hidden">
               <SafeImage
                 alt=""
                 className="absolute bottom-0 left-0 h-[390px] w-full object-cover"
@@ -178,11 +178,11 @@ function ProductDetailPage() {
                 src={product.imageUrl}
               />
             </div>
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-common-0/20 via-[15%] to-common-0 to-[90%]" />
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-common-0/70 via-[45%] to-common-0 to-[75%]" />
           </div>
         </div>
 
-        <div className="relative z-10 -mt-[250px] px-5">
+        <div className="relative z-10 -mt-[251px] px-5">
           <article className="rounded-t-2xl bg-common-0">
             <div className="flex flex-col gap-2">
               <div className="relative space-y-4 px-4 py-5">
