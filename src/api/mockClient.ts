@@ -341,15 +341,15 @@ const mockPreviewDb = new Map<string, PreviewRecord>()
 const mockResultsDb = new Map<number, StoredResult>()
 
 function createCatalogItem(
-  spec: ProductDetail & { price: number; category: ProductCategory; reason: string },
+  spec: ProductDetail & { category: ProductCategory; reason: string },
   categories: ResultProductsFilterCategory[]
 ): MockCatalogItem {
-  const { price, category, reason, ...detail } = spec
+  const { category, reason, ...detail } = spec
   return {
     productId: detail.productId,
     name: detail.name,
     brand: detail.brand,
-    price,
+    price: detail.price ?? 0,
     imageUrl: detail.imageUrl,
     category,
     reason,

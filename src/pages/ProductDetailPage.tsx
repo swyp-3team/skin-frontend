@@ -1,7 +1,10 @@
-import { useLayoutEffect } from 'react'
+import { useState, useLayoutEffect } from 'react'
+import { MotionConfig, motion, useReducedMotion } from 'motion/react'
 import { useNavigate } from 'react-router-dom'
 
 import { APP_ROUTES } from '../app/routes'
+import closeBlackIcon from '../assets/icons/product-detail/close-black.svg'
+import exclamationCircleIcon from '../assets/icons/product-detail/exclamation-circle.svg'
 import AlertMessage from '../components/common/AlertMessage'
 import SafeImage from '../components/common/SafeImage'
 import GlassOverlayHeader from '../components/mobile-page/GlassOverlayHeader'
@@ -9,9 +12,105 @@ import MobilePage from '../components/MobilePage'
 import { Button } from '../components/ui/button'
 import { useProductDetail } from './product/useProductDetail'
 
+const PRICE_INFO_EASING: [number, number, number, number] = [0.22, 1, 0.36, 1]
+const PRICE_INFO_OPEN_DURATION = 0.24
+const PRICE_INFO_CLOSE_DURATION = 0.2
+const PRICE_INFO_GAP = 12
+const PRICE_INFO_PANEL_CLASS = 'w-[303px] overflow-hidden rounded-[4px] border border-neutral-300 bg-common-0'
+const PRICE_INFO_PANEL_VARIANTS = {
+  open: { height: 'auto', opacity: 1, marginTop: PRICE_INFO_GAP },
+  closed: { height: 0, opacity: 0, marginTop: 0 },
+} as const
+const PRICE_INFO_CONTENT_VARIANTS = {
+  open: { opacity: 1, y: 0 },
+  closed: { opacity: 0, y: -4 },
+} as const
+const PRICE_INFO_CONTENT_VARIANTS_REDUCED = {
+  open: { opacity: 1 },
+  closed: { opacity: 0 },
+} as const
+
+function formatPrice(price: number) {
+  return new Intl.NumberFormat('ko-KR').format(price)
+}
+
+function formatPriceAsOf(value: string) {
+  const parsedDate = new Date(value)
+  if (Number.isNaN(parsedDate.getTime())) {
+    return value
+  }
+
+  const year = parsedDate.getFullYear()
+  const month = String(parsedDate.getMonth() + 1).padStart(2, '0')
+  const day = String(parsedDate.getDate()).padStart(2, '0')
+  return `${year}.${month}.${day}`
+}
+
+interface PriceInfoPanelProps {
+  isOpen: boolean
+  panelId: string
+  formattedPriceDate: string
+  onClose: () => void
+}
+
+function PriceInfoPanel({ isOpen, panelId, formattedPriceDate, onClose }: PriceInfoPanelProps) {
+  const shouldReduceMotion = useReducedMotion()
+  const openTransition = shouldReduceMotion
+    ? { duration: 0 }
+    : { duration: PRICE_INFO_OPEN_DURATION, ease: PRICE_INFO_EASING }
+  const closeTransition = shouldReduceMotion
+    ? { duration: 0 }
+    : { duration: PRICE_INFO_CLOSE_DURATION, ease: PRICE_INFO_EASING }
+  const transition = isOpen ? openTransition : closeTransition
+  const contentVariants = shouldReduceMotion
+    ? PRICE_INFO_CONTENT_VARIANTS_REDUCED
+    : PRICE_INFO_CONTENT_VARIANTS
+
+  return (
+    <MotionConfig reducedMotion="user">
+      <motion.section
+        animate={isOpen ? 'open' : 'closed'}
+        aria-hidden={!isOpen}
+        className={`${PRICE_INFO_PANEL_CLASS}${isOpen ? '' : ' pointer-events-none'}`}
+        id={panelId}
+        initial={false}
+        transition={transition}
+        variants={PRICE_INFO_PANEL_VARIANTS}
+      >
+        <motion.div
+          animate={isOpen ? 'open' : 'closed'}
+          initial={false}
+          transition={transition}
+          variants={contentVariants}
+        >
+          <div className="flex items-center justify-between px-2 py-1.5">
+            <div className="px-2 pt-1">
+              <p className="text-sm font-semibold leading-[20.44px] text-[#000000]">가격 안내</p>
+            </div>
+            <button
+              aria-label="가격 안내 닫기"
+              className="inline-flex items-center justify-center p-2"
+              onClick={onClose}
+              type="button"
+            >
+              <img alt="" aria-hidden className="h-5 w-5" src={closeBlackIcon} />
+            </button>
+          </div>
+          <div className="px-4 pb-4 pt-1">
+            <p className="text-xs leading-[16.32px] text-[#000000]">
+              {formattedPriceDate} 기준 가격입니다. 링크 연결 시 가격이 변동될 수 있습니다.
+            </p>
+          </div>
+        </motion.div>
+      </motion.section>
+    </MotionConfig>
+  )
+}
+
 function ProductDetailPage() {
   const navigate = useNavigate()
   const { productId, data: product, isLoading, error } = useProductDetail()
+  const [isPriceInfoOpen, setIsPriceInfoOpen] = useState(false)
 
   useLayoutEffect(() => {
     window.scrollTo(0, 0)
@@ -36,6 +135,9 @@ function ProductDetailPage() {
       </MobilePage>
     )
   }
+
+  const formattedPriceDate = formatPriceAsOf(product.createdDate)
+  const priceInfoPanelId = `price-info-panel-${product.productId}`
 
   return (
     <MobilePage
@@ -87,8 +189,30 @@ function ProductDetailPage() {
                 <p className="text-sm leading-[20.44px] text-neutral-800">{product.brand}</p>
                 <h2 className="text-[20px] leading-[27.6px] text-neutral-800">{product.name}</h2>
 
-                <div className="flex items-end gap-0.5">
-                  <strong className="text-[22px] leading-[29.7px] text-neutral-800">-</strong>
+                <div className="space-y-0">
+                  <div className="flex items-center gap-1">
+                    <div className="flex items-end gap-0.5">
+                      <strong className="text-[22px] leading-[29.7px] text-neutral-800">{formatPrice(product.price)}</strong>
+                      <span className="text-[18px] leading-[25.56px] text-neutral-800">원</span>
+                    </div>
+                    <button
+                      aria-controls={priceInfoPanelId}
+                      aria-expanded={isPriceInfoOpen}
+                      aria-label="가격 안내 보기"
+                      className="inline-flex h-5 w-5 items-center justify-center overflow-hidden"
+                      onClick={() => setIsPriceInfoOpen((prev) => !prev)}
+                      type="button"
+                    >
+                      <img alt="" aria-hidden className="h-5 w-5" src={exclamationCircleIcon} />
+                    </button>
+                  </div>
+
+                  <PriceInfoPanel
+                    formattedPriceDate={formattedPriceDate}
+                    isOpen={isPriceInfoOpen}
+                    onClose={() => setIsPriceInfoOpen(false)}
+                    panelId={priceInfoPanelId}
+                  />
                 </div>
               </div>
 

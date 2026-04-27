@@ -39,6 +39,7 @@ export interface ProductDetail {
   productId: number
   name: string
   brand: string
+  price: number
   imageUrl: string | null
   description: string
   createdDate: string
