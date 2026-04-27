@@ -771,6 +771,7 @@ function normalizeProductDetail(payload: unknown): ProductDetail {
     productId: payload.productId,
     name: payload.name,
     brand: payload.brand,
+    price: typeof payload.price === 'number' ? payload.price : 0,
     imageUrl: typeof payload.imageUrl === 'string' ? payload.imageUrl : null,
     description: typeof payload.description === 'string' ? payload.description : '',
     createdDate: typeof payload.createdDate === 'string' ? payload.createdDate : '',
