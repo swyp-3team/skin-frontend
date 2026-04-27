@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { X } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { ChevronRight, X } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 import { APP_ROUTES, createResultProductsPath, createResultRoutinePath } from '@/app/routes'
@@ -7,7 +7,7 @@ import menuIcon from '@/assets/icons/mobile-page/menu.svg'
 import AlertMessage from '@/components/common/AlertMessage'
 import LoginDialog from '@/components/survey/LoginDialog'
 import { Button } from '@/components/ui/button'
-import { DrawerClose, DrawerContent, DrawerRoot, DrawerTrigger } from '@/components/ui/drawer'
+import { DrawerClose, DrawerContent, DrawerRoot, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer'
 import { useLogout } from '@/hooks/useLogout'
 import { cn } from '@/lib/utils'
 import { saveIntent } from '@/auth/postLoginIntent'
@@ -48,16 +48,12 @@ function createLoginRequiredAction(path: string): MenuItemConfig['resolveAction'
 
 const MENU_ITEMS: MenuItemConfig[] = [
   {
-    label: '홈페이지',
+    label: '홈',
     resolveAction: () => ({ type: 'navigate', path: APP_ROUTES.home }),
   },
   {
     label: '피부 진단하기',
     resolveAction: () => ({ type: 'navigate', path: APP_ROUTES.survey }),
-  },
-  {
-    label: '마이페이지',
-    resolveAction: createLoginRequiredAction(APP_ROUTES.myPage),
   },
   {
     label: '루틴 추천받기',
@@ -67,6 +63,10 @@ const MENU_ITEMS: MenuItemConfig[] = [
     label: '제품 추천받기',
     resolveAction: createAuthGuardedAction(createResultProductsPath),
   },
+  {
+    label: '마이페이지',
+    resolveAction: createLoginRequiredAction(APP_ROUTES.myPage),
+  },
 ]
 
 interface UserAvatarProps {
@@ -75,7 +75,7 @@ interface UserAvatarProps {
 
 function UserAvatar({ nickname }: UserAvatarProps) {
   return (
-    <div className="size-[49px] shrink-0 overflow-hidden rounded-full bg-neutral-100 flex items-center justify-center text-sm font-medium text-neutral-800">
+    <div className="size-12 shrink-0 overflow-hidden rounded-full bg-neutral-100 flex items-center justify-center text-sm font-medium text-neutral-800">
       {nickname?.charAt(0) ?? '?'}
     </div>
   )
@@ -87,8 +87,13 @@ interface NavMenuDialogProps {
 
 function NavMenuDialog({ triggerClassName }: NavMenuDialogProps) {
   const [open, setOpen] = useState(false)
+  const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null)
   const [inlineAlert, setInlineAlert] = useState<string | null>(null)
   const [loginDialogOpen, setLoginDialogOpen] = useState(false)
+
+  useEffect(() => {
+    setPortalContainer(document.querySelector<HTMLElement>('[data-mobile-portal]'))
+  }, [])
 
   const isAuthenticated = useAuthStore(selectIsAuthenticated)
   const nickname = useAuthStore((s) => s.user?.nickname)
@@ -134,7 +139,7 @@ function NavMenuDialog({ triggerClassName }: NavMenuDialogProps) {
 
   return (
     <>
-      <DrawerRoot direction="top" open={open} onOpenChange={handleOpenChange}>
+      <DrawerRoot direction="right" open={open} onOpenChange={handleOpenChange}>
         <DrawerTrigger
           aria-label="메뉴 열기"
           className={cn('inline-flex size-7 shrink-0 items-center justify-center rounded', triggerClassName)}
@@ -144,56 +149,60 @@ function NavMenuDialog({ triggerClassName }: NavMenuDialogProps) {
 
         <DrawerContent
           aria-label="네비게이션 메뉴"
-          className="h-[80dvh] overflow-hidden border-none px-5 shadow-[0_7px_10px_rgba(0,0,0,0.07)]"
+          className="absolute top-0 right-0 h-full w-[286px] max-w-[calc(100%-48px)] translate-x-0 overflow-hidden border-none pointer-events-auto"
+          container={portalContainer}
+          overlayClassName="fixed inset-0 pointer-events-auto bg-common-1000/50"
+          style={{ left: 'unset', boxShadow: '-2px 0 0 0 white, 2px 0 0 0 white' }}
         >
-          <div className="flex h-13 shrink-0 items-center justify-end">
+          <DrawerTitle className="sr-only">네비게이션 메뉴</DrawerTitle>
+
+          <div className="flex h-12 shrink-0 items-center justify-end px-2.5">
             <DrawerClose
               aria-label="메뉴 닫기"
-              className="flex items-center justify-center rounded p-1 text-neutral-400 transition-colors hover:text-neutral-800"
+              className="flex size-11 items-center justify-center rounded-lg text-neutral-800 transition-colors hover:bg-neutral-50 active:bg-neutral-50"
             >
               <X size={24} />
             </DrawerClose>
           </div>
 
-          <div className="shrink-0 pb-12 pt-8">
+          <div className="shrink-0 px-5 pb-10 pt-8">
             {isAuthenticated ? (
               <div className="flex items-center gap-3">
                 <UserAvatar nickname={nickname} />
                 <div className="flex flex-col gap-0.5">
-                  <span className="font-bold text-neutral-800">{nickname ?? AUTH_UI_TEXT.defaultNickname}</span>
+                  <span className="text-[18px] font-bold leading-[27.6px] text-neutral-800">
+                    {nickname ?? AUTH_UI_TEXT.defaultNickname}
+                  </span>
                 </div>
               </div>
             ) : (
               <button
                 type="button"
-                className="group flex w-full items-center justify-between pr-3"
+                className="group flex w-full items-center justify-between py-2"
                 onClick={handleLoginClick}
               >
-                <span className="text-2xl font-bold text-neutral-800">로그인하기</span>
-                <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
+                <span className="text-[20px] font-bold leading-[27.6px] text-neutral-800">로그인하기</span>
+                <ChevronRight
+                  aria-hidden
                   className="text-neutral-800 transition-transform group-hover:translate-x-0.5"
-                >
-                  <path d="M14 5L21 12L14 19" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M4 12H21" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                  size={24}
+                  strokeWidth={1.6}
+                />
               </button>
             )}
           </div>
 
-          <div className="mr-3 flex min-h-0 flex-1 flex-col overflow-y-auto">
-            <p className="mb-2 text-sm font-medium text-neutral-500">메뉴</p>
-            <div className="border-t border-neutral-500" />
-            <ul className="flex flex-col pt-5 gap-3">
+          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-5">
+            <div className="flex flex-col gap-3">
+              <p className="text-[14px] font-medium leading-[20.44px] text-neutral-500">메뉴</p>
+              <div className="h-px bg-neutral-200" />
+            </div>
+            <ul className="flex flex-col gap-4 pt-4">
               {MENU_ITEMS.map((item) => (
                 <li key={item.label}>
                   <button
                     type="button"
-                    className="w-full rounded-xl p-2 text-left text-lg font-medium text-neutral-800 transition-colors hover:bg-neutral-50 active:bg-neutral-50"
+                    className="w-full rounded-lg px-3 py-2 text-left text-[16px] font-medium leading-[23.68px] text-neutral-800 transition-colors hover:bg-neutral-50 active:bg-neutral-50"
                     onClick={() => handleItemClick(item)}
                   >
                     {item.label}
@@ -210,20 +219,19 @@ function NavMenuDialog({ triggerClassName }: NavMenuDialogProps) {
               </div>
             )}
           </div>
-
-          {isAuthenticated && (
-            <div className="shrink-0 py-5">
-              <Button
-                className="h-10 rounded-[10px] bg-neutral-50 border-neutral-100"
-                onClick={handleLogout}
-                size="page"
-                type="button"
-                variant="tertiary"
-              >
-                로그아웃
-              </Button>
-            </div>
-          )}
+            {isAuthenticated && (
+              <div className="shrink-0 pb-10 px-4">
+                <Button
+                  className="h-10 rounded-[10px] bg-neutral-50 border-neutral-100"
+                  onClick={handleLogout}
+                  size="page"
+                  type="button"
+                  variant="tertiary"
+                >
+                  로그아웃
+                </Button>
+              </div>
+            )}
         </DrawerContent>
       </DrawerRoot>
 

@@ -22,6 +22,10 @@ function DrawerClose({ ...props }: React.ComponentProps<typeof DrawerPrimitive.C
   return <DrawerPrimitive.Close data-slot="drawer-close" {...props} />
 }
 
+function DrawerTitle({ ...props }: React.ComponentProps<typeof DrawerPrimitive.Title>) {
+  return <DrawerPrimitive.Title data-slot="drawer-title" {...props} />
+}
+
 function DrawerOverlay({ className, ...props }: React.ComponentProps<typeof DrawerPrimitive.Overlay>) {
   return (
     <DrawerPrimitive.Overlay
@@ -32,10 +36,15 @@ function DrawerOverlay({ className, ...props }: React.ComponentProps<typeof Draw
   )
 }
 
-function DrawerContent({ className, children, style, ...props }: React.ComponentProps<typeof DrawerPrimitive.Content>) {
+type DrawerContentProps = React.ComponentProps<typeof DrawerPrimitive.Content> & {
+  overlayClassName?: string
+  container?: HTMLElement | null
+}
+
+function DrawerContent({ className, children, overlayClassName, style, container, ...props }: DrawerContentProps) {
   return (
-    <DrawerPortal>
-      <DrawerOverlay />
+    <DrawerPortal container={container ?? undefined}>
+      <DrawerOverlay className={overlayClassName} />
       <DrawerPrimitive.Content
         data-slot="drawer-content"
         className={cn(
@@ -75,6 +84,7 @@ export {
   DrawerTrigger,
   DrawerPortal,
   DrawerClose,
+  DrawerTitle,
   DrawerOverlay,
   DrawerContent,
   DrawerContentBottom,

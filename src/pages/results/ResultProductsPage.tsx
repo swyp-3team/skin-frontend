@@ -47,7 +47,7 @@ interface ResultProductGridCardProps {
 function ResultProductGridCard({ onOpenProduct, product }: ResultProductGridCardProps) {
   return (
     <Link className="flex flex-col gap-3" onClick={onOpenProduct} to={createProductDetailPath(product.productId)}>
-      <div className="overflow-hidden rounded h-[159px] w-[159px] bg-common-0">
+      <div className="overflow-hidden rounded h-full w-full bg-common-0">
         <SafeImage
           alt={product.name}
           className="aspect-square w-full object-cover"
@@ -276,9 +276,9 @@ function ResultProductsPage() {
             </div>
           </div>
 
-          <section className={cn('mt-5 px-4 pb-10 transition-opacity duration-150', isTabSwitching && 'opacity-40')}>
+          <section className={cn('w-full mt-5 px-5 pb-10 transition-opacity duration-150', isTabSwitching && 'opacity-40')}>
             {allProducts.length > 0 ? (
-              <div className="grid grid-cols-2 gap-x-4 gap-y-6">
+              <div className="grid grid-cols-2 justify-items-center gap-x-4 gap-y-6">
                 {allProducts.map((product) => (
                   <ResultProductGridCard key={product.productId} onOpenProduct={saveScrollSnapshot} product={product} />
                 ))}
