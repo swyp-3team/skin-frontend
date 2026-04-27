@@ -33,7 +33,7 @@ function MobilePage({
           {children}
         </main>
         {footer ? (
-          <footer className="sticky bottom-0 w-full bg-white/70">
+          <footer className="sticky bottom-0 w-full bg-common-0">
             {footer}
           </footer>
         ) : null}

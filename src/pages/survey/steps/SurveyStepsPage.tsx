@@ -1,3 +1,4 @@
+import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useShallow } from 'zustand/react/shallow'
@@ -13,24 +14,49 @@ import {
   SURVEY_STEP_MILESTONE_TOASTS,
   SURVEY_VALIDATION_MESSAGES,
 } from '../../../constants/survey'
+import { CONCERN_STEP } from '../../../domain/surveyCodes'
 import { notify } from '../../../lib/notify'
 import { useSurveyProgressStore } from '../../../stores/surveyProgressStore'
+import type { SurveyStepAnswer } from '../../../stores/surveyProgressStore'
 import { useSurveySubmit } from '../useSurveySubmit'
 import SurveyStepActions from './SurveyStepActions'
 import SurveyStepSection from './SurveyStepSection'
 import { useSurveyQuestions } from './useSurveyQuestions'
 
 const TWO_COLUMN_FROM_STEP = 14
+const MAX_CONCERN_SELECTIONS = 2
 const MILESTONE_TOAST_BY_STEP = new Map(SURVEY_STEP_MILESTONE_TOASTS.map((item) => [item.step, item] as const))
+const CONCERN_SELECTION_LIMIT_MESSAGE = `\uCD5C\uB300 ${MAX_CONCERN_SELECTIONS}\uAC1C\uAE4C\uC9C0 \uC120\uD0DD\uD560 \uC218 \uC788\uC5B4\uC694.`
+
+function isAnswered(value: SurveyStepAnswer | undefined) {
+  if (typeof value === 'number') {
+    return true
+  }
+
+  return Array.isArray(value) && value.length > 0
+}
+
+function toSelectedOptionNumbers(value: SurveyStepAnswer | undefined) {
+  if (typeof value === 'number') {
+    return [value]
+  }
+
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  return [...new Set(value.filter((item) => Number.isInteger(item) && item > 0))]
+}
 
 function SurveyStepsPage() {
   const navigate = useNavigate()
 
-  const { currentStep, answersByStep, setStepAnswer, nextStep, prevStep, goToStep } = useSurveyProgressStore(
+  const { currentStep, answersByStep, setStepAnswer, setStepAnswers, nextStep, prevStep, goToStep } = useSurveyProgressStore(
     useShallow((state) => ({
       currentStep: state.currentStep,
       answersByStep: state.answersByStep,
       setStepAnswer: state.setStepAnswer,
+      setStepAnswers: state.setStepAnswers,
       nextStep: state.nextStep,
       prevStep: state.prevStep,
       goToStep: state.goToStep,
@@ -54,11 +80,21 @@ function SurveyStepsPage() {
   const safeCurrentStep = Math.min(currentStep, Math.max(totalSteps, 1))
   const isFinalStep = safeCurrentStep === totalSteps
   const activeQuestion = questions[safeCurrentStep - 1]
+  const isConcernStep = activeQuestion?.step === CONCERN_STEP
+  const activeAnswer = activeQuestion ? answersByStep[activeQuestion.step] : undefined
+  const selectedOptionNumbers = toSelectedOptionNumbers(activeAnswer)
 
-  const enterClass =
-    transitionDirection === 'forward'
-      ? 'animate-in fade-in-75 slide-in-from-right-4 duration-350 ease-out'
-      : 'animate-in fade-in-75 slide-in-from-left-4 duration-350 ease-out'
+  const slideVariants = {
+    enter: (dir: 'forward' | 'backward') => ({
+      x: dir === 'forward' ? 32 : -32,
+      opacity: 0,
+    }),
+    center: { x: 0, opacity: 1 },
+    exit: (dir: 'forward' | 'backward') => ({
+      x: dir === 'forward' ? -32 : 32,
+      opacity: 0,
+    }),
+  }
 
   useEffect(() => {
     if (!isLoading && !questionLoadError && totalSteps > 0 && currentStep > totalSteps) {
@@ -91,13 +127,14 @@ function SurveyStepsPage() {
     if (nextQuestion) {
       showMilestoneToast(nextQuestion.step)
     }
+    setIsOptionPressed(false)
     setTransitionDirection('forward')
     nextStep()
   }
 
   const handleNext = () => {
     clearErrors()
-    if (activeQuestion && answersByStep[activeQuestion.step] === undefined) {
+    if (activeQuestion && !isAnswered(answersByStep[activeQuestion.step])) {
       setValidationError(SURVEY_VALIDATION_MESSAGES.questionRequired)
       return
     }
@@ -110,12 +147,37 @@ function SurveyStepsPage() {
     prevStep()
   }
 
-  const handlePointerSelect = (optionNumber: number) => {
+  const handleOptionSelect = (optionNumber: number) => {
     if (!activeQuestion) return
+
+    clearErrors()
+
+    if (activeQuestion.step === CONCERN_STEP) {
+      const alreadySelected = selectedOptionNumbers.includes(optionNumber)
+
+      if (alreadySelected) {
+        setStepAnswers(
+          activeQuestion.step,
+          selectedOptionNumbers.filter((selected) => selected !== optionNumber),
+        )
+        return
+      }
+
+      if (selectedOptionNumbers.length >= MAX_CONCERN_SELECTIONS) {
+        setValidationError(CONCERN_SELECTION_LIMIT_MESSAGE)
+        return
+      }
+
+      const nextSelections = [...selectedOptionNumbers, optionNumber]
+      setStepAnswers(activeQuestion.step, nextSelections)
+      if (nextSelections.length >= MAX_CONCERN_SELECTIONS) {
+        advanceStep()
+      }
+      return
+    }
 
     const alreadySelected = answersByStep[activeQuestion.step] === optionNumber
     setStepAnswer(activeQuestion.step, optionNumber)
-
     if (!isFinalStep && !alreadySelected) {
       advanceStep()
     }
@@ -124,7 +186,7 @@ function SurveyStepsPage() {
   const handleSubmit = () => {
     clearErrors()
 
-    const firstUnanswered = questions.find((item) => answersByStep[item.step] === undefined)
+    const firstUnanswered = questions.find((item) => !isAnswered(answersByStep[item.step]))
     if (firstUnanswered) {
       setTransitionDirection('backward')
       goToStep(questions.indexOf(firstUnanswered) + 1)
@@ -133,15 +195,14 @@ function SurveyStepsPage() {
     }
 
     submitMutation.mutate(undefined, {
-        onSuccess: (outcome) => {
-          if (outcome.kind === 'full') {
-            navigate(createResultDetailPath(outcome.result.resultId))
-          } else {
-            navigate(APP_ROUTES.surveyResult)
-          }
-        },
+      onSuccess: (outcome) => {
+        if (outcome.kind === 'full') {
+          navigate(createResultDetailPath(outcome.result.resultId))
+        } else {
+          navigate(APP_ROUTES.surveyResult)
+        }
       },
-    )
+    })
   }
 
   if (isLoading) {
@@ -175,59 +236,88 @@ function SurveyStepsPage() {
     )
   }
 
-  const footer = (
-    <div className="px-3 pt-4 pb-12">
-      <SurveyStepActions
-        currentStep={safeCurrentStep}
-        isNextHighlighted={isOptionPressed}
-        isFinalStep={isFinalStep}
-        isSubmitting={submitMutation.isPending}
-        onNext={handleNext}
-        onPrev={handlePrev}
-        onSubmit={handleSubmit}
-      />
-    </div>
-  )
+  const progressPercent = totalSteps > 0 ? Math.min((safeCurrentStep / totalSteps) * 100, 100) : 0
 
   return (
     <MobilePage
-      header={<TitleCloseHeader title={SURVEY_PAGE_TITLE} onClose={() => navigate(APP_ROUTES.home)} />}
-      footer={footer}
+      className="bg-gradient-to-b from-neutral-800 from-[10%] to-neutral-600"
+      header={<TitleCloseHeader title={SURVEY_PAGE_TITLE} onClose={() => navigate(APP_ROUTES.home)} tone="dark" />}
+      mainClassName="flex flex-col p-0"
+      footer={
+        <div className="px-6 pt-4 pb-12">
+          {validationError ? (
+            <div className="pb-3">
+              <AlertMessage variant="warning">{validationError}</AlertMessage>
+            </div>
+          ) : null}
+
+          {submitMutation.error ? (
+            <div className="pb-3">
+              <AlertMessage variant="error">{submitMutation.error.message}</AlertMessage>
+            </div>
+          ) : null}
+
+          <SurveyStepActions
+            currentStep={safeCurrentStep}
+            isNextHighlighted={isOptionPressed}
+            isFinalStep={isFinalStep}
+            isSubmitting={submitMutation.isPending}
+            onNext={handleNext}
+            onPrev={handlePrev}
+            onSubmit={handleSubmit}
+          />
+        </div>
+      }
     >
-      <section className="w-full text-neutral-800 px-4 flex flex-col h-full items-center overflow-hidden">
-        {activeQuestion ? (
-          <div key={activeQuestion.step} className={`w-full fill-mode-both ${enterClass}`}>
-            <SurveyStepSection
-              columns={activeQuestion.step >= TWO_COLUMN_FROM_STEP ? 2 : 1}
-              isSelected={(optionNumber) => answersByStep[activeQuestion.step] === optionNumber}
-              name={`step-${activeQuestion.step}`}
-              onOptionPointerDown={() => setIsOptionPressed(true)}
-              onOptionPointerUp={() => setIsOptionPressed(false)}
-              onPointerSelect={handlePointerSelect}
-              onSelect={(optionNumber) => {
-                setStepAnswer(activeQuestion.step, optionNumber)
-                clearErrors()
-              }}
-              options={activeQuestion.options}
-              title={activeQuestion.question}
+      <section className="flex flex-1 min-h-0 w-full flex-col">
+        <div className="px-6 py-2">
+          <div className="h-2 w-full overflow-hidden rounded-[20px] bg-neutral-600">
+            <div
+              className="h-full bg-primary-300 transition-[width] duration-300 ease-out"
+              style={{ width: `${progressPercent}%` }}
             />
           </div>
-        ) : null}
+        </div>
 
-        {validationError ? (
-          <div className="mt-6">
-            <AlertMessage variant="warning">{validationError}</AlertMessage>
+        {activeQuestion ? (
+          <div className="shrink-0 min-h-[135px] px-6 flex items-center">
+            <h2 className="text-[22px] font-medium leading-[33px] text-common-0">{activeQuestion.question}</h2>
           </div>
         ) : null}
 
-        {submitMutation.error ? (
-          <div className="mt-6">
-            <AlertMessage variant="error">{submitMutation.error.message}</AlertMessage>
-          </div>
-        ) : null}
+        <div className="flex flex-1 min-h-0 flex-col rounded-t-[20px] bg-common-0">
+          <AnimatePresence mode="wait" custom={transitionDirection}>
+            {activeQuestion ? (
+              <motion.div
+                key={activeQuestion.step}
+                className="min-h-0 flex-1 overflow-y-auto px-6 pt-6 pb-6"
+                custom={transitionDirection}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.1, ease: 'easeOut' }}
+              >
+                <SurveyStepSection
+                  columns={activeQuestion.step >= TWO_COLUMN_FROM_STEP ? 2 : 1}
+                  hideTitle
+                  isSelected={(optionNumber) => selectedOptionNumbers.includes(optionNumber)}
+                  name={`step-${activeQuestion.step}`}
+                  onOptionPointerDown={() => setIsOptionPressed(true)}
+                  onOptionPointerUp={() => setIsOptionPressed(false)}
+                  onSelect={handleOptionSelect}
+                  options={activeQuestion.options}
+                  selectionMode={isConcernStep ? 'multiple' : 'single'}
+                  title={activeQuestion.question}
+                />
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
+        </div>
       </section>
     </MobilePage>
   )
 }
 
 export default SurveyStepsPage
+

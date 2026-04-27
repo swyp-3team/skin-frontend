@@ -1,7 +1,7 @@
 import { cva } from 'class-variance-authority'
 
 export const surveyOptionCardVariants = cva(
-  'block w-full rounded-full py-3 px-6 text-center justify-content content-center text-base text-neutral-800 font-medium transition-all duration-150 cursor-pointer select-none',
+  'flex h-full w-full items-center justify-start rounded-xl border px-5 py-4 text-left text-base leading-[23.68px] font-normal text-neutral-800 transition-colors duration-150 cursor-pointer select-none',
   {
     variants: {
       selected: {
@@ -10,14 +10,14 @@ export const surveyOptionCardVariants = cva(
       },
       layout: {
         default: '',
-        grid: 'border border-neutral-100',
+        grid: '',
       },
     },
     compoundVariants: [
-      { layout: 'default', selected: false, class: 'bg-primary-50/70 hover:bg-primary-100/70' },
-      { layout: 'default', selected: true, class: 'bg-primary-150/70' },
-      { layout: 'grid', selected: false, class: 'bg-common-0 hover:bg-neutral-50' },
-      { layout: 'grid', selected: true, class: 'bg-primary-100 border-none' },
+      { layout: 'default', selected: false, class: 'border-neutral-150 bg-common-0 hover:bg-primary-50' },
+      { layout: 'default', selected: true, class: 'border-neutral-150 bg-primary-100' },
+      { layout: 'grid', selected: false, class: 'border-neutral-150 bg-common-0 hover:bg-primary-50' },
+      { layout: 'grid', selected: true, class: 'border-neutral-150 bg-primary-100' },
     ],
     defaultVariants: {
       selected: false,

@@ -4,15 +4,19 @@ import { createJSONStorage, persist } from 'zustand/middleware'
 import type { PreviewResult } from '../api/types'
 import { STORAGE_KEYS } from '../constants/storage'
 
+export type SurveyStepAnswer = number | number[]
+export type SurveyAnswersByStep = Record<number, SurveyStepAnswer>
+
 export interface SurveyProgressState {
   currentStep: number
-  answersByStep: Record<number, number>
+  answersByStep: SurveyAnswersByStep
   previewResult: PreviewResult | null
   previewToken: string | null
 }
 
 export interface SurveyProgressActions {
   setStepAnswer: (step: number, optionNumber: number) => void
+  setStepAnswers: (step: number, optionNumbers: number[]) => void
   nextStep: () => void
   prevStep: () => void
   goToStep: (step: number) => void
@@ -38,6 +42,12 @@ export const useSurveyProgressStore = create<SurveyProgressStore>()(
       setStepAnswer: (step, optionNumber) => {
         set((state) => ({
           answersByStep: { ...state.answersByStep, [step]: optionNumber },
+        }))
+      },
+      setStepAnswers: (step, optionNumbers) => {
+        const uniqueOptionNumbers = [...new Set(optionNumbers)]
+        set((state) => ({
+          answersByStep: { ...state.answersByStep, [step]: uniqueOptionNumbers },
         }))
       },
       nextStep: () => {

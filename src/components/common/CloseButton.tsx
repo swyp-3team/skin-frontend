@@ -6,9 +6,15 @@ interface CloseButtonProps {
   onClick: () => void
   'aria-label'?: string
   className?: string
+  iconClassName?: string
 }
 
-function CloseButton({ onClick, 'aria-label': ariaLabel = '닫기', className }: CloseButtonProps) {
+function CloseButton({
+  onClick,
+  'aria-label': ariaLabel = '\uB2EB\uAE30',
+  className,
+  iconClassName,
+}: CloseButtonProps) {
   return (
     <button
       onClick={onClick}
@@ -16,7 +22,7 @@ function CloseButton({ onClick, 'aria-label': ariaLabel = '닫기', className }:
       aria-label={ariaLabel}
       className={cn('inline-flex shrink-0 items-center justify-center rounded transition-colors', className)}
     >
-      <IconX size={28} strokeWidth={1.9} className="text-neutral-800" />
+      <IconX size={28} strokeWidth={1.9} className={cn('text-neutral-800', iconClassName)} />
     </button>
   )
 }

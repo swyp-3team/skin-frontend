@@ -9,20 +9,28 @@ import { CONCERN_STEP, SKIN_TYPE_STEP, isConcernCode, isSkinTypeCode } from '../
 import { queryKeys } from '../../lib/queryKeys'
 import { useAuthStore } from '../../stores/authStore'
 import { useSurveyProgressStore } from '../../stores/surveyProgressStore'
+import type { SurveyAnswersByStep, SurveyStepAnswer } from '../../stores/surveyProgressStore'
 import { useSurveyResultStore } from '../../stores/surveyResultStore'
 
 interface BuildSurveySubmitPayloadInput {
-  answersByStep: Record<number, number>
+  answersByStep: SurveyAnswersByStep
   questions: SurveyQuestion[]
 }
 
-function buildAnswers(answersByStep: Record<number, number>): SurveyAnswer[] {
+const MAX_CONCERN_SELECTIONS = 2
+
+function buildAnswers(answersByStep: SurveyAnswersByStep): SurveyAnswer[] {
   return Object.entries(answersByStep)
     .filter(([step]) => {
       const id = Number(step)
       return id !== SKIN_TYPE_STEP && id !== CONCERN_STEP
     })
-    .map(([step, optionNumber]) => ({ step: Number(step), answer: optionNumber }))
+    .flatMap(([step, value]) => {
+      if (typeof value !== 'number') {
+        return []
+      }
+      return [{ step: Number(step), answer: value }]
+    })
     .sort((a, b) => a.step - b.step)
 }
 
@@ -40,11 +48,41 @@ function getSelectedCode(questions: SurveyQuestion[], step: number, optionNumber
   return option.code
 }
 
-function getRequiredSkinType(questions: SurveyQuestion[], answersByStep: Record<number, number>) {
-  const optionNumber = answersByStep[SKIN_TYPE_STEP]
-  if (optionNumber === undefined) {
-    throw new ApiError('Skin type answer is missing.', 400, 'MISSING_SKIN_TYPE_ANSWER')
+function toSingleOptionNumber(value: SurveyStepAnswer | undefined, errorCode: string, message: string) {
+  if (typeof value === 'number') {
+    return value
   }
+
+  throw new ApiError(message, 400, errorCode)
+}
+
+function toConcernOptionNumbers(value: SurveyStepAnswer | undefined) {
+  if (typeof value === 'number') {
+    return [value]
+  }
+
+  if (!Array.isArray(value)) {
+    throw new ApiError('Concern answer is missing.', 400, 'MISSING_CONCERN_ANSWER')
+  }
+
+  const uniqueOptionNumbers = [...new Set(value.filter((item) => Number.isInteger(item) && item > 0))]
+  if (uniqueOptionNumbers.length === 0) {
+    throw new ApiError('Concern answer is missing.', 400, 'MISSING_CONCERN_ANSWER')
+  }
+
+  if (uniqueOptionNumbers.length > MAX_CONCERN_SELECTIONS) {
+    throw new ApiError('Concern answer count exceeds limit.', 400, 'INVALID_CONCERN_SELECTION_COUNT')
+  }
+
+  return uniqueOptionNumbers
+}
+
+function getRequiredSkinType(questions: SurveyQuestion[], answersByStep: SurveyAnswersByStep) {
+  const optionNumber = toSingleOptionNumber(
+    answersByStep[SKIN_TYPE_STEP],
+    'MISSING_SKIN_TYPE_ANSWER',
+    'Skin type answer is missing.',
+  )
 
   const code = getSelectedCode(questions, SKIN_TYPE_STEP, optionNumber)
   if (!isSkinTypeCode(code)) {
@@ -54,29 +92,25 @@ function getRequiredSkinType(questions: SurveyQuestion[], answersByStep: Record<
   return code
 }
 
-function getRequiredConcern(questions: SurveyQuestion[], answersByStep: Record<number, number>) {
-  const optionNumber = answersByStep[CONCERN_STEP]
-  if (optionNumber === undefined) {
-    throw new ApiError('Concern answer is missing.', 400, 'MISSING_CONCERN_ANSWER')
-  }
-
-  const code = getSelectedCode(questions, CONCERN_STEP, optionNumber)
-  if (!isConcernCode(code)) {
-    throw new ApiError('Concern code is invalid.', 400, 'INVALID_CONCERN_CODE')
-  }
-
-  return code
+function getRequiredConcerns(questions: SurveyQuestion[], answersByStep: SurveyAnswersByStep) {
+  return toConcernOptionNumbers(answersByStep[CONCERN_STEP]).map((optionNumber) => {
+    const code = getSelectedCode(questions, CONCERN_STEP, optionNumber)
+    if (!isConcernCode(code)) {
+      throw new ApiError('Concern code is invalid.', 400, 'INVALID_CONCERN_CODE')
+    }
+    return code
+  })
 }
 
 function buildSurveySubmitPayload({ answersByStep, questions }: BuildSurveySubmitPayloadInput): SurveySubmitPayload {
   const answers = buildAnswers(answersByStep)
   const skinType = getRequiredSkinType(questions, answersByStep)
-  const concern = getRequiredConcern(questions, answersByStep)
+  const concerns = getRequiredConcerns(questions, answersByStep)
 
   return {
     answers,
     skinType,
-    concerns: [concern],
+    concerns,
   }
 }
 

@@ -7,10 +7,11 @@ interface SurveyStepSectionProps {
   options: readonly SurveyOption[]
   isSelected: (optionNumber: number) => boolean
   onSelect: (optionNumber: number) => void
-  onPointerSelect?: (optionNumber: number) => void
   onOptionPointerDown?: () => void
   onOptionPointerUp?: () => void
   columns?: 1 | 2
+  selectionMode?: 'single' | 'multiple'
+  hideTitle?: boolean
 }
 
 function SurveyStepSection({
@@ -19,27 +20,31 @@ function SurveyStepSection({
   options,
   isSelected,
   onSelect,
-  onPointerSelect,
   onOptionPointerDown,
   onOptionPointerUp,
   columns = 1,
+  selectionMode = 'single',
+  hideTitle = false,
 }: SurveyStepSectionProps) {
+  const inputType = selectionMode === 'multiple' ? 'checkbox' : 'radio'
+
   return (
     <fieldset className="m-0 w-full border-0 p-0 flex flex-col">
-      <legend className="w-full">
-        <span className="flex min-h-40 items-center justify-center text-2xl font-bold leading-[135%] text-neutral-800 text-center">
-          {title}
-        </span>
-      </legend>
-      <div className="w-full pt-1 items-center flex-1 justify-center self-center text-neutral-600">
-        <ul className={columns === 2 ? 'grid grid-cols-2 gap-3 grid-rows-4 min-h-[288px]' : 'flex flex-col gap-3'}>
+      {!hideTitle ? (
+        <legend className="w-full">
+          <span className="flex min-h-40 items-center justify-center text-2xl font-bold leading-[135%] text-neutral-800 text-center">
+            {title}
+          </span>
+        </legend>
+      ) : null}
+      <div className="w-full text-neutral-600">
+        <ul className={columns === 2 ? 'grid grid-cols-2 gap-4' : 'flex flex-col gap-4'}>
           {options.map((option) => {
             const checked = isSelected(option.optionNumber)
             return (
               <li key={option.optionNumber} className="h-full">
                 <label
                   className="block cursor-pointer h-full"
-                  onClick={() => onPointerSelect?.(option.optionNumber)}
                   onPointerDown={onOptionPointerDown}
                   onPointerUp={onOptionPointerUp}
                   onPointerLeave={onOptionPointerUp}
@@ -49,7 +54,7 @@ function SurveyStepSection({
                     className="sr-only"
                     name={name}
                     onChange={() => onSelect(option.optionNumber)}
-                    type="radio"
+                    type={inputType}
                     value={option.optionNumber}
                   />
                   <span
