@@ -184,9 +184,54 @@ function ResultRoutinePage() {
     }
   }, [])
 
+  const [isInnerScrollResetting, setIsInnerScrollResetting] = useState(false)
+  const innerScrollRafRef = useRef<number | null>(null)
+
   useEffect(() => {
-    if (!isHeaderScrolled && whiteContainerRef.current) {
-      whiteContainerRef.current.scrollTop = 0
+    if (isHeaderScrolled) {
+      setIsInnerScrollResetting(false)
+      if (innerScrollRafRef.current !== null) {
+        cancelAnimationFrame(innerScrollRafRef.current)
+        innerScrollRafRef.current = null
+      }
+      return
+    }
+
+    const container = whiteContainerRef.current
+    if (!container || container.scrollTop === 0) return
+
+    setIsInnerScrollResetting(true)
+
+    const startScrollTop = container.scrollTop
+    const duration = 700
+    let startTime: number | null = null
+
+    // easeOutCubic: 처음에 빠르게 시작해서 느리게 마무리
+    const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3)
+
+    const animate = (timestamp: number) => {
+      if (startTime === null) startTime = timestamp
+      const elapsed = timestamp - startTime
+      const progress = Math.min(elapsed / duration, 1)
+
+      container.scrollTop = startScrollTop * (1 - easeOutCubic(progress))
+
+      if (progress < 1) {
+        innerScrollRafRef.current = requestAnimationFrame(animate)
+      } else {
+        container.scrollTop = 0
+        innerScrollRafRef.current = null
+        setIsInnerScrollResetting(false)
+      }
+    }
+
+    innerScrollRafRef.current = requestAnimationFrame(animate)
+
+    return () => {
+      if (innerScrollRafRef.current !== null) {
+        cancelAnimationFrame(innerScrollRafRef.current)
+        innerScrollRafRef.current = null
+      }
     }
   }, [isHeaderScrolled])
 
@@ -312,7 +357,8 @@ function ResultRoutinePage() {
               ref={whiteContainerRef}
               className={cn(
                 'min-h-0 flex-1 hide-scrollbar',
-                isHeaderScrolled ? 'overflow-y-auto' : 'overflow-y-hidden',
+                // 스크롤 리셋 애니메이션 중에는 overflow-y-auto 유지 (중단되지 않도록)
+                isHeaderScrolled || isInnerScrollResetting ? 'overflow-y-auto' : 'overflow-y-hidden',
               )}
             >
               <section className="space-y-5 px-4 pb-10 pt-5">
