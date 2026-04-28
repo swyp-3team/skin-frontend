@@ -13,11 +13,14 @@ import type {
   ProfileData,
   ResultDetail,
   ResultIngredientMeta,
+  ResultListQuery,
+  ResultListResponse,
   ResultProductsFilterCategory,
   ResultProductsPageData,
   ResultProductsQuery,
-  RoutineDetail,
-  RoutineGroup,
+  RoutineDetailResponse,
+  RoutineListQuery,
+  RoutineListResponse,
   RoutineRecommendationWithToken,
   RoutineSection,
   SaveRoutineRequest,
@@ -336,9 +339,20 @@ interface StoredResult {
 }
 
 let mockResultSequence = 700
+let mockRoutineSequence = 0
 
 const mockPreviewDb = new Map<string, PreviewRecord>()
 const mockResultsDb = new Map<number, StoredResult>()
+
+interface StoredRoutine {
+  routineGroupId: number
+  title: string
+  createdAt: string
+  resultId: number
+  skinType: SkinType
+}
+
+const mockRoutineDb = new Map<number, StoredRoutine>()
 
 function createCatalogItem(
   spec: ProductDetail & { category: ProductCategory; reason: string },
@@ -463,30 +477,6 @@ function getStoredResult(resultId: number): StoredResult {
   return stored
 }
 
-function createRoutineProducts(
-  productIds: number[],
-  reasons: string[],
-  notes: string[],
-): RoutineDetail['products'] {
-  return productIds.map((productId, index) => {
-    const item = MOCK_CATALOG_MAP.get(productId)
-    if (!item) {
-      throw new ApiError(`Product not found. (ID: ${productId})`, 404, 'PRODUCT_NOT_FOUND')
-    }
-
-    return {
-      productId: item.productId,
-      name: item.name,
-      brand: item.brand,
-      category: item.category,
-      imageUrl: item.imageUrl,
-      sortOrder: index + 1,
-      reason: reasons[index] ?? item.reason,
-      note: notes[index] ?? 'Use a thin, even layer and adjust by skin condition.',
-      price: item.price,
-    }
-  })
-}
 
 interface MockRoutineProductSpec {
   productId: number
@@ -544,53 +534,31 @@ function createRoutineRecommendationWithToken(stored: StoredResult): RoutineReco
   }
 }
 
-function createRoutineGroup(resultId: number, stored: StoredResult): RoutineGroup {
+function buildMockRoutineDetail(stored: StoredRoutine): RoutineDetailResponse {
   const copy = RESULT_COPY_BY_SKIN_TYPE[stored.skinType]
 
+  const amSpecs: MockRoutineProductSpec[] = [
+    { productId: 202, productCategory: 'TONER', routineStepCategory: 'PREPARE' },
+    { productId: 204, productCategory: 'SERUM', routineStepCategory: 'INTENSIVE_CARE' },
+    { productId: 209, productCategory: 'SUN_CARE', routineStepCategory: 'SUN_CARE' },
+  ]
+
+  const pmSpecs: MockRoutineProductSpec[] = [
+    { productId: 202, productCategory: 'TONER', routineStepCategory: 'PREPARE' },
+    { productId: 205, productCategory: 'AMPOULE', routineStepCategory: 'INTENSIVE_CARE' },
+    { productId: 208, productCategory: 'CREAM', routineStepCategory: 'MOISTURIZER' },
+  ]
+
   return {
-    routineGroupId: resultId,
-    resultId,
-    skinType: stored.skinType,
-    title: copy.routineTitle,
-    summary: copy.routineSummary,
-    caution: copy.caution,
-    createdAt: stored.detail.diagnosedAt,
-    amRoutine: {
-      routineId: resultId * 10 + 1,
-      routineType: 'AM',
-      memo: 'Keep the texture light and finish with daily UV protection.',
-      products: createRoutineProducts(
-        [202, 204, 209],
-        [
-          'Use a calming toner first to settle the skin and prepare the surface.',
-          'Add a focused serum to support balance without over-layering.',
-          'Seal the morning routine with comfortable UV protection.',
-        ],
-        [
-          'Press in a thin first layer and repeat once on dry areas.',
-          'Concentrate on the center of the face and reactive areas.',
-          'Apply generously as the final step every morning.',
-        ]
-      ),
-    },
-    pmRoutine: {
-      routineId: resultId * 10 + 2,
-      routineType: 'PM',
-      memo: 'Evening steps can be a touch richer so the skin wakes up more comfortable.',
-      products: createRoutineProducts(
-        [202, 205, 208],
-        [
-          'Reset the skin with a calming prep step before heavier layers.',
-          'Use a richer treatment texture at night when the skin needs recovery.',
-          'Finish with a barrier cream to reduce overnight moisture loss.',
-        ],
-        [
-          'Keep the toner step light and comfortable.',
-          'Layer only on the areas that need the most support.',
-          'Adjust the amount based on dryness and indoor conditions.',
-        ]
-      ),
-    },
+    routineGroupId: stored.routineGroupId,
+    skinResultId: stored.resultId,
+    title: stored.title,
+    skinType: copy.skinType,
+    subtitle: copy.subtitle,
+    routineSummary: copy.routineSummary,
+    amRoutine: buildRoutineSection(amSpecs, 'AM'),
+    pmRoutine: buildRoutineSection(pmSpecs, 'PM'),
+    createdAt: stored.createdAt,
   }
 }
 
@@ -711,9 +679,32 @@ export const mockApiClient: ApiClient = {
     return withDelay(getStoredResult(resultId).detail)
   },
 
-  async getRoutineGroup(resultId: number): Promise<RoutineGroup> {
-    const stored = getStoredResult(resultId)
-    return withDelay(createRoutineGroup(resultId, stored))
+  async getResultList(query?: ResultListQuery): Promise<ResultListResponse> {
+    const size = query?.size ?? 10
+    const cursor = query?.cursor
+
+    const allResults = [...mockResultsDb.values()]
+      .map((stored) => stored.detail)
+      .sort((a, b) => b.resultId - a.resultId)
+
+    const startIndex =
+      cursor === undefined
+        ? 0
+        : allResults.findIndex((result) => result.resultId < cursor)
+    const startIdx = startIndex === -1 ? allResults.length : Math.max(startIndex, 0)
+    const page = allResults.slice(startIdx, startIdx + size)
+    const hasNext = startIdx + size < allResults.length
+    const lastItem = page.at(-1)
+
+    return withDelay({
+      results: page.map((result) => ({
+        resultId: result.resultId,
+        diagnosedAt: result.diagnosedAt,
+        title: result.skinType,
+      })),
+      hasNext,
+      nextCursor: hasNext && lastItem ? lastItem.resultId : null,
+    })
   },
 
   async getRoutineRecommendation(): Promise<RoutineRecommendationWithToken> {
@@ -726,13 +717,66 @@ export const mockApiClient: ApiClient = {
   },
 
   async saveRoutine(request: SaveRoutineRequest): Promise<SaveRoutineResponse> {
-    void request
-    const groupId = mockResultSequence * 100 + 1
+    const tokenMatch = request.previewToken.match(/mock-routine-token-(\d+)/)
+    const resultId = tokenMatch ? Number(tokenMatch[1]) : mockResultSequence
+    const stored = mockResultsDb.get(resultId) ?? mockResultsDb.get(mockResultSequence)
+
+    mockRoutineSequence += 1
+    const routineGroupId = mockRoutineSequence
+
+    if (stored) {
+      mockRoutineDb.set(routineGroupId, {
+        routineGroupId,
+        title: request.title,
+        createdAt: new Date().toISOString(),
+        resultId,
+        skinType: stored.skinType,
+      })
+    }
+
     return withDelay({
-      routineGroupId: groupId,
+      routineGroupId,
       title: request.title,
       message: '루틴이 저장되었습니다.',
     })
+  },
+
+  async getRoutineList(query?: RoutineListQuery): Promise<RoutineListResponse> {
+    const size = query?.size ?? 10
+    const cursor = query?.cursor
+
+    const allRoutines = [...mockRoutineDb.values()].sort((a, b) => b.routineGroupId - a.routineGroupId)
+
+    const startIndex =
+      cursor === undefined
+        ? 0
+        : allRoutines.findIndex((r) => r.routineGroupId < cursor)
+    const startIdx = startIndex === -1 ? allRoutines.length : Math.max(startIndex, 0)
+    const page = allRoutines.slice(startIdx, startIdx + size)
+    const hasNext = startIdx + size < allRoutines.length
+    const lastItem = page.at(-1)
+
+    return withDelay({
+      routines: page.map((r) => ({ routineGroupId: r.routineGroupId, title: r.title, createdAt: r.createdAt })),
+      hasNext,
+      nextCursor: hasNext && lastItem ? lastItem.routineGroupId : null,
+    })
+  },
+
+  async getRoutineDetail(routineGroupId: number): Promise<RoutineDetailResponse> {
+    const stored = mockRoutineDb.get(routineGroupId)
+    if (!stored) {
+      throw new ApiError(`Routine not found. (ID: ${routineGroupId})`, 404, 'ROUTINE_NOT_FOUND')
+    }
+    return withDelay(buildMockRoutineDetail(stored))
+  },
+
+  async deleteRoutine(routineGroupId: number): Promise<void> {
+    if (!mockRoutineDb.has(routineGroupId)) {
+      throw new ApiError(`Routine not found. (ID: ${routineGroupId})`, 404, 'ROUTINE_NOT_FOUND')
+    }
+    mockRoutineDb.delete(routineGroupId)
+    return withDelay(undefined as unknown as void)
   },
 
   async getRecommendedProducts(query: ResultProductsQuery): Promise<ResultProductsPageData> {

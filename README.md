@@ -13,6 +13,8 @@
   - `/results/:id/routine` (보호)
   - `/results/:id/products` (보호)
   - `/mypage` (보호)
+  - `/mypage/results` (보호)
+  - `/mypage/routines` (보호)
   - `/mypage/routines/:id` (보호)
   - `/products/:id`
 - `zustand` 기반 설문 상태 관리 + `persist`
@@ -32,7 +34,8 @@
 - 오류 복구 정책:
   - 결과 조회 `401/404`: `latestResultId`/`savedRoutineKey` 초기화
   - 루틴 조회 `401/404`: `savedRoutineKey` 초기화
-- 진단 이력은 결과 목록 API 도입 전까지 고정 3행(실데이터 1행 + 플레이스홀더 2행) 정책을 사용합니다.
+- 마이페이지 미리보기는 진단 이력 3건, 루틴 1건만 노출합니다.
+- `전체보기`는 각각 `/mypage/results`, `/mypage/routines` 목록 페이지로 이동합니다.
 
 ## 실행
 

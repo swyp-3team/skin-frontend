@@ -9,6 +9,8 @@ export const APP_ROUTES = {
   resultProducts: '/results/:id/products',
   resultProductsSearch: '/results/:id/products/search',
   myPage: '/mypage',
+  myPageResults: '/mypage/results',
+  myPageRoutines: '/mypage/routines',
   routineDetail: '/mypage/routines/:id',
   productDetail: '/products/:id',
   authCallback: '/oauth2/callback',

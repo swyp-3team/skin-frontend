@@ -41,7 +41,7 @@ const SAVE_SHEET_CLOSE_BUTTON_CLASS =
   'inline-flex items-center justify-center rounded-full bg-[#1212121A] p-1 outline outline-[0.5px] -outline-offset-[0.5px] outline-neutral-100 backdrop-blur-[2px]'
 const ROUTINE_SAVED_TOASTER_ID = 'result-routine-saved'
 const ROUTINE_SAVED_TOAST_ID = 'result-routine-saved-toast'
-const ROUTINE_SAVED_TOAST_WRAPPER_CLASS = 'w-full rounded-[8px] border-0 bg-[#0D0F0CE5]/90 p-0 shadow-none'
+const ROUTINE_SAVED_TOAST_WRAPPER_CLASS = 'w-full rounded-[8px] border-0 bg-none p-0 shadow-none'
 
 const ROUTINE_PAGE_COPY = {
   title: '루틴 추천받기',
@@ -122,13 +122,13 @@ interface RoutineSavedToastProps {
 
 function RoutineSavedToast({ onMoveToMyPage }: RoutineSavedToastProps) {
   return (
-    <div className="flex w-full max-w-[350px] flex-col items-start gap-2.5 rounded-[8px] bg-[rgba(13,15,12,0.90)] p-3 shadow-[0px_2px_4px_rgba(13,15,12,0.05),0px_2px_20px_rgba(13,15,12,0.05)]">
+    <div className="inline-flex w-full flex-col items-start gap-2.5 rounded-[8px] p-3 bg-[rgba(13,15,12,0.90)] shadow-[0px_2px_4px_rgba(13,15,12,0.05),0px_2px_20px_rgba(13,15,12,0.05)]">
       <div className="flex w-full flex-col items-start gap-0.5">
         <p className="text-[15px] font-medium leading-[22.2px] text-common-0">{ROUTINE_PAGE_COPY.savedToastTitle}</p>
         <p className="text-xs font-medium leading-[16.32px] text-neutral-150">{ROUTINE_PAGE_COPY.savedToastDescription}</p>
       </div>
       <button
-        className="inline-flex w-full items-center justify-center gap-0.5 px-2 py-1 text-xs font-medium leading-[16.32px] text-primary-400"
+        className="inline-flex w-full items-center justify-center gap-0.5 pl-2 pr-0.5 py-1 text-xs font-medium leading-[16.32px] text-primary-400"
         onClick={onMoveToMyPage}
         type="button"
       >

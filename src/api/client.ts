@@ -6,9 +6,13 @@ import type {
   ProductDetail,
   ProfileData,
   ResultDetail,
+  ResultListQuery,
+  ResultListResponse,
   ResultProductsPageData,
   ResultProductsQuery,
-  RoutineGroup,
+  RoutineDetailResponse,
+  RoutineListQuery,
+  RoutineListResponse,
   RoutineRecommendationWithToken,
   SaveRoutineRequest,
   SaveRoutineResponse,
@@ -22,9 +26,12 @@ export interface ApiClient {
   submitSurveyPreview(payload: SurveySubmitPayload): Promise<PreviewApiData>
   submitSurveyResult(input: SurveyResultInput): Promise<ResultDetail>
   getResult(resultId: number): Promise<ResultDetail>
-  getRoutineGroup(resultId: number): Promise<RoutineGroup>
+  getResultList(query?: ResultListQuery): Promise<ResultListResponse>
   getRoutineRecommendation(): Promise<RoutineRecommendationWithToken>
   saveRoutine(request: SaveRoutineRequest): Promise<SaveRoutineResponse>
+  getRoutineList(query?: RoutineListQuery): Promise<RoutineListResponse>
+  getRoutineDetail(routineGroupId: number): Promise<RoutineDetailResponse>
+  deleteRoutine(routineGroupId: number): Promise<void>
   getRecommendedProducts(query: ResultProductsQuery): Promise<ResultProductsPageData>
   searchProducts(query: ProductSearchQuery): Promise<ProductSearchPageData>
   getProductDetail(productId: number): Promise<ProductDetail>

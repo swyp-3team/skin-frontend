@@ -5,8 +5,8 @@ import { Link } from 'react-router-dom'
 
 import { apiClient } from '../api'
 import { ApiError } from '../api/errors'
-import type { ResultDetail, RoutineGroup } from '../api/types'
-import { APP_ROUTES, createResultDetailPath, createRoutineDetailPath } from '../app/routes'
+import type { ResultDetail, ResultListResponse, RoutineListResponse } from '../api/types'
+import { APP_ROUTES, createResultDetailPath } from '../app/routes'
 import SectionTitle from '../components/common/SectionTitle'
 import SurfaceCard from '../components/common/SurfaceCard'
 import MobilePage from '../components/MobilePage'
@@ -15,6 +15,7 @@ import { buttonVariants } from '../components/ui/button'
 import { AUTH_UI_TEXT } from '../constants/auth'
 
 import { useLogout } from '../hooks/useLogout'
+import { toDateTimeDisplay, toYearMonthDay } from '../lib/dateDisplay'
 import { queryKeys } from '../lib/queryKeys'
 import { cn } from '../lib/utils'
 import { selectIsAuthenticated, useAuthStore } from '../stores/authStore'
@@ -22,8 +23,10 @@ import { useSurveyResultStore } from '../stores/surveyResultStore'
 import { getResultDetailQueryOptions } from './results/useResultDetail'
 
 type MyPageViewState = 'diagnosis_routine' | 'diagnosis_only' | 'empty'
+const MAX_VISIBLE_HISTORY_COUNT = 3
+const CARD_BOTTOM_ACTION_CLASS =
+  'inline-flex items-center gap-0.5 px-2 py-1 text-xs font-medium leading-[16.32px] text-neutral-300'
 
-const PLACEHOLDER_HISTORY_TITLE = '피부 진단 결과'
 
 interface HistoryRowProps {
   date: string
@@ -61,49 +64,6 @@ function shouldResetByError(error: ApiError | null): boolean {
   return error.status === 401 || error.status === 404
 }
 
-function toDateTimeDisplay(value: string): { date: string; time: string } {
-  const parsed = new Date(value)
-  if (!Number.isNaN(parsed.getTime())) {
-    const year = parsed.getFullYear()
-    const month = String(parsed.getMonth() + 1).padStart(2, '0')
-    const day = String(parsed.getDate()).padStart(2, '0')
-    const hour = String(parsed.getHours()).padStart(2, '0')
-    const minute = String(parsed.getMinutes()).padStart(2, '0')
-
-    return {
-      date: `${year}.${month}.${day}`,
-      time: `${hour}:${minute}`,
-    }
-  }
-
-  const matchedDate = value.match(/^(\d{4})[./-](\d{2})[./-](\d{2})(?:\s+(\d{2}):(\d{2}))?$/)
-  if (matchedDate) {
-    const [, year, month, day, hour, minute] = matchedDate
-    return {
-      date: `${year}.${month}.${day}`,
-      time: hour && minute ? `${hour}:${minute}` : '--:--',
-    }
-  }
-
-  return { date: 'YYYY.MM.DD', time: 'HH:MM' }
-}
-
-function toMonthDay(value: string): string {
-  const parsed = new Date(value)
-  if (!Number.isNaN(parsed.getTime())) {
-    const month = String(parsed.getMonth() + 1).padStart(2, '0')
-    const day = String(parsed.getDate()).padStart(2, '0')
-    return `${month}.${day}`
-  }
-
-  const matchedDate = value.match(/^\d{4}[./-](\d{2})[./-](\d{2})/)
-  if (matchedDate) {
-    return `${matchedDate[1]}.${matchedDate[2]}`
-  }
-
-  return 'MM.DD'
-}
-
 function MyPage() {
   const isAuthenticated = useAuthStore(selectIsAuthenticated)
   const user = useAuthStore((state) => state.user)
@@ -128,10 +88,17 @@ function MyPage() {
   const hasSavedRoutine = latestResultId != null && savedResultId === latestResultId
   const hasDiagnosis = resultQuery.data !== undefined || (latestResultId != null && !shouldResetByResultError)
 
-  const routineQuery = useQuery<RoutineGroup, ApiError>({
-    queryKey: queryKeys.resultRoutine(latestResultId ?? -1),
-    queryFn: () => apiClient.getRoutineGroup(latestResultId!),
+  const routineQuery = useQuery<RoutineListResponse, ApiError>({
+    queryKey: queryKeys.routineListPreview(),
+    queryFn: () => apiClient.getRoutineList({ size: 1 }),
     enabled: isAuthenticated && latestResultId != null && hasDiagnosis && hasSavedRoutine,
+    retry: false,
+  })
+
+  const resultListQuery = useQuery<ResultListResponse, ApiError>({
+    queryKey: queryKeys.resultListPreview(),
+    queryFn: () => apiClient.getResultList({ size: MAX_VISIBLE_HISTORY_COUNT }),
+    enabled: isAuthenticated && hasDiagnosis,
     retry: false,
   })
 
@@ -149,12 +116,11 @@ function MyPage() {
     viewState = 'diagnosis_only'
   }
 
-  const summary = resultQuery.data
-  const historyDateTime = summary ? toDateTimeDisplay(summary.diagnosedAt) : null
-
-  const routineName = savedRoutineName ?? routineQuery.data?.title ?? '저장한 루틴'
-  const routineDate = routineQuery.data ? toMonthDay(routineQuery.data.createdAt) : 'MM.DD'
-  const routineDetailPath = routineQuery.data ? createRoutineDetailPath(routineQuery.data.routineGroupId) : null
+  const latestRoutine = routineQuery.data?.routines[0]
+  const routineName = savedRoutineName ?? latestRoutine?.title ?? '저장한 루틴'
+  const routineDate = latestRoutine ? toYearMonthDay(latestRoutine.createdAt) : 'YYYY.MM.DD'
+  const hasRoutinePreview = latestRoutine != null || savedRoutineName != null
+  const resultItems = (resultListQuery.data?.results ?? []).slice(0, MAX_VISIBLE_HISTORY_COUNT)
 
   return (
     <MobilePage
@@ -162,13 +128,13 @@ function MyPage() {
       mainClassName="bg-neutral-50 px-5 py-5"
     >
       <section className="space-y-5 pb-8">
-        <SurfaceCard className="rounded-xl bg-common-0 p-4">
+        <SurfaceCard className="rounded-[12px] bg-common-0 p-4">
           <p className="text-base font-semibold leading-[23.68px] text-neutral-800">
             {user?.nickname ?? AUTH_UI_TEXT.defaultNickname}
           </p>
         </SurfaceCard>
 
-        <SurfaceCard className="space-y-4 rounded-xl bg-common-0 p-4">
+        <SurfaceCard className="space-y-4 rounded-[12px] bg-common-0 p-4">
           <SectionTitle>나의 루틴</SectionTitle>
 
           {viewState === 'diagnosis_routine' ? (
@@ -182,37 +148,23 @@ function MyPage() {
               </p>
             ) : (
               <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-2">
-                  <article className="flex h-[108px] flex-col justify-between rounded-lg bg-primary-200 p-2">
-                    <div className="space-y-1">
-                      <p className="text-[11px] font-medium leading-[14.3px] text-neutral-800">아침</p>
-                      <p className="text-sm font-medium leading-[20.44px] text-neutral-900">{routineName}</p>
-                    </div>
-                    <p className="text-[11px] font-medium leading-[14.3px] text-neutral-400">{routineDate}</p>
-                  </article>
+                <article className="flex w-full flex-col gap-4 rounded-[8px] bg-primary-200 p-4">
+                  <p className="text-[15px] font-semibold leading-[22.2px] text-neutral-900">{routineName}</p>
+                  <p className="text-[11px] font-medium leading-[14.3px] text-neutral-400">{routineDate}</p>
+                </article>
 
-                  <article className="flex h-[108px] flex-col justify-between rounded-lg bg-neutral-500 p-2">
-                    <div className="space-y-1">
-                      <p className="text-[11px] font-medium leading-[14.3px] text-common-0">저녁</p>
-                      <p className="text-sm font-medium leading-[20.44px] text-common-0">{routineName}</p>
-                    </div>
-                    <p className="text-[11px] font-medium leading-[14.3px] text-neutral-200">{routineDate}</p>
-                  </article>
-                </div>
-
-                {routineDetailPath ? (
-                  <Link
-                    className="inline-flex items-center gap-0.5 px-2 py-1 text-xs font-medium leading-[16.32px] text-neutral-300"
-                    to={routineDetailPath}
-                  >
-                    <span>전체보기</span>
-                    <ChevronRight className="size-4" strokeWidth={1.8} />
-                  </Link>
+                {hasRoutinePreview ? (
+                  <div className="flex w-full justify-center">
+                    <Link className={CARD_BOTTOM_ACTION_CLASS} to={APP_ROUTES.myPageRoutines}>
+                      <span>전체보기</span>
+                      <ChevronRight className="size-4" strokeWidth={1.8} />
+                    </Link>
+                  </div>
                 ) : null}
               </div>
             )
           ) : (
-            <div className="space-y-4 rounded-lg border border-neutral-150 px-2.5 py-6 text-center">
+            <div className="space-y-4 rounded-[8px] border border-neutral-150 px-2.5 py-6 text-center">
               <p className="whitespace-pre-line text-sm leading-[20.44px] text-neutral-400">
                 {viewState === 'diagnosis_only'
                   ? '저장된 루틴이 없어요.\n루틴 추천 결과를 저장해 보세요.'
@@ -228,13 +180,13 @@ function MyPage() {
           )}
         </SurfaceCard>
 
-        <SurfaceCard className="space-y-4 rounded-xl bg-common-0 p-4">
+        <SurfaceCard className="space-y-4 rounded-[12px] bg-common-0 p-4">
           <SectionTitle>피부 진단 이력</SectionTitle>
 
           {viewState === 'empty' ? (
-            <div className="space-y-4 rounded-lg border border-neutral-150 px-2.5 py-6 text-center">
+            <div className="space-y-4 rounded-[8px] border border-neutral-150 px-2.5 py-6 text-center">
               <p className="whitespace-pre-line text-sm leading-[20.44px] text-neutral-400">
-                진단 이력이 없어요.\n피부 진단을 시작해 보세요.
+                진단 이력이 없어요.<br />피부 진단을 시작해 보세요.
               </p>
               <Link
                 className={cn(buttonVariants({ variant: 'dark' }), 'h-auto rounded-lg px-4 py-1.5 text-sm')}
@@ -243,53 +195,67 @@ function MyPage() {
                 피부 진단하기
               </Link>
             </div>
-          ) : resultQuery.isLoading ? (
+          ) : resultListQuery.isLoading ? (
             <p className="rounded-lg border border-neutral-150 px-3 py-6 text-center text-sm text-neutral-400">
               진단 이력을 불러오는 중입니다.
             </p>
-          ) : resultQuery.error ? (
+          ) : resultListQuery.error ? (
             <p className="rounded-lg border border-neutral-150 px-3 py-6 text-center text-sm text-neutral-400">
               진단 이력을 불러오지 못했습니다.
             </p>
-          ) : summary && historyDateTime ? (
-            <ul>
-              <HistoryRow
-                date={historyDateTime.date}
-                resultDetailPath={latestResultId != null ? createResultDetailPath(latestResultId) : undefined}
-                time={historyDateTime.time}
-                title={summary.skinType}
-              />
-              <HistoryRow date="YYYY.MM.DD" time="HH:MM" title={PLACEHOLDER_HISTORY_TITLE} />
-              <HistoryRow date="YYYY.MM.DD" time="HH:MM" title={PLACEHOLDER_HISTORY_TITLE} />
-            </ul>
+          ) : resultItems.length > 0 ? (
+            <div className="space-y-3">
+              <ul>
+                {resultItems.map((resultItem) => {
+                  const historyDateTime = toDateTimeDisplay(resultItem.diagnosedAt)
+                  return (
+                    <HistoryRow
+                      key={resultItem.resultId}
+                      date={historyDateTime.date}
+                      resultDetailPath={createResultDetailPath(resultItem.resultId)}
+                      time={historyDateTime.time}
+                      title={resultItem.title}
+                    />
+                  )
+                })}
+              </ul>
+              <div className="flex w-full justify-center">
+                <Link className={CARD_BOTTOM_ACTION_CLASS} to={APP_ROUTES.myPageResults}>
+                  <span>전체보기</span>
+                  <ChevronRight className="size-4" strokeWidth={1.8} />
+                </Link>
+              </div>
+            </div>
           ) : (
             <p className="rounded-lg border border-neutral-150 px-3 py-6 text-center text-sm text-neutral-400">
-              진단 이력을 불러오지 못했습니다.
+              진단 이력이 없어요.
             </p>
           )}
         </SurfaceCard>
 
         <button
-          className="inline-flex h-12 w-full items-center justify-center rounded-xl bg-common-0 px-6 py-3 text-base font-semibold leading-[23.68px] text-neutral-600"
+          className="inline-flex h-12 w-full items-center justify-center rounded-[12px] bg-common-0 px-6 py-3 text-base font-semibold leading-[23.68px] text-neutral-600"
           onClick={logout}
           type="button"
         >
           로그아웃
         </button>
 
-        <div className="space-y-2 py-5">
+        <div className="space-y-2 py-7">
           <p className="text-sm font-medium leading-[20.44px] text-neutral-900">회원 탈퇴</p>
           <p className="text-xs font-medium leading-[16.32px] text-neutral-400">
             탈퇴하면 모든 데이터가 삭제되며 복구할 수 없습니다.
           </p>
-          <button
-            className="inline-flex items-center gap-0.5 px-2 py-1 text-xs font-medium leading-[16.32px] text-red-400 opacity-70 disabled:cursor-not-allowed"
-            disabled
-            type="button"
-          >
-            <span>탈퇴하기</span>
-            <ChevronRight className="size-4" strokeWidth={1.8} />
-          </button>
+          <div className="flex w-full justify-center">
+            <button
+              className="inline-flex items-center gap-0.5 px-2 py-1 text-xs font-medium leading-[16.32px] text-red-400 opacity-70 disabled:cursor-not-allowed"
+              disabled
+              type="button"
+            >
+              <span>탈퇴하기</span>
+              <ChevronRight className="size-4" strokeWidth={1.8} />
+            </button>
+          </div>
         </div>
       </section>
     </MobilePage>

@@ -1,4 +1,4 @@
-import type { Concern, ProductCategory, SkinType } from '../types/domain'
+import type { Concern, SkinType } from '../types/domain'
 
 export interface SurveyOption {
   optionNumber: number
@@ -62,35 +62,40 @@ export interface ResultDetail {
   ingredientMetas: ResultIngredientMeta[]
 }
 
-export interface RoutineProduct {
-  productId: number
-  name: string
-  brand: string
-  category: ProductCategory
-  imageUrl: string | null
-  sortOrder: number
-  reason: string
-  note: string
-  price: number | null
-}
-
-export interface RoutineDetail {
-  routineId: number
-  routineType: string
-  memo: string
-  products: RoutineProduct[]
-}
-
-export interface RoutineGroup {
-  routineGroupId: number
+export interface ResultListItem {
   resultId: number
-  skinType: SkinType
+  diagnosedAt: string
   title: string
-  summary: string
-  caution: string
-  amRoutine: RoutineDetail
-  pmRoutine: RoutineDetail
+}
+
+export interface ResultListQuery {
+  cursor?: number
+  size?: number
+}
+
+export interface ResultListResponse {
+  results: ResultListItem[]
+  hasNext: boolean
+  nextCursor: number | null
+}
+
+// ── 루틴 목록/상세 API 타입 ────────────────────────────────────────────────────
+
+export interface RoutineListItem {
+  routineGroupId: number
+  title: string
   createdAt: string
+}
+
+export interface RoutineListQuery {
+  cursor?: number
+  size?: number
+}
+
+export interface RoutineListResponse {
+  routines: RoutineListItem[]
+  hasNext: boolean
+  nextCursor: number | null
 }
 
 // ── 루틴 추천 API 타입 ─────────────────────────────────────────────────────────
@@ -133,6 +138,18 @@ export interface RoutineRecommendation {
 export interface RoutineRecommendationWithToken {
   recommendation: RoutineRecommendation
   previewToken: string
+}
+
+export interface RoutineDetailResponse {
+  routineGroupId: number
+  skinResultId: number
+  title: string
+  skinType: string
+  subtitle: string
+  routineSummary: string
+  amRoutine: RoutineSection
+  pmRoutine: RoutineSection
+  createdAt: string
 }
 
 export interface SaveRoutineRequest {

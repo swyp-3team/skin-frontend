@@ -7,6 +7,8 @@ import AuthCallbackPage from '../pages/auth/AuthCallbackPage'
 import HomePage from '../pages/HomePage'
 import LandingPage from '../pages/LandingPage'
 import MyPage from '../pages/MyPage'
+import MyPageResultsPage from '../pages/MyPageResultsPage'
+import MyPageRoutinesPage from '../pages/MyPageRoutinesPage'
 import NotFoundPage from '../pages/NotFoundPage'
 import ProductDetailPage from '../pages/ProductDetailPage'
 import RoutineDetailPage from '../pages/RoutineDetailPage'
@@ -39,6 +41,8 @@ function AppRouter() {
             <Route element={<ResultProductsPage />} path={APP_ROUTES.resultProducts} />
             <Route element={<ResultProductsSearchPage />} path={APP_ROUTES.resultProductsSearch} />
             <Route element={<MyPage />} path={APP_ROUTES.myPage} />
+            <Route element={<MyPageResultsPage />} path={APP_ROUTES.myPageResults} />
+            <Route element={<MyPageRoutinesPage />} path={APP_ROUTES.myPageRoutines} />
             <Route element={<RoutineDetailPage />} path={APP_ROUTES.routineDetail} />
           </Route>
 

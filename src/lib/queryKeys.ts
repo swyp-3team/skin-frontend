@@ -2,8 +2,12 @@ import type { ResultProductTabId } from '../components/results/types'
 
 export const queryKeys = {
   result: (resultId: number) => ['result', resultId] as const,
-  resultRoutine: (resultId: number) => ['result-routine', resultId] as const,
+  resultListPreview: () => ['result-list', 'preview'] as const,
+  resultListInfinite: () => ['result-list', 'infinite'] as const,
   routineRecommendation: () => ['routine-recommendation'] as const,
+  routineListPreview: () => ['routine-list', 'preview'] as const,
+  routineListInfinite: () => ['routine-list', 'infinite'] as const,
+  routineDetail: (routineGroupId: number) => ['routine-detail', routineGroupId] as const,
   resultProducts: (resultId: number, tabId: ResultProductTabId) => ['result-products', resultId, tabId] as const,
   resultProductsSearchSource: (resultId: number, keyword: string) =>
     ['result-products-search-source', resultId, keyword] as const,
