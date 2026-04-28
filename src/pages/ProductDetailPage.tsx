@@ -1,6 +1,6 @@
 import { useState, useLayoutEffect } from 'react'
 import { MotionConfig, motion, useReducedMotion } from 'motion/react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 
 import { APP_ROUTES } from '../app/routes'
 import closeBlackIcon from '../assets/icons/product-detail/close-black.svg'
@@ -29,6 +29,15 @@ const PRICE_INFO_CONTENT_VARIANTS_REDUCED = {
   open: { opacity: 1 },
   closed: { opacity: 0 },
 } as const
+
+function isValidFromState(state: unknown): state is { from: string } {
+  return (
+    typeof state === 'object' &&
+    state !== null &&
+    'from' in state &&
+    typeof (state as { from: unknown }).from === 'string'
+  )
+}
 
 function formatPrice(price: number) {
   return new Intl.NumberFormat('ko-KR').format(price)
@@ -109,8 +118,18 @@ function PriceInfoPanel({ isOpen, panelId, formattedPriceDate, onClose }: PriceI
 
 function ProductDetailPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { productId, data: product, isLoading, error } = useProductDetail()
   const [isPriceInfoOpen, setIsPriceInfoOpen] = useState(false)
+
+  function handleBack() {
+    if (location.key !== 'default') {
+      navigate(-1)
+      return
+    }
+    const from = isValidFromState(location.state) ? location.state.from : null
+    navigate(from ?? APP_ROUTES.home, { replace: true })
+  }
 
   useLayoutEffect(() => {
     window.scrollTo(0, 0)
@@ -141,7 +160,7 @@ function ProductDetailPage() {
 
   return (
     <MobilePage
-      header={<GlassOverlayHeader onBack={() => navigate(-1)} onClose={() => navigate(APP_ROUTES.home)}/>}
+      header={<GlassOverlayHeader onBack={handleBack} onClose={handleBack} />}
       mainClassName="-mt-12 overflow-x-hidden p-0"
       footer={
         <div className='relative'>
@@ -169,7 +188,7 @@ function ProductDetailPage() {
             src={product.imageUrl}
           />
           <div className="absolute inset-x-0 bottom-0 z-0 h-[250px]">
-            <div className="absolute inset-x-0 bottom-0 h-[1px] origin-bottom scale-y-[260] overflow-hidden">
+            <div className="absolute inset-x-0 bottom-0 h-[3px] origin-bottom scale-y-[90] overflow-hidden">
               <SafeImage
                 alt=""
                 className="absolute bottom-0 left-0 h-[390px] w-full object-cover"

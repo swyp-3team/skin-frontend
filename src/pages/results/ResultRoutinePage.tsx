@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { ChevronRight, X } from 'lucide-react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useShallow } from 'zustand/react/shallow'
 
 import { APP_ROUTES, createProductDetailPath } from '../../app/routes'
@@ -84,11 +84,12 @@ const ROUTINE_PRODUCT_CATEGORY_LABELS: Record<RoutineRecommendedProduct['product
 }
 
 interface RoutineStepCardProps {
+  from: string
   stepNumber: number
   product: RoutineRecommendedProduct
 }
 
-function RoutineStepCard({ stepNumber, product }: RoutineStepCardProps) {
+function RoutineStepCard({ from, stepNumber, product }: RoutineStepCardProps) {
   return (
     <article className={ROUTINE_CARD_CLASS}>
       <div className="inline-flex items-center gap-2">
@@ -98,7 +99,7 @@ function RoutineStepCard({ stepNumber, product }: RoutineStepCardProps) {
         </h3>
       </div>
 
-      <Link className={ROUTINE_PRODUCT_LINK_CLASS} to={createProductDetailPath(product.productId)}>
+      <Link className={ROUTINE_PRODUCT_LINK_CLASS} state={{ from }} to={createProductDetailPath(product.productId)}>
         <SafeImage
           alt={product.name}
           className="size-20 rounded object-cover"
@@ -140,6 +141,7 @@ function RoutineSavedToast({ onMoveToMyPage }: RoutineSavedToastProps) {
 
 function ResultRoutinePage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { id } = useParams<{ id: string }>()
   const resultId = Number(id)
   const [activeTabId, setActiveTabId] = useState<RoutineTabId>('am')
@@ -315,7 +317,12 @@ function ResultRoutinePage() {
             >
               <section className="space-y-5 px-4 pb-10 pt-5">
                 {products.map((product, index) => (
-                  <RoutineStepCard key={product.productId} product={product} stepNumber={index + 1} />
+                  <RoutineStepCard
+                    key={product.productId}
+                    from={location.pathname + location.search + location.hash}
+                    product={product}
+                    stepNumber={index + 1}
+                  />
                 ))}
               </section>
             </div>

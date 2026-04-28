@@ -1,7 +1,7 @@
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { ChevronLeft, Search } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 
 import { apiClient } from '@/api'
 import { ApiError } from '@/api/errors'
@@ -24,6 +24,14 @@ const SEARCH_PAGE_COPY = {
 } as const
 
 const SEARCH_PAGE_SIZE = 20
+
+interface SearchPageSnapshot {
+  inputKeyword: string
+  submittedKeyword: string
+  scrollY: number
+}
+
+const searchPageSnapshots = new Map<number, SearchPageSnapshot>()
 
 function isValidResultId(resultId: number): boolean {
   return Number.isFinite(resultId) && resultId > 0
@@ -61,12 +69,14 @@ function SearchHeader({ onBack }: SearchHeaderProps) {
 }
 
 interface SearchResultCardProps {
+  from: string
+  onSelect: () => void
   product: ResultProductItem
 }
 
-function SearchResultCard({ product }: SearchResultCardProps) {
+function SearchResultCard({ from, onSelect, product }: SearchResultCardProps) {
   return (
-    <Link className="flex flex-col gap-3" to={createProductDetailPath(product.productId)}>
+    <Link className="flex flex-col gap-3" onClick={onSelect} state={{ from }} to={createProductDetailPath(product.productId)}>
       <div className="aspect-square w-full overflow-hidden rounded-[4px] bg-common-0">
         <SafeImage
           alt={product.name}
@@ -90,13 +100,20 @@ function SearchResultCard({ product }: SearchResultCardProps) {
 
 function ResultProductsSearchPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { id } = useParams<{ id: string }>()
   const resultId = Number(id)
   const inputRef = useRef<HTMLInputElement | null>(null)
   const sentinelRef = useRef<HTMLDivElement | null>(null)
+  const didRestoreScrollRef = useRef(false)
+  // 마운트 시점에 스냅샷 존재 여부를 캡처 (effects 실행 전 확정)
+  const isRestoringFromSnapshotRef = useRef(
+    isValidResultId(resultId) && searchPageSnapshots.has(resultId),
+  )
 
-  const [inputKeyword, setInputKeyword] = useState('')
-  const [submittedKeyword, setSubmittedKeyword] = useState('')
+  const savedSnapshot = isValidResultId(resultId) ? searchPageSnapshots.get(resultId) : undefined
+  const [inputKeyword, setInputKeyword] = useState(savedSnapshot?.inputKeyword ?? '')
+  const [submittedKeyword, setSubmittedKeyword] = useState(savedSnapshot?.submittedKeyword ?? '')
   const [isInputFocused, setIsInputFocused] = useState(false)
 
   const normalizedSubmittedKeyword = submittedKeyword.trim()
@@ -133,7 +150,38 @@ function ResultProductsSearchPage() {
     setSubmittedKeyword(nextKeyword)
   }, [inputKeyword])
 
+  const saveSnapshot = useCallback(() => {
+    if (!isValidResultId(resultId)) return
+    searchPageSnapshots.set(resultId, {
+      inputKeyword,
+      submittedKeyword,
+      scrollY: window.scrollY,
+    })
+  }, [resultId, inputKeyword, submittedKeyword])
+
+  // 스냅샷 복원 시 스크롤 위치 복구
+  useLayoutEffect(() => {
+    if (didRestoreScrollRef.current) return
+
+    const snapshot = searchPageSnapshots.get(resultId)
+    if (!snapshot) {
+      didRestoreScrollRef.current = true
+      return
+    }
+
+    const snapshotHasKeyword = snapshot.submittedKeyword.trim().length > 0
+    // 검색 결과가 있는 경우 결과가 로드될 때까지 대기
+    if (snapshotHasKeyword && !searchPages) return
+
+    window.scrollTo(0, snapshot.scrollY)
+    searchPageSnapshots.delete(resultId)
+    didRestoreScrollRef.current = true
+  }, [resultId, searchPages])
+
+  // 검색 결과에서 돌아온 경우 자동 포커스 생략
   useEffect(() => {
+    if (isRestoringFromSnapshotRef.current) return
+
     const focusInput = () => {
       const input = inputRef.current
       if (!input) {
@@ -266,7 +314,12 @@ function ResultProductsSearchPage() {
         <section className="px-5 py-5">
           <div className="grid grid-cols-2 gap-x-4 gap-y-6">
             {searchedProducts.map((product) => (
-              <SearchResultCard key={product.productId} product={product} />
+              <SearchResultCard
+                key={product.productId}
+                from={location.pathname + location.search + location.hash}
+                onSelect={saveSnapshot}
+                product={product}
+              />
             ))}
           </div>
           <div ref={sentinelRef} className="h-px w-full" />

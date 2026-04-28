@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 
 import searchIcon from '../../assets/icons/mobile-page/search.svg'
 import { createProductDetailPath, createResultProductsSearchPath } from '../../app/routes'
@@ -40,13 +40,14 @@ function isValidResultId(resultId: number): boolean {
 }
 
 interface ResultProductGridCardProps {
+  from: string
   onOpenProduct: () => void
   product: ResultProductItem
 }
 
-function ResultProductGridCard({ onOpenProduct, product }: ResultProductGridCardProps) {
+function ResultProductGridCard({ from, onOpenProduct, product }: ResultProductGridCardProps) {
   return (
-    <Link className="flex flex-col gap-3" onClick={onOpenProduct} to={createProductDetailPath(product.productId)}>
+    <Link className="flex flex-col gap-3" onClick={onOpenProduct} state={{ from }} to={createProductDetailPath(product.productId)}>
       <div className="overflow-hidden rounded h-full w-full bg-common-0">
         <SafeImage
           alt={product.name}
@@ -70,6 +71,7 @@ function ResultProductGridCard({ onOpenProduct, product }: ResultProductGridCard
 
 function ResultProductsPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { id } = useParams<{ id: string }>()
   const resultId = Number(id)
   const savedSnapshot = Number.isFinite(resultId) ? productsPageScrollSnapshots.get(resultId) : undefined
@@ -280,7 +282,12 @@ function ResultProductsPage() {
             {allProducts.length > 0 ? (
               <div className="grid grid-cols-2 justify-items-center gap-x-4 gap-y-6">
                 {allProducts.map((product) => (
-                  <ResultProductGridCard key={product.productId} onOpenProduct={saveScrollSnapshot} product={product} />
+                  <ResultProductGridCard
+                    key={product.productId}
+                    from={location.pathname + location.search + location.hash}
+                    onOpenProduct={saveScrollSnapshot}
+                    product={product}
+                  />
                 ))}
               </div>
             ) : (

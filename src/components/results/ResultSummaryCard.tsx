@@ -60,8 +60,8 @@ function ResultSummaryCard({
   return (
     <article className={cn('gap-2 flex w-full flex-col rounded-2xl bg-common-0 p-4', className)}>
       <div className="flex flex-col justify-end gap-2">
-        <ResultMiniTag>{subtitleTag}</ResultMiniTag>
-        <h3 className="text-[18px] font-bold leading-[25.56px] text-neutral-800">{diagnosisTitle}</h3>
+        <ResultMiniTag>{diagnosisTitle}</ResultMiniTag>
+        <h3 className="text-[18px] font-bold leading-[25.56px] text-neutral-800">{subtitleTag}</h3>
       </div>
 
       <p
