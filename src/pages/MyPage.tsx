@@ -1,12 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
 import { ChevronRight } from 'lucide-react'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { apiClient } from '../api'
 import { ApiError } from '../api/errors'
 import type { ResultDetail, ResultListResponse, RoutineListResponse } from '../api/types'
 import { APP_ROUTES, createResultDetailPath } from '../app/routes'
+import ConfirmActionDialog from '../components/common/ConfirmActionDialog'
 import SectionTitle from '../components/common/SectionTitle'
 import SurfaceCard from '../components/common/SurfaceCard'
 import MobilePage from '../components/MobilePage'
@@ -16,6 +17,7 @@ import { AUTH_UI_TEXT } from '../constants/auth'
 
 import { useLogout } from '../hooks/useLogout'
 import { toDateTimeDisplay, toYearMonthDay } from '../lib/dateDisplay'
+import { notify } from '../lib/notify'
 import { queryKeys } from '../lib/queryKeys'
 import { cn } from '../lib/utils'
 import { selectIsAuthenticated, useAuthStore } from '../stores/authStore'
@@ -68,6 +70,7 @@ function MyPage() {
   const isAuthenticated = useAuthStore(selectIsAuthenticated)
   const user = useAuthStore((state) => state.user)
   const logout = useLogout()
+  const [isWithdrawalDialogOpen, setIsWithdrawalDialogOpen] = useState(false)
 
   const latestResultId = useSurveyResultStore((state) => state.latestResultId)
   const savedResultId = useSurveyResultStore((state) => state.savedResultId)
@@ -121,6 +124,15 @@ function MyPage() {
   const routineDate = latestRoutine ? toYearMonthDay(latestRoutine.createdAt) : 'YYYY.MM.DD'
   const hasRoutinePreview = latestRoutine != null || savedRoutineName != null
   const resultItems = (resultListQuery.data?.results ?? []).slice(0, MAX_VISIBLE_HISTORY_COUNT)
+
+  function handleWithdrawalClick() {
+    setIsWithdrawalDialogOpen(true)
+  }
+
+  function handleWithdrawalConfirm() {
+    setIsWithdrawalDialogOpen(false)
+    notify.info('회원탈퇴 기능은 준비중입니다.')
+  }
 
   return (
     <MobilePage
@@ -248,8 +260,8 @@ function MyPage() {
           </p>
           <div className="flex w-full justify-center">
             <button
-              className="inline-flex items-center gap-0.5 px-2 py-1 text-xs font-medium leading-[16.32px] text-red-400 opacity-70 disabled:cursor-not-allowed"
-              disabled
+              className="inline-flex items-center gap-0.5 px-2 py-1 text-xs font-medium leading-[16.32px] text-red-400 opacity-70"
+              onClick={handleWithdrawalClick}
               type="button"
             >
               <span>탈퇴하기</span>
@@ -258,6 +270,14 @@ function MyPage() {
           </div>
         </div>
       </section>
+
+      <ConfirmActionDialog
+        description="탈퇴하면 모든 데이터가 삭제되며 복구할 수 없습니다. 탈퇴하시겠습니까?"
+        onConfirm={handleWithdrawalConfirm}
+        onOpenChange={setIsWithdrawalDialogOpen}
+        open={isWithdrawalDialogOpen}
+        title="회원탈퇴 확인"
+      />
     </MobilePage>
   )
 }

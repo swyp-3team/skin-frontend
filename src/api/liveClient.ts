@@ -930,7 +930,7 @@ export function createLiveApiClient(baseUrl: string): ApiClient {
     },
 
     async getProfile(resultId?: number) {
-      const url = resultId != null ? `${baseUrl}/profile?resultId=${resultId}` : `${baseUrl}/profile`
+      const url = resultId != null ? `${baseUrl}/profile?skinResultId=${resultId}` : `${baseUrl}/profile`
       const payload = await requestApi<unknown>(url, { method: 'GET' })
       return normalizeProfileData(payload)
     },

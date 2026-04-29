@@ -6,9 +6,11 @@ import { apiClient } from '../api'
 import { ApiError } from '../api/errors'
 import { APP_ROUTES } from '../app/routes'
 import AlertMessage from '../components/common/AlertMessage'
+import ConfirmActionDialog from '../components/common/ConfirmActionDialog'
 import RoutineStepCard from '../components/common/RoutineStepCard'
 import MobilePage from '../components/MobilePage'
 import PageHeader from '../components/common/PageHeader'
+import { notify } from '../lib/notify'
 import { queryKeys } from '../lib/queryKeys'
 import { cn } from '../lib/utils'
 
@@ -30,6 +32,7 @@ function RoutineDetailPage() {
   const { id } = useParams<{ id: string }>()
   const routineGroupId = Number(id)
   const [activeTabId, setActiveTabId] = useState<RoutineTabId>('am')
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const isValidId = isValidRoutineGroupId(routineGroupId)
 
   useEffect(() => {
@@ -63,17 +66,25 @@ function RoutineDetailPage() {
       ])
       navigate(APP_ROUTES.myPageRoutines, { replace: true })
     },
+    onError: (deleteError) => {
+      notify.error(deleteError.message || '루틴 삭제에 실패했습니다.')
+    },
   })
 
-  function handleDeleteRoutine() {
+  function handleDeleteRoutineClick() {
     if (!isValidId || deleteRoutineMutation.isPending) {
       return
     }
 
-    if (!window.confirm('이 루틴을 삭제할까요?')) {
+    setIsDeleteDialogOpen(true)
+  }
+
+  function handleDeleteRoutineConfirm() {
+    if (!isValidId || deleteRoutineMutation.isPending) {
       return
     }
 
+    setIsDeleteDialogOpen(false)
     deleteRoutineMutation.mutate(routineGroupId)
   }
 
@@ -118,7 +129,7 @@ function RoutineDetailPage() {
             <button
               className="inline-flex items-center px-2 py-1 text-[14px] font-normal leading-[20.44px] text-red-400 disabled:text-neutral-300"
               disabled={deleteRoutineMutation.isPending}
-              onClick={handleDeleteRoutine}
+              onClick={handleDeleteRoutineClick}
               type="button"
             >
               {deleteRoutineMutation.isPending ? '삭제 중...' : '삭제'}
@@ -177,6 +188,22 @@ function RoutineDetailPage() {
           </div>
         </div>
       </section>
+
+      <ConfirmActionDialog
+        confirmDisabled={deleteRoutineMutation.isPending}
+        confirmLabel={deleteRoutineMutation.isPending ? '삭제 중...' : '확인'}
+        description={
+          <>
+            삭제된 루틴은 복구할 수 없습니다.
+            <br />
+            삭제하시겠습니까?
+          </>
+        }
+        onConfirm={handleDeleteRoutineConfirm}
+        onOpenChange={setIsDeleteDialogOpen}
+        open={isDeleteDialogOpen}
+        title="루틴 삭제 확인"
+      />
     </MobilePage>
   )
 }
