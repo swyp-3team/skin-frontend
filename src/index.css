@@ -222,9 +222,15 @@
    [data-x-position='center']에서 transform: none 을 강제 적용하고
    width: 100% 로 뷰포트 전체를 점유하는 문제를 보정.
    - max-width: sonner가 설정하지 않는 속성이므로 !important 없이 안전하게 제한
-   - 위치(left/transform)는 !important 로 모바일 내장 규칙을 오버라이드 */
+   - 위치(left/transform)는 !important 로 모바일 내장 규칙을 오버라이드
+   - 기본 Toaster: 좌우 여백 40px → max-width = 390 - 80 = 310px
+   - #result-routine-saved: 좌우 여백 20px → max-width = 390 - 40 = 350px */
 [data-sonner-toaster][data-x-position='center'] {
-  max-width: 358px;
+  max-width: calc(390px - 80px);
+}
+
+[data-sonner-toaster][data-x-position='center']#result-routine-saved {
+  max-width: calc(390px - 40px);
 }
 
 @media (max-width: 600px) {

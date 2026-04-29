@@ -267,7 +267,7 @@ function ResultProductsSearchPage() {
             ref={inputRef}
             autoComplete="off"
             autoFocus
-            className="no-search-cancel h-[18px] flex-1 bg-transparent px-1 text-[13px] leading-[18.2px] text-neutral-800 placeholder:text-neutral-200 focus:outline-none"
+            className="no-search-cancel h-[18px] flex-1 bg-transparent px-1 text-[16px] leading-[18.2px] text-neutral-800 placeholder:text-neutral-200 focus:outline-none"
             enterKeyHint="search"
             placeholder={SEARCH_PAGE_COPY.placeholder}
             type="search"

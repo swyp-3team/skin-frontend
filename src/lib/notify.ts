@@ -14,10 +14,10 @@ interface MilestoneToastInput {
 const DEFAULT_TOAST_DURATION = 2000
 
 const milestoneBaseClass =
-  '!w-full max-w-[390px] mx-auto h-full inline-flex items-center justify-center gap-[13px] rounded-[8px] px-3 py-2 text-base font-semibold leading-[23.68px] break-words opacity-60'
+  '!w-full h-full inline-flex items-center justify-center gap-[13px] rounded-[8px] px-3 py-2 text-base font-semibold leading-[23.68px] break-words opacity-60'
 
 const milestoneToneClassMap: Record<ToastTone, string> = {
-  neutral: 'bg-neutral-800/60 text-neutral-0',
+  neutral: 'bg-neutral-900/90 text-primary-400',
   primary: 'bg-primary-500 text-neutral-0',
 }
 

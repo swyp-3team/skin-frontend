@@ -14,7 +14,7 @@ import GlobalErrorFallback from './components/GlobalErrorFallback'
 import { Toaster } from './components/ui/sonner'
 import { queryClient } from './lib/queryClient'
 
-const bottomToasterOffset = { bottom: 140 }
+const bottomToasterOffset = { bottom: 80, left: 40, right: 40 }
 const resultRoutineToasterOffset = { top: 28, left: 20, right: 20 }
 
 createRoot(document.getElementById('root')!).render(

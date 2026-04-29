@@ -244,7 +244,7 @@ function SurveyStepsPage() {
       header={<TitleCloseHeader title={SURVEY_PAGE_TITLE} onClose={() => navigate(APP_ROUTES.home)} tone="dark" />}
       mainClassName="flex flex-col p-0"
       footer={
-        <div className="px-6 pt-4 pb-8">
+        <div className="px-6 pt-4 pb-5">
           {validationError ? (
             <div className="pb-3">
               <AlertMessage variant="warning">{validationError}</AlertMessage>
