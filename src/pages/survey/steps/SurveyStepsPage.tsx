@@ -240,7 +240,7 @@ function SurveyStepsPage() {
 
   return (
     <MobilePage
-      className="bg-gradient-to-b from-neutral-800 from-[5%] to-neutral-600 to-60%"
+      className="bg-gradient-to-b from-neutral-800 from-[5%] to-neutral-600 to-50%"
       header={<TitleCloseHeader title={SURVEY_PAGE_TITLE} onClose={() => navigate(APP_ROUTES.home)} tone="dark" />}
       mainClassName="flex flex-col p-0"
       footer={
