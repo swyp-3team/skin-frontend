@@ -41,10 +41,11 @@ function SurveyStepSection({
         <ul className={columns === 2 ? 'grid grid-cols-2 gap-4' : 'flex flex-col gap-4'}>
           {options.map((option) => {
             const checked = isSelected(option.optionNumber)
+            const isGrid = columns === 2
             return (
-              <li key={option.optionNumber} className="h-full">
+              <li key={option.optionNumber} className={isGrid ? 'h-full' : undefined}>
                 <label
-                  className="block cursor-pointer h-full"
+                  className={isGrid ? 'block cursor-pointer h-full' : 'block cursor-pointer'}
                   onPointerDown={onOptionPointerDown}
                   onPointerUp={onOptionPointerUp}
                   onPointerLeave={onOptionPointerUp}
@@ -57,9 +58,7 @@ function SurveyStepSection({
                     type={inputType}
                     value={option.optionNumber}
                   />
-                  <span
-                    className={surveyOptionCardVariants({ selected: checked, layout: columns === 2 ? 'grid' : 'default' }) + ' h-full'}
-                  >
+                  <span className={surveyOptionCardVariants({ selected: checked, layout: isGrid ? 'grid' : 'default' })}>
                     {option.content}
                   </span>
                 </label>

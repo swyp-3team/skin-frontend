@@ -1,16 +1,19 @@
 import { ChevronRight } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 
+import { apiClient } from '../api'
 import { ApiError } from '../api/errors'
+import type { ProfileData } from '../api/types'
 import { APP_ROUTES, createResultDetailPath } from '../app/routes'
 import AlertMessage from '../components/common/AlertMessage'
 import PageHeader from '../components/common/PageHeader'
 import MobilePage from '../components/MobilePage'
+import { queryKeys } from '../lib/queryKeys'
 import { cn } from '../lib/utils'
 import { selectIsAuthenticated, useAuthStore } from '../stores/authStore'
 import { useSurveyResultStore } from '../stores/surveyResultStore'
-import { useResultDetail } from './results/useResultDetail'
 
 function formatDateTime(value: string): { date: string; time: string } {
   const parsed = new Date(value)
@@ -52,10 +55,18 @@ function HomePage() {
   const latestResultId = useSurveyResultStore((state) => state.latestResultId)
   const clearLatestResultId = useSurveyResultStore((state) => state.clearLatestResultId)
   const clearSavedRoutine = useSurveyResultStore((state) => state.clearSavedRoutine)
+  const profileResultId = latestResultId ?? undefined
 
-  const resultQuery = useResultDetail(isAuthenticated ? (latestResultId ?? -1) : -1)
+  const resultQuery = useQuery<ProfileData, ApiError>({
+    queryKey: queryKeys.profile(profileResultId),
+    queryFn: () => apiClient.getProfile(profileResultId),
+    enabled: isAuthenticated,
+    retry: false,
+    staleTime: Infinity,
+    gcTime: Infinity,
+  })
 
-  const shouldRedirectToLanding = !isAuthenticated || latestResultId == null
+  const shouldRedirectToLanding = !isAuthenticated
   const hasExpiredResultError =
     resultQuery.error instanceof ApiError &&
     (resultQuery.error.status === 401 || resultQuery.error.status === 404)
@@ -117,7 +128,7 @@ function HomePage() {
               {result ? (
                 <Link
                   className="inline-flex items-center gap-0.5 px-2 py-2 text-[12px] font-medium leading-[16.32px] text-primary-400"
-                  to={createResultDetailPath(latestResultId)}
+                  to={createResultDetailPath(result.resultId)}
                 >
                   결과보기
                   <ChevronRight className="size-4" strokeWidth={1.8} />

@@ -1,7 +1,7 @@
 import { cva } from 'class-variance-authority'
 
 export const surveyOptionCardVariants = cva(
-  'flex h-full w-full items-center justify-start rounded-xl border px-5 py-4 text-left text-base leading-[23.68px] font-normal text-neutral-800 transition-colors duration-150 cursor-pointer select-none',
+  'flex w-full items-center justify-start rounded-xl border px-5 py-4 text-left text-base leading-[23.68px] font-normal text-neutral-800 transition-colors duration-150 cursor-pointer select-none',
   {
     variants: {
       selected: {
@@ -10,7 +10,7 @@ export const surveyOptionCardVariants = cva(
       },
       layout: {
         default: '',
-        grid: '',
+        grid: 'h-full',
       },
     },
     compoundVariants: [
