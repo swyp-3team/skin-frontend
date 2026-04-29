@@ -188,7 +188,7 @@ function unwrapEnvelope<T>(body: unknown, status: number): T {
   }
 
   if (!('data' in body)) {
-    throw new ApiError('Response data is missing.', status, 'MISSING_RESPONSE_DATA', body)
+    return null as T
   }
 
   return body.data as T
