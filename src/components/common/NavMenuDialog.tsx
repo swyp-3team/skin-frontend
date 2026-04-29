@@ -117,7 +117,7 @@ function NavMenuDialog({ triggerClassName }: NavMenuDialogProps) {
   }
 
   function handleItemClick(item: MenuItemConfig) {
-    if ((item.id === 'routine' || item.id === 'products') && latestResultId == null) {
+    if ((item.id === 'routine' || item.id === 'products') && (!isAuthenticated || latestResultId == null)) {
       if (!isAuthenticated && location.pathname === APP_ROUTES.surveyResult && hasPreviewResult) {
         handleOpenChange(false)
         setLoginDialogVariant('result')
