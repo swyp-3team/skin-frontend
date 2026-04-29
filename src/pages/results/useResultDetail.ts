@@ -43,10 +43,10 @@ function profileToHeaderViewModel(data: ProfileData): ResultHeaderViewModel {
   }
 }
 
-export function useProfileHeader() {
+export function useProfileHeader(resultId?: number) {
   return useQuery<ProfileData, ApiError, ResultHeaderViewModel>({
-    queryKey: queryKeys.profile(),
-    queryFn: () => apiClient.getProfile(),
+    queryKey: queryKeys.profile(resultId),
+    queryFn: () => apiClient.getProfile(resultId),
     select: profileToHeaderViewModel,
     retry: false,
     staleTime: Infinity,

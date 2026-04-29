@@ -35,7 +35,7 @@ export interface ApiClient {
   getRecommendedProducts(query: ResultProductsQuery): Promise<ResultProductsPageData>
   searchProducts(query: ProductSearchQuery): Promise<ProductSearchPageData>
   getProductDetail(productId: number): Promise<ProductDetail>
-  getProfile(): Promise<ProfileData>
+  getProfile(resultId?: number): Promise<ProfileData>
 
   // 인증 메서드
   getMe(): Promise<AuthUser>

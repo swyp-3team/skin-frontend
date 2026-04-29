@@ -158,7 +158,7 @@ function RoutineDetailPage() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto hide-scrollbar bg-neutral-50 px-5 py-5">
+        <div className="flex-1 overflow-y-auto hide-scrollbar bg-neutral-50 px-5 py-5 pb-13">
           <div className="space-y-5 pb-8">
             {products.length > 0 ? (
               products.map((product, index) => (

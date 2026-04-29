@@ -12,5 +12,5 @@ export const queryKeys = {
   resultProductsSearchSource: (resultId: number, keyword: string) =>
     ['result-products-search-source', resultId, keyword] as const,
   productDetail: (id: number) => ['product', id] as const,
-  profile: () => ['profile'] as const,
+  profile: (resultId?: number) => (resultId != null ? ['profile', resultId] : ['profile']) as const,
 } as const

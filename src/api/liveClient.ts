@@ -929,8 +929,9 @@ export function createLiveApiClient(baseUrl: string): ApiClient {
       return normalizeProductDetail(payload)
     },
 
-    async getProfile() {
-      const payload = await requestApi<unknown>(`${baseUrl}/profile`, { method: 'GET' })
+    async getProfile(resultId?: number) {
+      const url = resultId != null ? `${baseUrl}/profile?resultId=${resultId}` : `${baseUrl}/profile`
+      const payload = await requestApi<unknown>(url, { method: 'GET' })
       return normalizeProfileData(payload)
     },
 

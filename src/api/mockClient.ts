@@ -788,9 +788,9 @@ export const mockApiClient: ApiClient = {
     return withDelay(createMockProductSearchPage(query))
   },
 
-  async getProfile(): Promise<ProfileData> {
-    const latestId = mockResultSequence
-    const stored = mockResultsDb.get(latestId)
+  async getProfile(resultId?: number): Promise<ProfileData> {
+    const targetId = resultId ?? mockResultSequence
+    const stored = mockResultsDb.get(targetId)
     if (!stored) {
       throw new ApiError('No profile found. Please complete the survey first.', 404, 'PROFILE_NOT_FOUND')
     }

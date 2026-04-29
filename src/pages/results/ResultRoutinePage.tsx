@@ -97,7 +97,7 @@ function ResultRoutinePage() {
       markRoutineSavedByResultId: state.markRoutineSavedByResultId,
     })),
   )
-  const { data: header, isLoading: isHeaderLoading, error: headerError } = useProfileHeader()
+  const { data: header, isLoading: isHeaderLoading, error: headerError } = useProfileHeader(resultId)
   const { data: routineData, isLoading: isRoutineLoading, error: routineError } = useRoutineRecommendation(resultId)
 
   const isLoading = isHeaderLoading || isRoutineLoading

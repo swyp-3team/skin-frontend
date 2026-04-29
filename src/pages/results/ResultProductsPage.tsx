@@ -85,7 +85,7 @@ function ResultProductsPage() {
     initialHeaderScrolled,
   )
 
-  const { data: header, isLoading: isHeaderLoading, error: headerError } = useProfileHeader()
+  const { data: header, isLoading: isHeaderLoading, error: headerError } = useProfileHeader(resultId)
   const {
     data: productsPages,
     isLoading: isProductsLoading,
