@@ -168,7 +168,7 @@ function ResultIngredientCarousel({ cards }: ResultIngredientCarouselProps) {
                 aria-label={`${rankLabel} ${card.name}`}
                 aria-pressed={!supportsHover ? flippedIndex === index : undefined}
                 className={cn(
-                  'group relative block h-[170px] w-[158px] cursor-default rounded-lg text-left transition-transform opacity-100 shadow-none transition-transform ease-[cubic-bezier(0.22,1,0.36,1)]',
+                  'group relative block h-[190px] w-[158px] cursor-default rounded-lg text-left transition-transform opacity-100 shadow-none transition-transform ease-[cubic-bezier(0.22,1,0.36,1)]',
                   isEmphasized
                     ? '-translate-y-3 duration-[450ms]'
                     : 'translate-y-0 duration-[500ms]',
@@ -189,26 +189,31 @@ function ResultIngredientCarousel({ cards }: ResultIngredientCarouselProps) {
                   >
                     <span
                       className={cn(
-                        'absolute inset-0 flex h-full flex-col justify-between rounded-[8px] bg-neutral-600 px-2 py-3 text-common-0 [backface-visibility:hidden] [-webkit-backface-visibility:hidden] transition-opacity duration-2000 motion-reduce:transition-none',
+                        'absolute inset-0 inline-flex h-full flex-col items-start justify-start gap-1 rounded-[8px] bg-neutral-600 px-2 py-3 text-common-0 [backface-visibility:hidden] [-webkit-backface-visibility:hidden] transition-opacity duration-2000 motion-reduce:transition-none',
                       )}
                       style={!useFlipMotion ? { opacity: isRevealed ? 0 : 1 } : undefined}
                     >
                       <span className="text-xs font-medium leading-[16.32px] text-neutral-200">{rankLabel}</span>
-                      <span className="line-clamp-2 pr-8 text-base font-semibold leading-[23.68px]">{card.name}</span>
+                      <span className="w-full break-words text-base font-semibold leading-[23.68px] text-common-0">
+                        {card.name}
+                      </span>
                     </span>
 
                     <span
                       className={cn(
-                        'absolute inset-0 flex h-full flex-col rounded-lg bg-primary-300 px-3 py-3 text-neutral-800 transition-opacity duration-3000 ease-[cubic-bezier(0.4,1,0.56,1)] motion-reduce:transition-none',
+                        'absolute inset-0 inline-flex h-full flex-col items-start justify-between rounded-[8px] bg-primary-300 p-3 text-neutral-800 transition-opacity duration-3000 ease-[cubic-bezier(0.4,1,0.56,1)] motion-reduce:transition-none',
                         useFlipMotion
                           ? '[transform:rotateY(180deg)] [backface-visibility:hidden] [-webkit-backface-visibility:hidden]'
                           : '',
                       )}
                       style={!useFlipMotion ? { opacity: isRevealed ? 1 : 0 } : undefined}
                     >
-                      <span className="text-xs font-medium leading-[16.32px] text-neutral-700">{rankLabel}</span>
-                      <span className="mt-1 line-clamp-2 text-base font-semibold leading-[23.68px]">{card.name}</span>
-                      <span className="mt-3 line-clamp-5 text-[10px] leading-[14px] text-neutral-700">{card.description}</span>
+                      <span className="w-full break-words text-base font-semibold leading-[23.68px] text-neutral-800">
+                        {card.name}
+                      </span>
+                      <span className="w-full break-words text-[10px] font-normal leading-[14px] text-neutral-800">
+                        {card.description}
+                      </span>
                     </span>
                   </span>
                 </span>
