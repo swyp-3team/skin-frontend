@@ -7,7 +7,7 @@ import { apiClient } from '../api'
 import { ApiError } from '../api/errors'
 import type { ResultListItem, ResultListResponse } from '../api/types'
 import { createResultDetailPath } from '../app/routes'
-import MyPageSubPageHeader from '../components/mypage/MyPageSubPageHeader'
+import PageHeader from '../components/common/PageHeader'
 import MobilePage from '../components/MobilePage'
 import { toDateTimeDisplay } from '../lib/dateDisplay'
 import { queryKeys } from '../lib/queryKeys'
@@ -22,7 +22,7 @@ function ResultHistoryCard({ item }: ResultHistoryCardProps) {
   const historyDateTime = toDateTimeDisplay(item.diagnosedAt)
 
   return (
-    <li className="rounded-[8px] bg-common-0 px-3 py-2">
+    <li className="rounded-[8px] bg-common-0 px-3 py-3">
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1">
           <div className="flex items-center gap-1 text-sm leading-[20.44px] text-neutral-600">
@@ -92,7 +92,7 @@ function MyPageResultsPage() {
   const resultItems = data?.pages.flatMap((page) => page.results) ?? []
 
   return (
-    <MobilePage header={<MyPageSubPageHeader title="피부 진단 내역" />} mainClassName="bg-neutral-50 px-5 py-5">
+    <MobilePage header={<PageHeader backTo="/mypage" title="피부 진단 내역" />} mainClassName="bg-neutral-50 px-5 py-5">
       <section className="space-y-4 pb-8">
         {isLoading ? (
           <p className="rounded-lg border border-neutral-150 bg-common-0 px-3 py-6 text-center text-sm text-neutral-400">

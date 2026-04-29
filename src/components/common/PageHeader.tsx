@@ -1,12 +1,15 @@
 import type { ReactNode } from 'react'
 
+import { ChevronLeft } from 'lucide-react'
+import { Link } from 'react-router-dom'
+
 import AppLogo from '@/components/icons/AppLogo'
 import NavMenuDialog from '@/components/common/NavMenuDialog'
 import { cn } from '@/lib/utils'
 
-const ROOT_CLASS =
-  'sticky top-0 z-10 flex h-12 w-full items-center justify-between px-5 py-2 transition-colors duration-300'
+const BASE_CLASS = 'sticky top-0 z-10 h-12 w-full items-center px-5 transition-colors duration-300'
 const TITLE_CLASS = 'text-[20px] font-medium leading-[27.6px]'
+const SUB_TITLE_CLASS = 'truncate text-center text-[18px] font-medium leading-[25.56px] text-neutral-800'
 
 interface PageHeaderProps {
   title?: string
@@ -15,6 +18,8 @@ interface PageHeaderProps {
   tone?: 'default' | 'dark' | 'light'
   showLogo?: boolean
   actionSlot?: ReactNode
+  backTo?: string
+  leftSlot?: ReactNode
 }
 
 function PageHeader({
@@ -24,7 +29,35 @@ function PageHeader({
   tone = 'default',
   showLogo = false,
   actionSlot = null,
+  backTo,
+  leftSlot,
 }: PageHeaderProps) {
+  const isSubPage = backTo !== undefined || leftSlot !== undefined
+
+  if (isSubPage) {
+    return (
+      <header className={cn(BASE_CLASS, 'relative flex justify-center bg-common-0 py-2.5', className)}>
+        <div className="absolute left-5 top-1/2 -translate-y-1/2 whitespace-nowrap">
+          {leftSlot ?? (
+            <Link
+              aria-label="뒤로 돌아가기"
+              className="inline-flex size-7 items-center justify-start text-neutral-800"
+              to={backTo!}
+            >
+              <ChevronLeft className="size-5" strokeWidth={1.8} />
+            </Link>
+          )}
+        </div>
+
+        <h1 className={SUB_TITLE_CLASS}>{title}</h1>
+
+        <div className="absolute flex right-5 top-1/2 -translate-y-1/2">
+          <NavMenuDialog />
+        </div>
+      </header>
+    )
+  }
+
   const isDarkTone = tone === 'dark'
   const isLightTone = tone === 'light'
   const isWhiteContent = isDarkTone && !isScrolled
@@ -32,7 +65,8 @@ function PageHeader({
   return (
     <header
       className={cn(
-        ROOT_CLASS,
+        BASE_CLASS,
+        'flex justify-between py-2.5',
         isLightTone
           ? 'bg-[#F2FAFA]'
           : isDarkTone && !isScrolled
@@ -46,10 +80,9 @@ function PageHeader({
       {showLogo ? (
         <AppLogo className={isWhiteContent ? 'text-common-0' : undefined} />
       ) : (
-        <h1 className={cn(TITLE_CLASS, isWhiteContent ? 'text-common-0' : 'text-neutral-800')}>
-          {title}
-        </h1>
+        <h1 className={cn(TITLE_CLASS, isWhiteContent ? 'text-common-0' : 'text-neutral-800')}>{title}</h1>
       )}
+
       <div className="flex items-center gap-4">
         {actionSlot}
         <NavMenuDialog
@@ -61,3 +94,4 @@ function PageHeader({
 }
 
 export default PageHeader
+

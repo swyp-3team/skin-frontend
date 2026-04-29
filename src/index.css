@@ -102,6 +102,10 @@
     box-sizing: border-box;
   }
 
+  html {
+    scrollbar-gutter: stable;
+  }
+
   html,
   body,
   #root {
@@ -129,6 +133,11 @@
 
   html {
     @apply font-sans;
+  }
+
+  html.routine-detail-no-scroll,
+  body.routine-detail-no-scroll {
+    overflow: hidden;
   }
 }
 

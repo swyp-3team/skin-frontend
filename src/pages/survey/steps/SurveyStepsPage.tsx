@@ -240,11 +240,11 @@ function SurveyStepsPage() {
 
   return (
     <MobilePage
-      className="bg-gradient-to-b from-neutral-800 from-[10%] to-neutral-600"
+      className="bg-gradient-to-b from-neutral-800 from-[5%] to-neutral-600 to-60%"
       header={<TitleCloseHeader title={SURVEY_PAGE_TITLE} onClose={() => navigate(APP_ROUTES.home)} tone="dark" />}
       mainClassName="flex flex-col p-0"
       footer={
-        <div className="px-6 pt-4 pb-12">
+        <div className="px-6 pt-4 pb-8">
           {validationError ? (
             <div className="pb-3">
               <AlertMessage variant="warning">{validationError}</AlertMessage>

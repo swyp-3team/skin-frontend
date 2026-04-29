@@ -1,48 +1,180 @@
-import { useParams } from 'react-router-dom'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useEffect, useState } from 'react'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 
-import PageHeading from '../components/common/PageHeading'
-import RoutineItem from '../components/common/RoutineItem'
-import SectionTitle from '../components/common/SectionTitle'
-import SurfaceCard from '../components/common/SurfaceCard'
+import { apiClient } from '../api'
+import { ApiError } from '../api/errors'
+import { APP_ROUTES } from '../app/routes'
+import AlertMessage from '../components/common/AlertMessage'
+import RoutineStepCard from '../components/common/RoutineStepCard'
 import MobilePage from '../components/MobilePage'
+import PageHeader from '../components/common/PageHeader'
+import { queryKeys } from '../lib/queryKeys'
+import { cn } from '../lib/utils'
 
-const routineSteps = [
-  { category: '토너', guide: '진정 성분으로 세안 후 피부결을 먼저 정돈해 주세요.' },
-  { category: '세럼', guide: '집중 성분으로 고민 부위를 세심하게 관리해 주세요.' },
-  { category: '크림', guide: '보습막을 형성해 피부를 편안하게 마무리해 주세요.' },
+type RoutineTabId = 'am' | 'pm'
+
+const ROUTINE_TAB_ITEMS: { id: RoutineTabId; label: string }[] = [
+  { id: 'am', label: '아침 루틴' },
+  { id: 'pm', label: '저녁 루틴' },
 ]
 
+function isValidRoutineGroupId(routineGroupId: number) {
+  return Number.isFinite(routineGroupId) && routineGroupId > 0
+}
+
 function RoutineDetailPage() {
-  const { id } = useParams()
+  const queryClient = useQueryClient()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { id } = useParams<{ id: string }>()
+  const routineGroupId = Number(id)
+  const [activeTabId, setActiveTabId] = useState<RoutineTabId>('am')
+  const isValidId = isValidRoutineGroupId(routineGroupId)
+
+  useEffect(() => {
+    document.documentElement.classList.add('routine-detail-no-scroll')
+    document.body.classList.add('routine-detail-no-scroll')
+
+    return () => {
+      document.documentElement.classList.remove('routine-detail-no-scroll')
+      document.body.classList.remove('routine-detail-no-scroll')
+    }
+  }, [])
+
+  const {
+    data: routineDetail,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: queryKeys.routineDetail(routineGroupId),
+    queryFn: () => apiClient.getRoutineDetail(routineGroupId),
+    enabled: isValidId,
+    retry: false,
+  })
+
+  const deleteRoutineMutation = useMutation<void, ApiError, number>({
+    mutationFn: (targetId) => apiClient.deleteRoutine(targetId),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.routineListInfinite() }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.routineListPreview() }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.routineDetail(routineGroupId) }),
+      ])
+      navigate(APP_ROUTES.myPageRoutines, { replace: true })
+    },
+  })
+
+  function handleDeleteRoutine() {
+    if (!isValidId || deleteRoutineMutation.isPending) {
+      return
+    }
+
+    if (!window.confirm('이 루틴을 삭제할까요?')) {
+      return
+    }
+
+    deleteRoutineMutation.mutate(routineGroupId)
+  }
+
+  if (!id || Number.isNaN(routineGroupId)) {
+    return (
+      <MobilePage>
+        <AlertMessage size="md" variant="error">
+          올바른 루틴 ID가 아닙니다.
+        </AlertMessage>
+      </MobilePage>
+    )
+  }
+
+  if (isLoading) {
+    return (
+      <MobilePage>
+        <AlertMessage size="md" variant="info">
+          루틴을 불러오는 중입니다...
+        </AlertMessage>
+      </MobilePage>
+    )
+  }
+
+  if (error || !routineDetail) {
+    return (
+      <MobilePage>
+        <AlertMessage size="md" variant="error">
+          {error?.message ?? '루틴을 불러오지 못했습니다.'}
+        </AlertMessage>
+      </MobilePage>
+    )
+  }
+
+  const selectedRoutine = activeTabId === 'am' ? routineDetail.amRoutine : routineDetail.pmRoutine
+  const products = selectedRoutine.products
 
   return (
-    <MobilePage>
-      <section className="space-y-5">
-        <PageHeading>나의 루틴</PageHeading>
-
-        <SurfaceCard className="space-y-3">
-          <p className="text-xs text-neutral-400">루틴 그룹 #{id ?? '-'}</p>
-          <p className="text-sm leading-6 text-neutral-600">
-            아침과 저녁 루틴을 나눠 현재 피부 컨디션에 맞게 관리해 보세요.
-          </p>
-        </SurfaceCard>
-
-        <div className="space-y-3">
-          <SectionTitle>아침 루틴</SectionTitle>
-          <SurfaceCard className="space-y-2" density="compact">
-            {routineSteps.map((step) => (
-              <RoutineItem badge={step.category} guide={step.guide} key={`am-${step.category}`} />
-            ))}
-          </SurfaceCard>
+    <MobilePage
+      header={
+        <PageHeader
+          leftSlot={
+            <button
+              className="inline-flex items-center px-2 py-1 text-[14px] font-normal leading-[20.44px] text-red-400 disabled:text-neutral-300"
+              disabled={deleteRoutineMutation.isPending}
+              onClick={handleDeleteRoutine}
+              type="button"
+            >
+              {deleteRoutineMutation.isPending ? '삭제 중...' : '삭제'}
+            </button>
+          }
+          title={routineDetail.title}
+        />
+      }
+      mainClassName="flex h-[100dvh] flex-col bg-neutral-50 px-0"
+    >
+      <section className="flex h-[100dvh] flex-col">
+        <div className="h-[54px] border-b border-neutral-100 bg-common-0 px-5 pt-2">
+          <div className="flex h-full items-center gap-2">
+            {ROUTINE_TAB_ITEMS.map((item) => {
+              const isActive = activeTabId === item.id
+              return (
+                <button
+                  className={cn(
+                    'flex h-full flex-1 items-center justify-center border-b-2 px-2.5',
+                    isActive ? 'border-neutral-800' : 'border-transparent',
+                  )}
+                  key={item.id}
+                  onClick={() => setActiveTabId(item.id)}
+                  type="button"
+                >
+                  <span
+                    className={cn(
+                      'text-[18px] leading-[25.56px]',
+                      isActive ? 'font-bold text-neutral-800' : 'font-medium text-neutral-400',
+                    )}
+                  >
+                    {item.label}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
         </div>
 
-        <div className="space-y-3">
-          <SectionTitle>저녁 루틴</SectionTitle>
-          <SurfaceCard className="space-y-2" density="compact">
-            {routineSteps.map((step) => (
-              <RoutineItem badge={step.category} guide={step.guide} key={`pm-${step.category}`} />
-            ))}
-          </SurfaceCard>
+        <div className="flex-1 overflow-y-auto hide-scrollbar bg-neutral-50 px-5 py-5">
+          <div className="space-y-5 pb-8">
+            {products.length > 0 ? (
+              products.map((product, index) => (
+                <RoutineStepCard
+                  from={location.pathname + location.search + location.hash}
+                  key={product.productId}
+                  product={product}
+                  stepNumber={index + 1}
+                />
+              ))
+            ) : (
+              <p className="rounded-xl bg-common-0 px-4 py-8 text-center text-sm text-neutral-400">
+                표시할 루틴 단계가 없습니다.
+              </p>
+            )}
+          </div>
         </div>
       </section>
     </MobilePage>

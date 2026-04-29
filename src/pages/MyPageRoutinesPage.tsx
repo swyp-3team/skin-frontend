@@ -7,7 +7,7 @@ import { apiClient } from '../api'
 import { ApiError } from '../api/errors'
 import type { RoutineListItem, RoutineListResponse } from '../api/types'
 import { createRoutineDetailPath } from '../app/routes'
-import MyPageSubPageHeader from '../components/mypage/MyPageSubPageHeader'
+import PageHeader from '../components/common/PageHeader'
 import MobilePage from '../components/MobilePage'
 import { toYearMonthDay } from '../lib/dateDisplay'
 import { queryKeys } from '../lib/queryKeys'
@@ -20,7 +20,7 @@ interface RoutineCardProps {
 
 function RoutineCard({ item }: RoutineCardProps) {
   return (
-    <li className="rounded-[8px] bg-common-0 px-3 py-2">
+    <li className="rounded-[8px] bg-common-0 px-3 py-3">
       <div className="space-y-2">
         <div className="flex items-start justify-between gap-3">
           <p className="text-[15px] font-medium leading-[22.2px] text-neutral-900">{item.title}</p>
@@ -87,7 +87,7 @@ function MyPageRoutinesPage() {
   const routineItems = data?.pages.flatMap((page) => page.routines) ?? []
 
   return (
-    <MobilePage header={<MyPageSubPageHeader title="나의 루틴" />} mainClassName="bg-neutral-50 px-5 py-5">
+    <MobilePage header={<PageHeader backTo="/mypage" title="나의 루틴" />} mainClassName="bg-neutral-50 px-5 py-5">
       <section className="space-y-4 pb-8">
         {isLoading ? (
           <p className="rounded-lg border border-neutral-150 bg-common-0 px-3 py-6 text-center text-sm text-neutral-400">

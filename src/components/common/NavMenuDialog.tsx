@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { ChevronRight, X } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
@@ -87,13 +87,10 @@ interface NavMenuDialogProps {
 
 function NavMenuDialog({ triggerClassName }: NavMenuDialogProps) {
   const [open, setOpen] = useState(false)
-  const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null)
   const [inlineAlert, setInlineAlert] = useState<string | null>(null)
   const [loginDialogOpen, setLoginDialogOpen] = useState(false)
-
-  useEffect(() => {
-    setPortalContainer(document.querySelector<HTMLElement>('[data-mobile-portal]'))
-  }, [])
+  const portalContainer =
+    typeof document === 'undefined' ? null : document.querySelector<HTMLElement>('[data-mobile-portal]')
 
   const isAuthenticated = useAuthStore(selectIsAuthenticated)
   const nickname = useAuthStore((s) => s.user?.nickname)

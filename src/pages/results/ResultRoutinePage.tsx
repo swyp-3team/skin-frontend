@@ -3,11 +3,10 @@ import { ChevronRight, X } from 'lucide-react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useShallow } from 'zustand/react/shallow'
 
-import { APP_ROUTES, createProductDetailPath } from '../../app/routes'
-import type { RoutineRecommendedProduct, RoutineStepCategory } from '../../api/types'
+import { APP_ROUTES } from '../../app/routes'
 import { apiClient } from '../../api'
 import AlertMessage from '../../components/common/AlertMessage'
-import SafeImage from '../../components/common/SafeImage'
+import RoutineStepCard from '../../components/common/RoutineStepCard'
 import MobilePage from '../../components/MobilePage'
 import PageHeader from '../../components/common/PageHeader'
 import ResultTabBar from '../../components/results/ResultTabBar'
@@ -26,13 +25,6 @@ import { useRoutineRecommendation } from './useResultRoutine'
 type RoutineNameFieldState = 'placeholder' | 'focus' | 'typed'
 
 const ROUTINE_NAME_MAX_LENGTH = 10
-const ROUTINE_CARD_CLASS =
-  'flex flex-col gap-[15px] rounded-xl outline outline-1 -outline-offset-1 outline-neutral-100 bg-common-0 p-3'
-const STEP_BADGE_CLASS =
-  'inline-flex px-1.5 py-1 items-center size-[22px] justify-center rounded-[8px] bg-neutral-800 text-[12px] font-bold leading-[16.32px] text-neutral-50'
-const PRODUCT_CATEGORY_CHIP_CLASS =
-  'inline-flex self-start items-center justify-center rounded bg-primary-50 px-1 py-0.5 text-[10px] font-medium leading-[13px] text-primary-500'
-const ROUTINE_PRODUCT_LINK_CLASS = 'inline-flex w-full items-center gap-3 bg-common-0 no-underline'
 const SAVE_ROUTINE_BUTTON_CLASS =
   'inline-flex w-full items-center justify-center rounded-lg border border-neutral-100 bg-common-0 px-6 py-3 text-base font-semibold leading-[23.68px] text-neutral-600'
 const GO_MYPAGE_LINK_CLASS =
@@ -64,57 +56,6 @@ const ROUTINE_TAB_ITEMS = [
 const HEADER_HEIGHT_PX = 48
 const WINDOW_SNAP_TRIGGER_PX = 80
 const FOOTER_SAFE_AREA_PADDING = 'calc(16px + env(safe-area-inset-bottom))'
-const ROUTINE_STEP_TITLE_BY_STEP_CATEGORY: Record<RoutineStepCategory, string> = {
-  PREPARE: '피부 결 정돈',
-  INTENSIVE_CARE: '집중 케어',
-  MOISTURIZER: '보습',
-  SUN_CARE: '자외선 차단',
-}
-
-const ROUTINE_PRODUCT_CATEGORY_LABELS: Record<RoutineRecommendedProduct['productCategory'], string> = {
-  SKIN: '스킨',
-  TONER: '토너',
-  LOTION: '로션',
-  EMULSION: '에멀전',
-  ESSENCE: '에센스',
-  SERUM: '세럼',
-  AMPOULE: '앰플',
-  CREAM: '크림',
-  SUN_CARE: '선케어',
-}
-
-interface RoutineStepCardProps {
-  from: string
-  stepNumber: number
-  product: RoutineRecommendedProduct
-}
-
-function RoutineStepCard({ from, stepNumber, product }: RoutineStepCardProps) {
-  return (
-    <article className={ROUTINE_CARD_CLASS}>
-      <div className="inline-flex items-center gap-2">
-        <span className={STEP_BADGE_CLASS}>{stepNumber}</span>
-        <h3 className="text-base font-semibold leading-[23.68px] text-black">
-          {ROUTINE_STEP_TITLE_BY_STEP_CATEGORY[product.routineStepCategory]}
-        </h3>
-      </div>
-
-      <Link className={ROUTINE_PRODUCT_LINK_CLASS} state={{ from }} to={createProductDetailPath(product.productId)}>
-        <SafeImage
-          alt={product.name}
-          className="size-20 rounded object-cover"
-          fallbackAlt={`${product.name} 이미지`}
-          loading="lazy"
-          src={product.imageUrl}
-        />
-        <div className="inline-flex h-20 min-w-0 flex-1 flex-col justify-center gap-2">
-          <span className={PRODUCT_CATEGORY_CHIP_CLASS}>{ROUTINE_PRODUCT_CATEGORY_LABELS[product.productCategory]}</span>
-          <p className="line-clamp-2 text-xs leading-[16.32px] text-neutral-800">{product.name}</p>
-        </div>
-      </Link>
-    </article>
-  )
-}
 
 interface RoutineSavedToastProps {
   onMoveToMyPage: () => void
@@ -157,7 +98,7 @@ function ResultRoutinePage() {
     })),
   )
   const { data: header, isLoading: isHeaderLoading, error: headerError } = useProfileHeader()
-  const { data: routineData, isLoading: isRoutineLoading, error: routineError } = useRoutineRecommendation()
+  const { data: routineData, isLoading: isRoutineLoading, error: routineError } = useRoutineRecommendation(resultId)
 
   const isLoading = isHeaderLoading || isRoutineLoading
   const error = headerError ?? routineError

@@ -181,7 +181,7 @@ function MyPage() {
         </SurfaceCard>
 
         <SurfaceCard className="space-y-4 rounded-[12px] bg-common-0 p-4">
-          <SectionTitle>피부 진단 이력</SectionTitle>
+          <SectionTitle>피부 진단 내역</SectionTitle>
 
           {viewState === 'empty' ? (
             <div className="space-y-4 rounded-[8px] border border-neutral-150 px-2.5 py-6 text-center">
