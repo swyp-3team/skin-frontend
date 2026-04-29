@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 
@@ -7,6 +8,7 @@ import { ApiError } from '../api/errors'
 import { APP_ROUTES } from '../app/routes'
 import AlertMessage from '../components/common/AlertMessage'
 import ConfirmActionDialog from '../components/common/ConfirmActionDialog'
+import CardStack from '../components/common/CardStack'
 import RoutineStepCard from '../components/common/RoutineStepCard'
 import MobilePage from '../components/MobilePage'
 import PageHeader from '../components/common/PageHeader'
@@ -32,6 +34,7 @@ function RoutineDetailPage() {
   const { id } = useParams<{ id: string }>()
   const routineGroupId = Number(id)
   const [activeTabId, setActiveTabId] = useState<RoutineTabId>('am')
+  const [slideDirection, setSlideDirection] = useState(0)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const isValidId = isValidRoutineGroupId(routineGroupId)
 
@@ -152,7 +155,11 @@ function RoutineDetailPage() {
                     isActive ? 'border-neutral-800' : 'border-transparent',
                   )}
                   key={item.id}
-                  onClick={() => setActiveTabId(item.id)}
+                  onClick={() => {
+                    if (item.id === activeTabId) return
+                    setSlideDirection(item.id === 'pm' ? 1 : -1)
+                    setActiveTabId(item.id)
+                  }}
                   type="button"
                 >
                   <span
@@ -169,23 +176,39 @@ function RoutineDetailPage() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto hide-scrollbar bg-neutral-50 px-5 py-5 pb-13">
-          <div className="space-y-5 pb-8">
-            {products.length > 0 ? (
-              products.map((product, index) => (
-                <RoutineStepCard
-                  from={location.pathname + location.search + location.hash}
-                  key={product.productId}
-                  product={product}
-                  stepNumber={index + 1}
-                />
-              ))
-            ) : (
-              <p className="rounded-xl bg-common-0 px-4 py-8 text-center text-sm text-neutral-400">
-                표시할 루틴 단계가 없습니다.
-              </p>
-            )}
-          </div>
+        <div className="flex-1 overflow-x-hidden overflow-y-auto hide-scrollbar bg-neutral-50 px-5 py-5 pb-13">
+          <AnimatePresence custom={slideDirection} initial={false} mode="wait">
+            <motion.div
+              key={activeTabId}
+              animate="center"
+              custom={slideDirection}
+              exit="exit"
+              initial="enter"
+              transition={{ type: 'tween', duration: 0.16, ease: 'easeOut' }}
+              variants={{
+                enter: (dir: number) => ({ x: dir > 0 ? '40%' : '-40%', opacity: 0 }),
+                center: { x: 0, opacity: 1 },
+                exit: (dir: number) => ({ x: dir > 0 ? '-40%' : '40%', opacity: 0 }),
+              }}
+            >
+              {products.length > 0 ? (
+                <CardStack className="pb-8">
+                  {products.map((product, index) => (
+                    <RoutineStepCard
+                      from={location.pathname + location.search + location.hash}
+                      key={product.productId}
+                      product={product}
+                      stepNumber={index + 1}
+                    />
+                  ))}
+                </CardStack>
+              ) : (
+                <p className="rounded-xl bg-common-0 px-4 py-8 text-center text-sm text-neutral-400">
+                  표시할 루틴 단계가 없습니다.
+                </p>
+              )}
+            </motion.div>
+          </AnimatePresence>
         </div>
       </section>
 

@@ -1,3 +1,4 @@
+import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { ChevronRight, X } from 'lucide-react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
@@ -6,6 +7,7 @@ import { useShallow } from 'zustand/react/shallow'
 import { APP_ROUTES } from '../../app/routes'
 import { apiClient } from '../../api'
 import AlertMessage from '../../components/common/AlertMessage'
+import CardStack from '../../components/common/CardStack'
 import RoutineStepCard from '../../components/common/RoutineStepCard'
 import MobilePage from '../../components/MobilePage'
 import PageHeader from '../../components/common/PageHeader'
@@ -86,6 +88,7 @@ function ResultRoutinePage() {
   const { id } = useParams<{ id: string }>()
   const resultId = Number(id)
   const [activeTabId, setActiveTabId] = useState<RoutineTabId>('am')
+  const [slideDirection, setSlideDirection] = useState(0)
   const [isSaveSheetOpen, setIsSaveSheetOpen] = useState(false)
   const [routineNameDraft, setRoutineNameDraft] = useState('')
   const [isRoutineNameFocused, setIsRoutineNameFocused] = useState(false)
@@ -290,28 +293,48 @@ function ResultRoutinePage() {
                 activeTabId={activeTabId}
                 items={ROUTINE_TAB_ITEMS}
                 mode="equal"
-                onChange={(tabId) => setActiveTabId(tabId as RoutineTabId)}
+                onChange={(tabId) => {
+                  if (tabId === activeTabId) return
+                  setSlideDirection(tabId === 'pm' ? 1 : -1)
+                  setActiveTabId(tabId as RoutineTabId)
+                }}
               />
             </div>
 
             <div
               ref={whiteContainerRef}
               className={cn(
-                'min-h-0 flex-1 hide-scrollbar',
+                'min-h-0 flex-1 overflow-x-hidden hide-scrollbar',
                 // 스크롤 리셋 애니메이션 중에는 overflow-y-auto 유지 (중단되지 않도록)
                 isHeaderScrolled || isInnerScrollResetting ? 'overflow-y-auto' : 'overflow-y-hidden',
               )}
             >
-              <section className="space-y-5 px-4 pb-10 pt-5">
-                {products.map((product, index) => (
-                  <RoutineStepCard
-                    key={product.productId}
-                    from={location.pathname + location.search + location.hash}
-                    product={product}
-                    stepNumber={index + 1}
-                  />
-                ))}
-              </section>
+              <AnimatePresence custom={slideDirection} initial={false} mode="wait">
+                <motion.div
+                  key={activeTabId}
+                  animate="center"
+                  custom={slideDirection}
+                  exit="exit"
+                  initial="enter"
+                  transition={{ type: 'tween', duration: 0.16, ease: 'easeOut' }}
+                  variants={{
+                    enter: (dir: number) => ({ x: dir > 0 ? '40%' : '-40%', opacity: 0 }),
+                    center: { x: 0, opacity: 1 },
+                    exit: (dir: number) => ({ x: dir > 0 ? '-40%' : '40%', opacity: 0 }),
+                  }}
+                >
+                  <CardStack className="px-4 pb-10 pt-5">
+                    {products.map((product, index) => (
+                      <RoutineStepCard
+                        key={product.productId}
+                        from={location.pathname + location.search + location.hash}
+                        product={product}
+                        stepNumber={index + 1}
+                      />
+                    ))}
+                  </CardStack>
+                </motion.div>
+              </AnimatePresence>
             </div>
 
             <div
