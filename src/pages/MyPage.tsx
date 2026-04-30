@@ -100,8 +100,9 @@ function MyPage() {
   const hasResultFromApi = (resultListQuery.data?.results.length ?? 0) > 0
   const hasRoutineFromApi = (routineQuery.data?.routines.length ?? 0) > 0
 
+  {/*hasResultFromApi &&  나중에 추가 */}
   let viewState: MyPageViewState = 'empty'
-  if (hasResultFromApi && hasRoutineFromApi && !shouldResetByRoutineError) {
+  if (hasRoutineFromApi && !shouldResetByRoutineError) {
     viewState = 'diagnosis_routine'
   } else if (hasResultFromApi) {
     viewState = 'diagnosis_only'
