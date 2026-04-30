@@ -12,7 +12,7 @@ function AppLogo({ variant = 'bold', className }: AppLogoProps) {
       viewBox="0 0 82 28"
       aria-label="Layerd"
       className={cn(
-        'h-[20px] w-auto',
+        'h-[24px] w-auto',
         variant === 'muted' && 'text-neutral-400/30',
         variant === 'bold' && 'text-neutral-800',
         className,
