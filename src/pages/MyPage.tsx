@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom'
 
 import { apiClient } from '../api'
 import { ApiError } from '../api/errors'
-import type { ResultDetail, ResultListResponse, RoutineListResponse } from '../api/types'
+import type { ResultListResponse, RoutineListResponse } from '../api/types'
 import { APP_ROUTES, createResultDetailPath } from '../app/routes'
 import ConfirmActionDialog from '../components/common/ConfirmActionDialog'
 import SectionTitle from '../components/common/SectionTitle'
@@ -22,7 +22,6 @@ import { queryKeys } from '../lib/queryKeys'
 import { cn } from '../lib/utils'
 import { selectIsAuthenticated, useAuthStore } from '../stores/authStore'
 import { useSurveyResultStore } from '../stores/surveyResultStore'
-import { getResultDetailQueryOptions } from './results/useResultDetail'
 
 type MyPageViewState = 'diagnosis_routine' | 'diagnosis_only' | 'empty'
 const MAX_VISIBLE_HISTORY_COUNT = 3
@@ -72,36 +71,20 @@ function MyPage() {
   const logout = useLogout()
   const [isWithdrawalDialogOpen, setIsWithdrawalDialogOpen] = useState(false)
 
-  const latestResultId = useSurveyResultStore((state) => state.latestResultId)
-  const savedResultId = useSurveyResultStore((state) => state.savedResultId)
   const savedRoutineName = useSurveyResultStore((state) => state.savedRoutineName)
-  const clearLatestResultId = useSurveyResultStore((state) => state.clearLatestResultId)
   const clearSavedRoutine = useSurveyResultStore((state) => state.clearSavedRoutine)
-
-  const resultQuery = useQuery<ResultDetail, ApiError>(getResultDetailQueryOptions(latestResultId ?? -1))
-
-  const shouldResetByResultError = shouldResetByError(resultQuery.error ?? null)
-
-  useEffect(() => {
-    if (!shouldResetByResultError) return
-    clearLatestResultId()
-    clearSavedRoutine()
-  }, [shouldResetByResultError, clearLatestResultId, clearSavedRoutine])
-
-  const hasSavedRoutine = latestResultId != null && savedResultId === latestResultId
-  const hasDiagnosis = resultQuery.data !== undefined || (latestResultId != null && !shouldResetByResultError)
 
   const routineQuery = useQuery<RoutineListResponse, ApiError>({
     queryKey: queryKeys.routineListPreview(),
     queryFn: () => apiClient.getRoutineList({ size: 1 }),
-    enabled: isAuthenticated && latestResultId != null && hasDiagnosis && hasSavedRoutine,
+    enabled: isAuthenticated === true,
     retry: false,
   })
 
   const resultListQuery = useQuery<ResultListResponse, ApiError>({
     queryKey: queryKeys.resultListPreview(),
     queryFn: () => apiClient.getResultList({ size: MAX_VISIBLE_HISTORY_COUNT }),
-    enabled: isAuthenticated && hasDiagnosis,
+    enabled: isAuthenticated === true,
     retry: false,
   })
 
@@ -112,17 +95,20 @@ function MyPage() {
     clearSavedRoutine()
   }, [shouldResetByRoutineError, clearSavedRoutine])
 
+  const hasResultFromApi = (resultListQuery.data?.results.length ?? 0) > 0
+  const hasRoutineFromApi = (routineQuery.data?.routines.length ?? 0) > 0
+
   let viewState: MyPageViewState = 'empty'
-  if (hasDiagnosis && hasSavedRoutine && !shouldResetByRoutineError) {
+  if (hasResultFromApi && hasRoutineFromApi && !shouldResetByRoutineError) {
     viewState = 'diagnosis_routine'
-  } else if (hasDiagnosis) {
+  } else if (hasResultFromApi) {
     viewState = 'diagnosis_only'
   }
 
   const latestRoutine = routineQuery.data?.routines[0]
   const routineName = savedRoutineName ?? latestRoutine?.title ?? '저장한 루틴'
   const routineDate = latestRoutine ? toYearMonthDay(latestRoutine.createdAt) : 'YYYY.MM.DD'
-  const hasRoutinePreview = latestRoutine != null || savedRoutineName != null
+  const hasRoutinePreview = hasRoutineFromApi
   const resultItems = (resultListQuery.data?.results ?? []).slice(0, MAX_VISIBLE_HISTORY_COUNT)
 
   function handleWithdrawalClick() {
