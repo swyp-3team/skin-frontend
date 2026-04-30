@@ -78,6 +78,7 @@ function MyPage() {
     queryKey: queryKeys.routineListPreview(),
     queryFn: () => apiClient.getRoutineList({ size: 1 }),
     enabled: isAuthenticated === true,
+    staleTime: 0,
     retry: false,
   })
 
@@ -85,6 +86,7 @@ function MyPage() {
     queryKey: queryKeys.resultListPreview(),
     queryFn: () => apiClient.getResultList({ size: MAX_VISIBLE_HISTORY_COUNT }),
     enabled: isAuthenticated === true,
+    staleTime: 0,
     retry: false,
   })
 
