@@ -150,10 +150,7 @@ function RoutineDetailPage() {
               const isActive = activeTabId === item.id
               return (
                 <button
-                  className={cn(
-                    'flex h-full flex-1 items-center justify-center border-b-2 px-2.5',
-                    isActive ? 'border-neutral-800' : 'border-transparent',
-                  )}
+                  className="relative flex h-full flex-1 items-center justify-center px-2.5"
                   key={item.id}
                   onClick={() => {
                     if (item.id === activeTabId) return
@@ -170,6 +167,13 @@ function RoutineDetailPage() {
                   >
                     {item.label}
                   </span>
+                  {isActive && (
+                    <motion.div
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-neutral-800"
+                      layoutId="routine-tab-indicator"
+                      transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                    />
+                  )}
                 </button>
               )
             })}
@@ -184,7 +188,10 @@ function RoutineDetailPage() {
               custom={slideDirection}
               exit="exit"
               initial="enter"
-              transition={{ type: 'tween', duration: 0.16, ease: 'easeOut' }}
+              transition={{
+                x: { type: 'spring', bounce: 0, duration: 0.21 },
+                opacity: { duration: 0.15, ease: 'easeOut' },
+              }}
               variants={{
                 enter: (dir: number) => ({ x: dir > 0 ? '40%' : '-40%', opacity: 0 }),
                 center: { x: 0, opacity: 1 },

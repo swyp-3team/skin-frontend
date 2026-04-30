@@ -316,7 +316,10 @@ function ResultRoutinePage() {
                   custom={slideDirection}
                   exit="exit"
                   initial="enter"
-                  transition={{ type: 'tween', duration: 0.16, ease: 'easeOut' }}
+                  transition={{
+                    x: { type: 'spring', bounce: 0, duration: 0.21 },
+                    opacity: { duration: 0.15, ease: 'easeOut' },
+                  }}
                   variants={{
                     enter: (dir: number) => ({ x: dir > 0 ? '40%' : '-40%', opacity: 0 }),
                     center: { x: 0, opacity: 1 },

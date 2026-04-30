@@ -1,3 +1,5 @@
+import { motion } from 'motion/react'
+
 import { cn } from '@/lib/utils'
 
 export interface ResultTabItem {
@@ -23,16 +25,21 @@ function ResultTabBar({ items, activeTabId, onChange, mode, className }: ResultT
             return (
               <button
                 className={cn(
-                  'inline-flex items-center justify-center border-b-2 px-2 py-2.5 text-[18px] leading-[25.56px] transition-colors',
-                  isActive
-                    ? 'border-neutral-800 font-bold text-neutral-800'
-                    : 'border-transparent font-medium text-neutral-400',
+                  'relative inline-flex items-center justify-center px-2 py-2.5 text-[18px] leading-[25.56px] transition-colors',
+                  isActive ? 'font-bold text-neutral-800' : 'font-medium text-neutral-400',
                 )}
                 key={item.id}
                 onClick={() => onChange(item.id)}
                 type="button"
               >
                 {item.label}
+                {isActive && (
+                  <motion.div
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-neutral-800"
+                    layoutId="result-tab-indicator"
+                    transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                  />
+                )}
               </button>
             )
           })}
@@ -49,16 +56,21 @@ function ResultTabBar({ items, activeTabId, onChange, mode, className }: ResultT
           return (
             <button
               className={cn(
-                'inline-flex items-center justify-center border-b-2 px-2.5 py-2.5 text-[18px] leading-[25.56px] whitespace-nowrap transition-colors',
-                isActive
-                  ? 'border-neutral-800 font-bold text-neutral-800'
-                  : 'border-transparent font-medium text-neutral-400',
+                'relative inline-flex items-center justify-center px-2.5 py-2.5 text-[18px] leading-[25.56px] whitespace-nowrap transition-colors',
+                isActive ? 'font-bold text-neutral-800' : 'font-medium text-neutral-400',
               )}
               key={item.id}
               onClick={() => onChange(item.id)}
               type="button"
             >
               {item.label}
+              {isActive && (
+                <motion.div
+                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-neutral-800"
+                  layoutId="result-tab-indicator"
+                  transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                />
+              )}
             </button>
           )
         })}
