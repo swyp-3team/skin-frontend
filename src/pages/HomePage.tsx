@@ -107,7 +107,7 @@ function HomePage() {
             <p className="text-[14px] font-medium leading-[20.44px] text-neutral-600">최근 진단 결과</p>
           </div>
 
-          <article className="rounded-lg border-t-2 border-primary-400 bg-common-0 px-4 pb-3 pt-4">
+          <article className="rounded-lg border-t-3 border-primary-400 bg-common-0 px-4 pb-3 pt-4">
             <div className="space-y-1">
               <h2 className="text-[18px] font-bold leading-[25.56px] text-neutral-800">
                 {result?.skinType ?? '최근 진단 정보를 불러오는 중입니다.'}
