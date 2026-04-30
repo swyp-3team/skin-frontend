@@ -2,7 +2,7 @@ import { Link, useLocation } from 'react-router-dom'
 
 import { APP_ROUTES } from '@/app/routes'
 import PageHeading from '../../components/common/PageHeading'
-import PageHeader from '../../components/common/PageHeader'
+import PageHeader from '../../components/headers/PageHeader'
 import MobilePage from '../../components/MobilePage'
 import { buttonVariants } from '../../components/ui/button'
 import { LANDING_COPY } from '../../constants/landing'

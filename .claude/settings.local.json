@@ -30,7 +30,12 @@
       "WebFetch(domain:localhost)",
       "Bash(git checkout:*)",
       "Bash(git rm:*)",
-      "WebFetch(domain:api.layerd.co.kr)"
+      "WebFetch(domain:api.layerd.co.kr)",
+      "Bash(sed -i \"s|from './common/PageHeader'|from './headers/PageHeader'|g\" src/components/MobilePage.tsx)",
+      "Bash(sed -i \"s|from '@/components/common/PageHeader'|from '@/components/headers/PageHeader'|g\" src/components/results/ResultOverviewLayout.tsx)",
+      "Bash(sed -i \"s|from '../components/common/PageHeader'|from '../components/headers/PageHeader'|g\" src/pages/HomePage.tsx src/pages/LandingPage.tsx src/pages/MyPage.tsx src/pages/MyPageResultsPage.tsx src/pages/MyPageRoutinesPage.tsx src/pages/RoutineDetailPage.tsx)",
+      "Bash(sed -i \"s|from '../components/mobile-page/GlassOverlayHeader'|from '../components/headers/GlassOverlayHeader'|g\" src/pages/ProductDetailPage.tsx)",
+      "Bash(sed -i \"s|from '../../components/common/PageHeader'|from '../../components/headers/PageHeader'|g\" src/pages/results/ResultProductsPage.tsx src/pages/results/ResultRoutinePage.tsx src/pages/survey/SurveyIntroPage.tsx)"
     ]
   }
 }

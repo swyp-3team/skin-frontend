@@ -78,7 +78,9 @@ function PageHeader({
       )}
     >
       {showLogo ? (
-        <AppLogo className={isWhiteContent ? 'text-common-0' : undefined} />
+        <Link to="/" aria-label="홈으로 이동">
+          <AppLogo className={isWhiteContent ? 'text-common-0' : undefined} />
+        </Link>
       ) : (
         <h1 className={cn(TITLE_CLASS, isWhiteContent ? 'text-common-0' : 'text-neutral-800')}>{title}</h1>
       )}

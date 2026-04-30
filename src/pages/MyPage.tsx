@@ -11,7 +11,7 @@ import ConfirmActionDialog from '../components/common/ConfirmActionDialog'
 import SectionTitle from '../components/common/SectionTitle'
 import SurfaceCard from '../components/common/SurfaceCard'
 import MobilePage from '../components/MobilePage'
-import PageHeader from '../components/common/PageHeader'
+import PageHeader from '../components/headers/PageHeader'
 import { buttonVariants } from '../components/ui/button'
 import { AUTH_UI_TEXT } from '../constants/auth'
 

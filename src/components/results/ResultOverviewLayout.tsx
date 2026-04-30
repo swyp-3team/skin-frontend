@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 
 import MobilePage from '@/components/MobilePage'
-import PageHeader from '@/components/common/PageHeader'
+import PageHeader from '@/components/headers/PageHeader'
 import SafeImage from '@/components/common/SafeImage'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'

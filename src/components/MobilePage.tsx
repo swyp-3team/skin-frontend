@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 
 import { cn } from '@/lib/utils'
-import PageHeader from './common/PageHeader'
+import PageHeader from './headers/PageHeader'
 
 interface MobilePageProps {
   children: ReactNode

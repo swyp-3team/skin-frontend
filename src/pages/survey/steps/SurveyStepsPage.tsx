@@ -5,7 +5,7 @@ import { useShallow } from 'zustand/react/shallow'
 
 import { APP_ROUTES, createResultDetailPath } from '../../../app/routes'
 import AlertMessage from '../../../components/common/AlertMessage'
-import TitleCloseHeader from '../../../components/mobile-page/TitleCloseHeader'
+import TitleCloseHeader from '../../../components/headers/TitleCloseHeader'
 import MobilePage from '../../../components/MobilePage'
 import {
   SURVEY_PAGE_TITLE,
