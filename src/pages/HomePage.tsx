@@ -15,22 +15,17 @@ import { cn } from '../lib/utils'
 import { selectIsAuthenticated, useAuthStore } from '../stores/authStore'
 import { useSurveyResultStore } from '../stores/surveyResultStore'
 
-function formatDateTime(value: string): { date: string; time: string } {
+function formatDate(value: string): string {
   const parsed = new Date(value.replace(/\./g, '-'))
   if (Number.isNaN(parsed.getTime())) {
-    return { date: 'YYYY.MM.DD', time: '--:--' }
+    return 'YYYY.MM.DD'
   }
 
   const year = parsed.getFullYear()
   const month = String(parsed.getMonth() + 1).padStart(2, '0')
   const day = String(parsed.getDate()).padStart(2, '0')
-  const hour = String(parsed.getHours()).padStart(2, '0')
-  const minute = String(parsed.getMinutes()).padStart(2, '0')
 
-  return {
-    date: `${year}.${month}.${day}`,
-    time: `${hour}:${minute}`,
-  }
+  return `${year}.${month}.${day}`
 }
 
 function getElapsedDaysLabel(value: string): string {
@@ -85,7 +80,7 @@ function HomePage() {
   }
 
   const result = resultQuery.data
-  const diagnosed = result ? formatDateTime(result.diagnosedAt) : { date: 'YYYY.MM.DD', time: '--:--' }
+  const diagnosedDate = result ? formatDate(result.diagnosedAt) : 'YYYY.MM.DD'
   const elapsedDaysLabel = result ? getElapsedDaysLabel(result.diagnosedAt) : 'N일'
 
   return (
@@ -119,8 +114,7 @@ function HomePage() {
 
             <div className="mt-4 border-b border-neutral-100 py-2">
               <div className="inline-flex items-center gap-1 text-[12px] font-normal leading-[16.32px] text-neutral-400">
-                <span>{diagnosed.date}</span>
-                <span>{diagnosed.time}</span>
+                <span>{diagnosedDate}</span>
               </div>
             </div>
 
