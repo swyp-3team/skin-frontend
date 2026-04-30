@@ -71,7 +71,7 @@ function RoutineStepCard({ from, product, stepNumber }: RoutineStepCardProps) {
           <span className={PRODUCT_CATEGORY_CHIP_CLASS}>{ROUTINE_PRODUCT_CATEGORY_LABELS[product.productCategory]}</span>
           <p className="line-clamp-2 text-xs leading-[16.32px] text-neutral-800">{product.name}</p>
           <div className="inline-flex items-end text-neutral-800">
-            <span className="text-xs font-bold leading-[16.32px]">-</span>
+            <span className="text-xs font-bold leading-[16.32px]">{product.price.toLocaleString('ko-KR')}</span>
             <span className="text-[11px] font-normal leading-[14.3px]">원</span>
           </div>
         </div>

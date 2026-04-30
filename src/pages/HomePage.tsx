@@ -16,7 +16,7 @@ import { selectIsAuthenticated, useAuthStore } from '../stores/authStore'
 import { useSurveyResultStore } from '../stores/surveyResultStore'
 
 function formatDateTime(value: string): { date: string; time: string } {
-  const parsed = new Date(value)
+  const parsed = new Date(value.replace(/\./g, '-'))
   if (Number.isNaN(parsed.getTime())) {
     return { date: 'YYYY.MM.DD', time: '--:--' }
   }
@@ -34,7 +34,7 @@ function formatDateTime(value: string): { date: string; time: string } {
 }
 
 function getElapsedDaysLabel(value: string): string {
-  const parsed = new Date(value)
+  const parsed = new Date(value.replace(/\./g, '-'))
   if (Number.isNaN(parsed.getTime())) {
     return 'N일'
   }

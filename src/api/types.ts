@@ -116,6 +116,7 @@ export type RoutineStepCategory = 'PREPARE' | 'INTENSIVE_CARE' | 'MOISTURIZER' |
 export interface RoutineRecommendedProduct {
   productId: number
   name: string
+  price: number
   productCategory: RoutineProductCategory
   imageUrl: string | null
   routineStepCategory: RoutineStepCategory

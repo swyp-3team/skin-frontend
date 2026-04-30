@@ -562,6 +562,7 @@ function normalizeRoutineRecommendedProduct(raw: unknown, slot: string, index: n
   return {
     productId: raw.productId,
     name: raw.name,
+    price: typeof raw.price === 'number' ? raw.price : 0,
     productCategory: raw.productCategory,
     imageUrl: typeof raw.imageUrl === 'string' ? raw.imageUrl : null,
     routineStepCategory: raw.routineStepCategory,

@@ -498,6 +498,7 @@ function buildRoutineSection(
       return {
         productId: item.productId,
         name: item.name,
+        price: item.price,
         productCategory: spec.productCategory,
         imageUrl: item.imageUrl,
         routineStepCategory: spec.routineStepCategory,
