@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom'
 import { apiClient } from '../api'
 import { ApiError } from '../api/errors'
 import type { ResultListResponse, RoutineListResponse } from '../api/types'
-import { APP_ROUTES, createResultDetailPath } from '../app/routes'
+import { APP_ROUTES, createResultDetailPath, createRoutineDetailPath } from '../app/routes'
 import ConfirmActionDialog from '../components/common/ConfirmActionDialog'
 import SectionTitle from '../components/common/SectionTitle'
 import SurfaceCard from '../components/common/SurfaceCard'
@@ -149,10 +149,20 @@ function MyPage() {
               </p>
             ) : (
               <div className="space-y-3">
-                <article className="flex w-full flex-col gap-4 rounded-[8px] bg-primary-200 p-4">
-                  <p className="text-[15px] font-semibold leading-[22.2px] text-neutral-900">{routineName}</p>
-                  <p className="text-[11px] font-medium leading-[14.3px] text-neutral-400">{routineDate}</p>
-                </article>
+                {latestRoutine ? (
+                  <Link
+                    className="flex w-full flex-col gap-4 rounded-[8px] bg-primary-200 p-4"
+                    to={createRoutineDetailPath(latestRoutine.routineGroupId)}
+                  >
+                    <p className="text-[15px] font-semibold leading-[22.2px] text-neutral-900">{routineName}</p>
+                    <p className="text-[11px] font-medium leading-[14.3px] text-neutral-400">{routineDate}</p>
+                  </Link>
+                ) : (
+                  <article className="flex w-full flex-col gap-4 rounded-[8px] bg-primary-200 p-4">
+                    <p className="text-[15px] font-semibold leading-[22.2px] text-neutral-900">{routineName}</p>
+                    <p className="text-[11px] font-medium leading-[14.3px] text-neutral-400">{routineDate}</p>
+                  </article>
+                )}
 
                 {hasRoutinePreview ? (
                   <div className="flex w-full justify-center">
