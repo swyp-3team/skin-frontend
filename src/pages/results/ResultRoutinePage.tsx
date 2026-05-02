@@ -7,6 +7,7 @@ import { useShallow } from 'zustand/react/shallow'
 import { APP_ROUTES } from '../../app/routes'
 import { apiClient } from '../../api'
 import AlertMessage from '../../components/common/AlertMessage'
+import LoadingScreen from '../../components/common/LoadingScreen'
 import CardStack from '../../components/common/CardStack'
 import RoutineStepCard from '../../components/common/RoutineStepCard'
 import MobilePage from '../../components/MobilePage'
@@ -104,11 +105,49 @@ function ResultRoutinePage() {
   const { data: routineData, isLoading: isRoutineLoading, error: routineError } = useRoutineRecommendation(resultId)
 
   const isLoading = isHeaderLoading || isRoutineLoading
+  const [isDelaying, setIsDelaying] = useState(false)
+  const loadStartTimeRef = useRef<number | null>(null)
+  const loadDelayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const error = headerError ?? routineError
   const recommendation = routineData?.recommendation ?? null
   const previewToken = routineData?.previewToken ?? null
   const selectedRoutine = recommendation ? (activeTabId === 'am' ? recommendation.amRoutine : recommendation.pmRoutine) : null
   const products = selectedRoutine ? selectedRoutine.products : []
+
+  useEffect(() => {
+    if (isLoading) {
+      if (loadStartTimeRef.current === null) {
+        loadStartTimeRef.current = Date.now()
+      }
+      return
+    }
+
+    if (loadStartTimeRef.current === null) {
+      return
+    }
+
+    const elapsed = Date.now() - loadStartTimeRef.current
+    const remaining = Math.max(0, 3000 - elapsed)
+    loadStartTimeRef.current = null
+
+    if (remaining <= 0) {
+      setIsDelaying(false)
+      return
+    }
+
+    setIsDelaying(true)
+    loadDelayTimerRef.current = setTimeout(() => {
+      setIsDelaying(false)
+      loadDelayTimerRef.current = null
+    }, remaining)
+
+    return () => {
+      if (loadDelayTimerRef.current !== null) {
+        clearTimeout(loadDelayTimerRef.current)
+        loadDelayTimerRef.current = null
+      }
+    }
+  }, [isLoading])
 
   const whiteShellRef = useRef<HTMLDivElement>(null)
   const whiteContainerRef = useRef<HTMLDivElement>(null)
@@ -125,6 +164,9 @@ function ResultRoutinePage() {
   useEffect(() => {
     return () => {
       notify.dismiss(ROUTINE_SAVED_TOAST_ID)
+      if (loadDelayTimerRef.current !== null) {
+        clearTimeout(loadDelayTimerRef.current)
+      }
     }
   }, [])
 
@@ -189,27 +231,8 @@ function ResultRoutinePage() {
     )
   }
 
-  if (isLoading) {
-    return (
-      <MobilePage>
-        <AlertMessage size="md" variant="info">
-          루틴을 불러오는 중입니다...
-        </AlertMessage>
-      </MobilePage>
-    )
-  }
-
-  if (error || !recommendation || !header) {
-    return (
-      <MobilePage>
-        <AlertMessage size="md" variant="error">
-          {error?.message ?? '루틴을 불러오지 못했습니다.'}
-        </AlertMessage>
-      </MobilePage>
-    )
-  }
-
-  const skinResultId = recommendation.resultId
+  const showLoading = isLoading || isDelaying
+  const skinResultId = recommendation?.resultId ?? 0
   const isRoutineSaved = savedResultId === skinResultId
   const routineNameLength = routineNameDraft.length
   const trimmedRoutineName = routineNameDraft.trim()
@@ -279,146 +302,162 @@ function ResultRoutinePage() {
 
   return (
     <>
-      <MobilePage header={<PageHeader isScrolled={isHeaderScrolled} title={ROUTINE_PAGE_COPY.title} />}>
-        <section className="space-y-0">
-          <ResultTopSection header={header} intro={ROUTINE_PAGE_COPY.intro} resultId={resultId} />
-          <div ref={whiteBoxSentinelRef} aria-hidden className="h-px" />
+      <AnimatePresence>
+        {showLoading ? <LoadingScreen key="routine-loading" text="루틴을 구상하는 중이에요" /> : null}
+      </AnimatePresence>
 
-          <div
-            ref={whiteShellRef}
-            className="-mx-4 sticky top-12 flex h-[calc(100dvh-48px)] flex-col bg-common-0"
-          >
-            <div className="relative z-10 shrink-0 bg-common-0 px-4">
-              <ResultTabBar
-                activeTabId={activeTabId}
-                items={ROUTINE_TAB_ITEMS}
-                mode="equal"
-                onChange={(tabId) => {
-                  if (tabId === activeTabId) return
-                  setSlideDirection(tabId === 'pm' ? 1 : -1)
-                  setActiveTabId(tabId as RoutineTabId)
-                }}
-              />
-            </div>
+      {!showLoading && (error || !recommendation || !header) ? (
+        <MobilePage>
+          <AlertMessage size="md" variant="error">
+            {error?.message ?? '루틴을 불러오지 못했습니다.'}
+          </AlertMessage>
+        </MobilePage>
+      ) : null}
 
-            <div
-              ref={whiteContainerRef}
-              className={cn(
-                'min-h-0 flex-1 overflow-x-hidden hide-scrollbar',
-                // 스크롤 리셋 애니메이션 중에는 overflow-y-auto 유지 (중단되지 않도록)
-                isHeaderScrolled || isInnerScrollResetting ? 'overflow-y-auto' : 'overflow-y-hidden',
-              )}
-            >
-              <AnimatePresence custom={slideDirection} initial={false} mode="wait">
-                <motion.div
-                  key={activeTabId}
-                  animate="center"
-                  custom={slideDirection}
-                  exit="exit"
-                  initial="enter"
-                  transition={{ type: 'tween', duration: 0.16, ease: 'easeOut' }}
-                  variants={{
-                    enter: (dir: number) => ({ x: dir > 0 ? '40%' : '-40%', opacity: 0 }),
-                    center: { x: 0, opacity: 1 },
-                    exit: (dir: number) => ({ x: dir > 0 ? '-40%' : '40%', opacity: 0 }),
-                  }}
-                >
-                  <CardStack className="px-4 pb-10 pt-5">
-                    {products.map((product, index) => (
-                      <RoutineStepCard
-                        key={product.productId}
-                        from={location.pathname + location.search + location.hash}
-                        product={product}
-                        stepNumber={index + 1}
-                      />
-                    ))}
-                  </CardStack>
-                </motion.div>
-              </AnimatePresence>
-            </div>
+      {!showLoading && !error && recommendation && header ? (
+        <>
+          <MobilePage header={<PageHeader isScrolled={isHeaderScrolled} title={ROUTINE_PAGE_COPY.title} />}>
+            <section className="space-y-0">
+              <ResultTopSection header={header} intro={ROUTINE_PAGE_COPY.intro} resultId={resultId} />
+              <div ref={whiteBoxSentinelRef} aria-hidden className="h-px" />
 
-            <div
-              className={cn(
-                'shrink-0 overflow-hidden border-t border-neutral-100 bg-common-0 px-4 pt-3',
-                'transition-[max-height,opacity] duration-300 ease-out',
-                isHeaderScrolled ? 'max-h-40 opacity-100' : 'pointer-events-none max-h-0 opacity-0',
-              )}
-              style={{ paddingBottom: FOOTER_SAFE_AREA_PADDING }}
-            >
-              {routineAction}
-            </div>
-          </div>
-        </section>
-      </MobilePage>
-
-      <DrawerRoot open={isSaveSheetOpen} onOpenChange={handleSaveSheetOpenChange}>
-        <DrawerContentBottom aria-label={ROUTINE_PAGE_COPY.saveSheetTitle}>
-          <div className="w-full pt-2.5">
-            <div className="inline-flex w-full items-center justify-between px-5 py-2.5">
-              <div className="flex flex-1 items-center justify-center pl-8">
-                <h2 className="text-base font-medium leading-[23.68px] text-neutral-800">{ROUTINE_PAGE_COPY.saveSheetTitle}</h2>
-              </div>
-              <button
-                aria-label="루틴 저장 시트 닫기"
-                className={SAVE_SHEET_CLOSE_BUTTON_CLASS}
-                onClick={() => handleSaveSheetOpenChange(false)}
-                type="button"
-              >
-                <X className="size-6 text-common-0" strokeWidth={1.5} />
-              </button>
-            </div>
-          </div>
-
-          <form className="w-full" onSubmit={handleSaveRoutineSubmit}>
-            <div className="flex w-full flex-col gap-2.5 p-5">
               <div
-                className={cn(
-                  'flex flex-col gap-3 rounded-lg p-3',
-                  routineNameFieldState === 'focus'
-                    ? 'outline outline-2 -outline-offset-2 outline-primary-300'
-                    : 'outline outline-1 -outline-offset-1 outline-neutral-150',
-                )}
+                ref={whiteShellRef}
+                className="-mx-4 sticky top-12 flex h-[calc(100dvh-48px)] flex-col bg-common-0"
               >
-                <div className="inline-flex w-full items-center gap-2.5 px-1">
-                  <Input
-                    aria-label="루틴 이름을 입력하세요"
-                    className={cn(
-                      'h-auto border-0 bg-transparent p-0 text-[15px] font-normal leading-[22.2px] shadow-none focus-visible:border-0 focus-visible:ring-0 placeholder:text-neutral-200',
-                      routineNameFieldState === 'typed' ? 'text-neutral-800' : 'text-neutral-200',
-                    )}
-                    maxLength={ROUTINE_NAME_MAX_LENGTH}
-                    onBlur={() => setIsRoutineNameFocused(false)}
-                    onChange={(event) => setRoutineNameDraft(event.target.value)}
-                    onFocus={() => setIsRoutineNameFocused(true)}
-                    placeholder={ROUTINE_PAGE_COPY.saveSheetPlaceholder}
-                    value={routineNameDraft}
+                <div className="relative z-10 shrink-0 bg-common-0 px-4">
+                  <ResultTabBar
+                    activeTabId={activeTabId}
+                    items={ROUTINE_TAB_ITEMS}
+                    mode="equal"
+                    onChange={(tabId) => {
+                      if (tabId === activeTabId) return
+                      setSlideDirection(tabId === 'pm' ? 1 : -1)
+                      setActiveTabId(tabId as RoutineTabId)
+                    }}
                   />
                 </div>
 
-                <div className="flex w-full flex-col items-end justify-center gap-2.5">
-                  <div className="inline-flex w-full items-center justify-end px-1">
-                    <span className="text-xs font-medium leading-[16.32px] text-neutral-300">{routineNameLength}</span>
-                    <span className="text-xs font-medium leading-[16.32px] text-neutral-300">/{ROUTINE_NAME_MAX_LENGTH}</span>
-                  </div>
+                <div
+                  ref={whiteContainerRef}
+                  className={cn(
+                    'min-h-0 flex-1 overflow-x-hidden hide-scrollbar',
+                    // 스크롤 리셋 애니메이션 중에는 overflow-y-auto 유지 (중단되지 않도록)
+                    isHeaderScrolled || isInnerScrollResetting ? 'overflow-y-auto' : 'overflow-y-hidden',
+                  )}
+                >
+                  <AnimatePresence custom={slideDirection} initial={false} mode="wait">
+                    <motion.div
+                      key={activeTabId}
+                      animate="center"
+                      custom={slideDirection}
+                      exit="exit"
+                      initial="enter"
+                      transition={{ type: 'tween', duration: 0.16, ease: 'easeOut' }}
+                      variants={{
+                        enter: (dir: number) => ({ x: dir > 0 ? '40%' : '-40%', opacity: 0 }),
+                        center: { x: 0, opacity: 1 },
+                        exit: (dir: number) => ({ x: dir > 0 ? '-40%' : '40%', opacity: 0 }),
+                      }}
+                    >
+                      <CardStack className="px-4 pb-10 pt-5">
+                        {products.map((product, index) => (
+                          <RoutineStepCard
+                            key={product.productId}
+                            from={location.pathname + location.search + location.hash}
+                            product={product}
+                            stepNumber={index + 1}
+                          />
+                        ))}
+                      </CardStack>
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+
+                <div
+                  className={cn(
+                    'shrink-0 overflow-hidden border-t border-neutral-100 bg-common-0 px-4 pt-3',
+                    'transition-[max-height,opacity] duration-300 ease-out',
+                    isHeaderScrolled ? 'max-h-40 opacity-100' : 'pointer-events-none max-h-0 opacity-0',
+                  )}
+                  style={{ paddingBottom: FOOTER_SAFE_AREA_PADDING }}
+                >
+                  {routineAction}
                 </div>
               </div>
-            </div>
+            </section>
+          </MobilePage>
 
-            <div className="flex w-full flex-col gap-2.5 px-5 pb-5">
-              <button
-                className={cn(
-                  'inline-flex w-full min-w-[70px] items-center justify-center rounded-lg px-6 py-3 text-base font-medium leading-[23.68px] transition-colors',
-                  canSubmitRoutineName && !isSaving ? 'bg-neutral-800 text-common-0 hover:bg-neutral-900' : 'bg-neutral-100 text-neutral-300',
-                )}
-                disabled={!canSubmitRoutineName || isSaving}
-                type="submit"
-              >
-                {isSaving ? '저장 중...' : ROUTINE_PAGE_COPY.saveSheetSubmit}
-              </button>
-            </div>
-          </form>
-        </DrawerContentBottom>
-      </DrawerRoot>
+          <DrawerRoot open={isSaveSheetOpen} onOpenChange={handleSaveSheetOpenChange}>
+            <DrawerContentBottom aria-label={ROUTINE_PAGE_COPY.saveSheetTitle}>
+              <div className="w-full pt-2.5">
+                <div className="inline-flex w-full items-center justify-between px-5 py-2.5">
+                  <div className="flex flex-1 items-center justify-center pl-8">
+                    <h2 className="text-base font-medium leading-[23.68px] text-neutral-800">{ROUTINE_PAGE_COPY.saveSheetTitle}</h2>
+                  </div>
+                  <button
+                    aria-label="루틴 저장 시트 닫기"
+                    className={SAVE_SHEET_CLOSE_BUTTON_CLASS}
+                    onClick={() => handleSaveSheetOpenChange(false)}
+                    type="button"
+                  >
+                    <X className="size-6 text-common-0" strokeWidth={1.5} />
+                  </button>
+                </div>
+              </div>
+
+              <form className="w-full" onSubmit={handleSaveRoutineSubmit}>
+                <div className="flex w-full flex-col gap-2.5 p-5">
+                  <div
+                    className={cn(
+                      'flex flex-col gap-3 rounded-lg p-3',
+                      routineNameFieldState === 'focus'
+                        ? 'outline outline-2 -outline-offset-2 outline-primary-300'
+                        : 'outline outline-1 -outline-offset-1 outline-neutral-150',
+                    )}
+                  >
+                    <div className="inline-flex w-full items-center gap-2.5 px-1">
+                      <Input
+                        aria-label="루틴 이름을 입력하세요"
+                        className={cn(
+                          'h-auto border-0 bg-transparent p-0 text-[15px] font-normal leading-[22.2px] shadow-none focus-visible:border-0 focus-visible:ring-0 placeholder:text-neutral-200',
+                          routineNameFieldState === 'typed' ? 'text-neutral-800' : 'text-neutral-200',
+                        )}
+                        maxLength={ROUTINE_NAME_MAX_LENGTH}
+                        onBlur={() => setIsRoutineNameFocused(false)}
+                        onChange={(event) => setRoutineNameDraft(event.target.value)}
+                        onFocus={() => setIsRoutineNameFocused(true)}
+                        placeholder={ROUTINE_PAGE_COPY.saveSheetPlaceholder}
+                        value={routineNameDraft}
+                      />
+                    </div>
+
+                    <div className="flex w-full flex-col items-end justify-center gap-2.5">
+                      <div className="inline-flex w-full items-center justify-end px-1">
+                        <span className="text-xs font-medium leading-[16.32px] text-neutral-300">{routineNameLength}</span>
+                        <span className="text-xs font-medium leading-[16.32px] text-neutral-300">/{ROUTINE_NAME_MAX_LENGTH}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex w-full flex-col gap-2.5 px-5 pb-5">
+                  <button
+                    className={cn(
+                      'inline-flex w-full min-w-[70px] items-center justify-center rounded-lg px-6 py-3 text-base font-medium leading-[23.68px] transition-colors',
+                      canSubmitRoutineName && !isSaving ? 'bg-neutral-800 text-common-0 hover:bg-neutral-900' : 'bg-neutral-100 text-neutral-300',
+                    )}
+                    disabled={!canSubmitRoutineName || isSaving}
+                    type="submit"
+                  >
+                    {isSaving ? '저장 중...' : ROUTINE_PAGE_COPY.saveSheetSubmit}
+                  </button>
+                </div>
+              </form>
+            </DrawerContentBottom>
+          </DrawerRoot>
+        </>
+      ) : null}
     </>
   )
 }

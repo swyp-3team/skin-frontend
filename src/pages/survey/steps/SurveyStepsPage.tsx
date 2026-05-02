@@ -5,11 +5,11 @@ import { useShallow } from 'zustand/react/shallow'
 
 import { APP_ROUTES, createResultDetailPath } from '../../../app/routes'
 import AlertMessage from '../../../components/common/AlertMessage'
+import LoadingScreen from '../../../components/common/LoadingScreen'
 import TitleCloseHeader from '../../../components/headers/TitleCloseHeader'
 import MobilePage from '../../../components/MobilePage'
 import {
   SURVEY_PAGE_TITLE,
-  SURVEY_RESULT_COPY,
   SURVEY_STATUS_MESSAGES,
   SURVEY_STEP_MILESTONE_TOASTS,
   SURVEY_VALIDATION_MESSAGES,
@@ -65,6 +65,11 @@ function SurveyStepsPage() {
 
   const { questions, isLoading, error: questionLoadError } = useSurveyQuestions()
   const submitMutation = useSurveySubmit()
+  const [isDelaying, setIsDelaying] = useState(false)
+  const [isAwaitingNavigation, setIsAwaitingNavigation] = useState(false)
+  const submitStartTimeRef = useRef<number | null>(null)
+  const delayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pendingNavigateRef = useRef<(() => void) | null>(null)
   const [validationError, setValidationError] = useState<string | null>(null)
   const [isOptionPressed, setIsOptionPressed] = useState(false)
   const [transitionDirection, setTransitionDirection] = useState<'forward' | 'backward'>('forward')
@@ -73,6 +78,9 @@ function SurveyStepsPage() {
   useEffect(() => {
     return () => {
       notify.dismiss()
+      if (delayTimerRef.current !== null) {
+        clearTimeout(delayTimerRef.current)
+      }
     }
   }, [])
 
@@ -105,6 +113,13 @@ function SurveyStepsPage() {
   const clearErrors = () => {
     setValidationError(null)
     submitMutation.reset()
+    setIsDelaying(false)
+    setIsAwaitingNavigation(false)
+    pendingNavigateRef.current = null
+    if (delayTimerRef.current !== null) {
+      clearTimeout(delayTimerRef.current)
+      delayTimerRef.current = null
+    }
   }
 
   const showMilestoneToast = (step: number) => {
@@ -194,12 +209,27 @@ function SurveyStepsPage() {
       return
     }
 
+    submitStartTimeRef.current = Date.now()
     submitMutation.mutate(undefined, {
       onSuccess: (outcome) => {
-        if (outcome.kind === 'full') {
-          navigate(createResultDetailPath(outcome.result.resultId))
-        } else {
-          navigate(APP_ROUTES.surveyResult)
+        const elapsed = Date.now() - (submitStartTimeRef.current ?? Date.now())
+        const remaining = Math.max(0, 2000 - elapsed)
+
+        pendingNavigateRef.current = () => {
+          if (outcome.kind === 'full') {
+            navigate(createResultDetailPath(outcome.result.resultId))
+          } else {
+            navigate(APP_ROUTES.surveyResult)
+          }
+        }
+
+        setIsAwaitingNavigation(true)
+        if (remaining > 0) {
+          setIsDelaying(true)
+          delayTimerRef.current = setTimeout(() => {
+            setIsDelaying(false)
+            delayTimerRef.current = null
+          }, remaining)
         }
       },
     })
@@ -225,97 +255,105 @@ function SurveyStepsPage() {
     )
   }
 
-  if (submitMutation.isPending) {
-    return (
-      <MobilePage>
-        <div className="flex min-h-[60dvh] flex-col items-center justify-center gap-3">
-          <p className="text-lg font-bold text-neutral-800">{SURVEY_RESULT_COPY.submittingTitle}</p>
-          <p className="text-sm text-neutral-600/60">{SURVEY_RESULT_COPY.submittingDescription}</p>
-        </div>
-      </MobilePage>
-    )
-  }
-
   const progressPercent = totalSteps > 0 ? Math.min((safeCurrentStep / totalSteps) * 100, 100) : 0
+  const showSubmitLoading = submitMutation.isPending || isDelaying
+  const shouldRenderPageContent = !showSubmitLoading && !isAwaitingNavigation
 
   return (
-    <MobilePage
-      className="bg-gradient-to-b from-neutral-800 from-[5%] to-neutral-600 to-50%"
-      header={<TitleCloseHeader title={SURVEY_PAGE_TITLE} onClose={() => navigate(APP_ROUTES.home)} tone="dark" />}
-      mainClassName="flex flex-col p-0"
-      footer={
-        <div className="px-6 pt-4 pb-5">
-          {validationError ? (
-            <div className="pb-3">
-              <AlertMessage variant="warning">{validationError}</AlertMessage>
+    <>
+      <AnimatePresence
+        onExitComplete={() => {
+          const doNavigate = pendingNavigateRef.current
+          if (!doNavigate) {
+            return
+          }
+          pendingNavigateRef.current = null
+          doNavigate()
+        }}
+      >
+        {showSubmitLoading ? <LoadingScreen key="submit-loading" text="성분을 분석하고 있어요" /> : null}
+      </AnimatePresence>
+
+      {shouldRenderPageContent ? (
+        <MobilePage
+          className="bg-gradient-to-b from-neutral-800 from-[5%] to-neutral-600 to-50%"
+          header={<TitleCloseHeader title={SURVEY_PAGE_TITLE} onClose={() => navigate(APP_ROUTES.home)} tone="dark" />}
+          mainClassName="flex flex-col p-0"
+          footer={
+            <div className="px-6 pt-4 pb-5">
+              {validationError ? (
+                <div className="pb-3">
+                  <AlertMessage variant="warning">{validationError}</AlertMessage>
+                </div>
+              ) : null}
+
+              {submitMutation.error ? (
+                <div className="pb-3">
+                  <AlertMessage variant="error">{submitMutation.error.message}</AlertMessage>
+                </div>
+              ) : null}
+
+              <SurveyStepActions
+                currentStep={safeCurrentStep}
+                isNextHighlighted={isOptionPressed}
+                isFinalStep={isFinalStep}
+                isSubmitting={submitMutation.isPending}
+                onNext={handleNext}
+                onPrev={handlePrev}
+                onSubmit={handleSubmit}
+              />
             </div>
-          ) : null}
-
-          {submitMutation.error ? (
-            <div className="pb-3">
-              <AlertMessage variant="error">{submitMutation.error.message}</AlertMessage>
-            </div>
-          ) : null}
-
-          <SurveyStepActions
-            currentStep={safeCurrentStep}
-            isNextHighlighted={isOptionPressed}
-            isFinalStep={isFinalStep}
-            isSubmitting={submitMutation.isPending}
-            onNext={handleNext}
-            onPrev={handlePrev}
-            onSubmit={handleSubmit}
-          />
-        </div>
-      }
-    >
-      <section className="flex flex-1 min-h-0 w-full flex-col">
-        <div className="px-6 py-2">
-          <div className="h-2 w-full overflow-hidden rounded-[20px] bg-neutral-600">
-            <div
-              className="h-full bg-primary-300 transition-[width] duration-300 ease-out"
-              style={{ width: `${progressPercent}%` }}
-            />
-          </div>
-        </div>
-
-        {activeQuestion ? (
-          <div className="shrink-0 min-h-[135px] px-6 flex items-center">
-            <h2 className="text-[22px] font-medium leading-[33px] text-common-0">{activeQuestion.question}</h2>
-          </div>
-        ) : null}
-
-        <div className="flex flex-1 min-h-0 flex-col rounded-t-[20px] bg-common-0">
-          <AnimatePresence mode="wait" custom={transitionDirection}>
-            {activeQuestion ? (
-              <motion.div
-                key={activeQuestion.step}
-                className="min-h-0 flex-1 overflow-y-auto px-6 pt-6 pb-6"
-                custom={transitionDirection}
-                variants={slideVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={{ duration: 0.1, ease: 'easeOut' }}
-              >
-                <SurveyStepSection
-                  columns={activeQuestion.step >= TWO_COLUMN_FROM_STEP ? 2 : 1}
-                  hideTitle
-                  isSelected={(optionNumber) => selectedOptionNumbers.includes(optionNumber)}
-                  name={`step-${activeQuestion.step}`}
-                  onOptionPointerDown={() => setIsOptionPressed(true)}
-                  onOptionPointerUp={() => setIsOptionPressed(false)}
-                  onSelect={handleOptionSelect}
-                  options={activeQuestion.options}
-                  selectionMode={isConcernStep ? 'multiple' : 'single'}
-                  title={activeQuestion.question}
+          }
+        >
+          <section className="flex flex-1 min-h-0 w-full flex-col">
+            <div className="px-6 py-2">
+              <div className="h-2 w-full overflow-hidden rounded-[20px] bg-neutral-600">
+                <div
+                  className="h-full bg-primary-300 transition-[width] duration-300 ease-out"
+                  style={{ width: `${progressPercent}%` }}
                 />
-              </motion.div>
+              </div>
+            </div>
+
+            {activeQuestion ? (
+              <div className="shrink-0 min-h-[135px] px-6 flex items-center">
+                <h2 className="text-[22px] font-medium leading-[33px] text-common-0">{activeQuestion.question}</h2>
+              </div>
             ) : null}
-          </AnimatePresence>
-        </div>
-      </section>
-    </MobilePage>
+
+            <div className="flex flex-1 min-h-0 flex-col rounded-t-[20px] bg-common-0">
+              <AnimatePresence mode="wait" custom={transitionDirection}>
+                {activeQuestion ? (
+                  <motion.div
+                    key={activeQuestion.step}
+                    className="min-h-0 flex-1 overflow-y-auto px-6 pt-6 pb-6"
+                    custom={transitionDirection}
+                    variants={slideVariants}
+                    initial="enter"
+                    animate="center"
+                    exit="exit"
+                    transition={{ duration: 0.1, ease: 'easeOut' }}
+                  >
+                    <SurveyStepSection
+                      columns={activeQuestion.step >= TWO_COLUMN_FROM_STEP ? 2 : 1}
+                      hideTitle
+                      isSelected={(optionNumber) => selectedOptionNumbers.includes(optionNumber)}
+                      name={`step-${activeQuestion.step}`}
+                      onOptionPointerDown={() => setIsOptionPressed(true)}
+                      onOptionPointerUp={() => setIsOptionPressed(false)}
+                      onSelect={handleOptionSelect}
+                      options={activeQuestion.options}
+                      selectionMode={isConcernStep ? 'multiple' : 'single'}
+                      title={activeQuestion.question}
+                    />
+                  </motion.div>
+                ) : null}
+              </AnimatePresence>
+            </div>
+          </section>
+        </MobilePage>
+      ) : null}
+    </>
   )
 }
 
