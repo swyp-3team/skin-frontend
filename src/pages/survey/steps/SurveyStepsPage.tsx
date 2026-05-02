@@ -199,6 +199,7 @@ function SurveyStepsPage() {
   }
 
   const handleSubmit = () => {
+    notify.dismiss()
     clearErrors()
 
     const firstUnanswered = questions.find((item) => !isAnswered(answersByStep[item.step]))
