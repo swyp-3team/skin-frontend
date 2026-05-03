@@ -19,6 +19,8 @@ import ResultRoutinePage from '../pages/results/ResultRoutinePage'
 import SurveyIntroPage from '../pages/survey/SurveyIntroPage'
 import SurveyResultPage from '../pages/survey/result/SurveyResultPage'
 import SurveyStepsPage from '../pages/survey/steps/SurveyStepsPage'
+import TermsPage from '../pages/TermsPage'
+import PrivacyPage from '../pages/PrivacyPage'
 
 function AppRouter() {
   return (
@@ -33,6 +35,8 @@ function AppRouter() {
           <Route element={<SurveyStepsPage />} path={APP_ROUTES.surveySteps} />
           <Route element={<SurveyResultPage />} path={APP_ROUTES.surveyResult} />
           <Route element={<ProductDetailPage />} path={APP_ROUTES.productDetail} />
+          <Route element={<TermsPage />} path={APP_ROUTES.terms} />
+          <Route element={<PrivacyPage />} path={APP_ROUTES.privacy} />
 
           {/* 보호 라우트 (로그인 필요) */}
           <Route element={<ProtectedRoute />}>

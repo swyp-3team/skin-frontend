@@ -1,5 +1,7 @@
 import { X } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
+import { APP_ROUTES } from '@/app/routes'
 import AppLogo from '@/components/icons/AppLogo'
 import GoogleLogo from '@/components/icons/GoogleLogo'
 import KakaoLogo from '@/components/icons/KakaoLogo'
@@ -86,13 +88,13 @@ function LoginDialog({ open, variant, isPromoting, onOpenChange, onLogin }: Logi
             {/* 약관 안내 */}
             <p className="text-center text-[0.75rem] leading-[1.36] text-neutral-400">
               {AUTH_UI_TEXT.termsPrefix}{' '}
-              <a className="underline" href="#">
+              <Link className="underline" to={APP_ROUTES.terms}>
                 {AUTH_UI_TEXT.termsOfService}
-              </a>{' '}
+              </Link>{' '}
               {AUTH_UI_TEXT.termsSeparator}{' '}
-              <a className="underline" href="#">
+              <Link className="underline" to={APP_ROUTES.privacy}>
                 {AUTH_UI_TEXT.privacyPolicy}
-              </a>
+              </Link>
               {AUTH_UI_TEXT.termsSuffixPt1}
               <br />
               {AUTH_UI_TEXT.termsSuffixPt2}
