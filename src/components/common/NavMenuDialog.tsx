@@ -60,7 +60,7 @@ const MENU_ITEMS: MenuItemConfig[] = [
   {
     id: 'survey',
     label: '피부 진단하기',
-    resolveAction: () => ({ type: 'navigate', path: APP_ROUTES.survey }),
+    resolveAction: () => ({ type: 'navigate', path: APP_ROUTES.surveySteps }),
   },
   {
     id: 'routine',

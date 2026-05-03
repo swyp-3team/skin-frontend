@@ -115,7 +115,7 @@ function ResultProductsPage() {
     }
 
     const elapsed = Date.now() - loadStartTimeRef.current
-    const remaining = Math.max(0, 2500 - elapsed)
+    const remaining = Math.max(0, 3000 - elapsed)
     loadStartTimeRef.current = null
 
     if (remaining <= 0) {

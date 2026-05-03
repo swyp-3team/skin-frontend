@@ -214,7 +214,7 @@ function SurveyStepsPage() {
     submitMutation.mutate(undefined, {
       onSuccess: (outcome) => {
         const elapsed = Date.now() - (submitStartTimeRef.current ?? Date.now())
-        const remaining = Math.max(0, 2000 - elapsed)
+        const remaining = Math.max(0, 1500 - elapsed)
 
         pendingNavigateRef.current = () => {
           if (outcome.kind === 'full') {

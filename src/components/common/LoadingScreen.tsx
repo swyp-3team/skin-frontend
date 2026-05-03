@@ -48,7 +48,7 @@ function LoadingScreen({ text }: LoadingScreenProps) {
       }}
     >
       <div style={{ transform: 'translateY(-40px)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
-        <div ref={containerRef} style={{ width: 180, height: 180 }} />
+        <div ref={containerRef} style={{ width: 160, height: 160 }} />
         <p
           style={{
             color: 'var(--Neutral-600, #3A3D3B)',
