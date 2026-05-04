@@ -22,23 +22,22 @@ function ResultHistoryCard({ item }: ResultHistoryCardProps) {
   const historyDateTime = toDateTimeDisplay(item.diagnosedAt)
 
   return (
-    <li className="rounded-[8px] bg-common-0 px-3 py-3">
-      <div className="flex items-start justify-between gap-3">
-        <div className="space-y-1">
-          <div className="flex items-center gap-1 text-sm leading-[20.44px] text-neutral-600">
-            <span>{historyDateTime.date}</span>
-            <span className="text-neutral-300">{historyDateTime.time}</span>
+    <li className="rounded-[8px] bg-common-0">
+      <Link className="block px-3 py-3" to={createResultDetailPath(item.resultId)}>
+        <div className="flex items-start justify-between gap-3">
+          <div className="space-y-1">
+            <div className="flex items-center gap-1 text-sm leading-[20.44px] text-neutral-600">
+              <span>{historyDateTime.date}</span>
+              <span className="text-neutral-300">{historyDateTime.time}</span>
+            </div>
+            <p className="text-xs leading-[16.32px] text-neutral-300">{item.title}</p>
           </div>
-          <p className="text-xs leading-[16.32px] text-neutral-300">{item.title}</p>
+          <div className="inline-flex items-center gap-0.5 px-2 py-1 text-xs font-medium leading-[16.32px] text-primary-400">
+            <span>결과보기</span>
+            <ChevronRight className="size-4" strokeWidth={1.8} />
+          </div>
         </div>
-        <Link
-          className="inline-flex items-center gap-0.5 px-2 py-1 text-xs font-medium leading-[16.32px] text-primary-400"
-          to={createResultDetailPath(item.resultId)}
-        >
-          <span>결과보기</span>
-          <ChevronRight className="size-4" strokeWidth={1.8} />
-        </Link>
-      </div>
+      </Link>
     </li>
   )
 }

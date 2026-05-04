@@ -37,14 +37,14 @@ function PageHeader({
   if (isSubPage) {
     return (
       <header className={cn(BASE_CLASS, 'relative flex justify-center bg-common-0 py-2.5', className)}>
-        <div className="absolute left-5 top-1/2 -translate-y-1/2 whitespace-nowrap">
+        <div className="absolute flex items-center justify-start left-5 top-1/2 -translate-y-1/2 whitespace-nowrap">
           {leftSlot ?? (
             <Link
               aria-label="뒤로 돌아가기"
-              className="inline-flex size-7 items-center justify-start text-neutral-800"
+              className="inline-flex size-[28px] items-center justify-start text-neutral-800"
               to={backTo!}
             >
-              <ChevronLeft className="size-5" strokeWidth={1.8} />
+              <ChevronLeft className="size-[28px] items-center justify-start" strokeWidth={1.8} />
             </Link>
           )}
         </div>

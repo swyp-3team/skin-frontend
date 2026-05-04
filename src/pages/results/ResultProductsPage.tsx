@@ -1,5 +1,5 @@
 import { AnimatePresence } from 'motion/react'
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useReducer, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 
 import searchIcon from '../../assets/icons/mobile-page/search.svg'
@@ -98,11 +98,11 @@ function ResultProductsPage() {
     fetchNextPage,
   } = useResultProductsInfinite(resultId, activeTabId)
   const isLoading = isHeaderLoading || isProductsLoading
-  const [isDelaying, setIsDelaying] = useState(false)
+  const [isDelaying, dispatchDelay] = useReducer((_: boolean, next: boolean) => next, false)
   const loadStartTimeRef = useRef<number | null>(null)
-  const loadDelayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const delayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (isLoading) {
       if (loadStartTimeRef.current === null) {
         loadStartTimeRef.current = Date.now()
@@ -118,21 +118,24 @@ function ResultProductsPage() {
     const remaining = Math.max(0, 3000 - elapsed)
     loadStartTimeRef.current = null
 
-    if (remaining <= 0) {
-      setIsDelaying(false)
-      return
+    if (delayTimerRef.current) {
+      clearTimeout(delayTimerRef.current)
     }
 
-    setIsDelaying(true)
-    loadDelayTimerRef.current = setTimeout(() => {
-      setIsDelaying(false)
-      loadDelayTimerRef.current = null
-    }, remaining)
+    if (remaining > 0) {
+      dispatchDelay(true)
+      delayTimerRef.current = setTimeout(() => {
+        dispatchDelay(false)
+        delayTimerRef.current = null
+      }, remaining)
+    } else {
+      dispatchDelay(false)
+    }
 
     return () => {
-      if (loadDelayTimerRef.current !== null) {
-        clearTimeout(loadDelayTimerRef.current)
-        loadDelayTimerRef.current = null
+      if (delayTimerRef.current !== null) {
+        clearTimeout(delayTimerRef.current)
+        delayTimerRef.current = null
       }
     }
   }, [isLoading])
@@ -208,14 +211,6 @@ function ResultProductsPage() {
     observer.observe(sentinel)
     return () => observer.disconnect()
   }, [fetchNextPage, hasNextPage, isFetchingNextPage])
-
-  useEffect(() => {
-    return () => {
-      if (loadDelayTimerRef.current !== null) {
-        clearTimeout(loadDelayTimerRef.current)
-      }
-    }
-  }, [])
 
   if (!id || Number.isNaN(resultId)) {
     return (

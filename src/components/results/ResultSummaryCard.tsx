@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 
+import resultSummaryChevronRightIcon from '@/assets/icons/results/result-summary-chevron-right.svg'
 import { cn } from '@/lib/utils'
 import ResultMiniTag from './ResultMiniTag'
 
@@ -85,7 +86,7 @@ function ResultSummaryCard({
           to={resultDetailPath}
         >
           <span>결과보기</span>
-          <span aria-hidden>›</span>
+          <img alt="" aria-hidden className="size-4" src={resultSummaryChevronRightIcon} />
         </Link>
       </div>
     </article>

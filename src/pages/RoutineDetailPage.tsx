@@ -8,7 +8,6 @@ import { ApiError } from '../api/errors'
 import { APP_ROUTES } from '../app/routes'
 import AlertMessage from '../components/common/AlertMessage'
 import ConfirmActionDialog from '../components/common/ConfirmActionDialog'
-import CardStack from '../components/common/CardStack'
 import RoutineStepCard from '../components/common/RoutineStepCard'
 import MobilePage from '../components/MobilePage'
 import PageHeader from '../components/headers/PageHeader'
@@ -209,7 +208,7 @@ function RoutineDetailPage() {
               }}
             >
               {products.length > 0 ? (
-                <CardStack className="pb-8">
+                <div className="flex flex-col gap-5 pb-8">
                   {products.map((product, index) => (
                     <RoutineStepCard
                       from={location.pathname + location.search + location.hash}
@@ -218,7 +217,7 @@ function RoutineDetailPage() {
                       stepNumber={index + 1}
                     />
                   ))}
-                </CardStack>
+                </div>
               ) : (
                 <p className="rounded-xl bg-common-0 px-4 py-8 text-center text-sm text-neutral-400">
                   표시할 루틴 단계가 없습니다.

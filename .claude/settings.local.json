@@ -37,7 +37,9 @@
       "Bash(sed -i \"s|from '../components/mobile-page/GlassOverlayHeader'|from '../components/headers/GlassOverlayHeader'|g\" src/pages/ProductDetailPage.tsx)",
       "Bash(sed -i \"s|from '../../components/common/PageHeader'|from '../../components/headers/PageHeader'|g\" src/pages/results/ResultProductsPage.tsx src/pages/results/ResultRoutinePage.tsx src/pages/survey/SurveyIntroPage.tsx)",
       "WebFetch(domain:www.kakao.com)",
-      "WebFetch(domain:toss.im)"
+      "WebFetch(domain:toss.im)",
+      "Bash(npm ls:*)",
+      "Bash(xargs grep:*)"
     ]
   }
 }

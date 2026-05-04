@@ -20,20 +20,19 @@ interface RoutineCardProps {
 
 function RoutineCard({ item }: RoutineCardProps) {
   return (
-    <li className="rounded-[8px] bg-common-0 px-3 py-3">
-      <div className="space-y-2">
-        <div className="flex items-start justify-between gap-3">
-          <p className="text-[15px] font-medium leading-[22.2px] text-neutral-900">{item.title}</p>
-          <Link
-            className="inline-flex items-center gap-0.5 px-2 py-1 text-xs font-medium leading-[16.32px] text-primary-400"
-            to={createRoutineDetailPath(item.routineGroupId)}
-          >
-            <span>루틴보기</span>
-            <ChevronRight className="size-4" strokeWidth={1.8} />
-          </Link>
+    <li className="rounded-[8px] bg-common-0">
+      <Link className="block px-3 py-3" to={createRoutineDetailPath(item.routineGroupId)}>
+        <div className="space-y-2">
+          <div className="flex items-start justify-between gap-3">
+            <p className="text-[15px] font-medium leading-[22.2px] text-neutral-900">{item.title}</p>
+            <div className="inline-flex items-center gap-0.5 px-2 py-1 text-xs font-medium leading-[16.32px] text-primary-400">
+              <span>루틴보기</span>
+              <ChevronRight className="size-4" strokeWidth={1.8} />
+            </div>
+          </div>
+          <p className="text-[11px] font-medium leading-[14.3px] text-neutral-400">{toYearMonthDay(item.createdAt)}</p>
         </div>
-        <p className="text-[11px] font-medium leading-[14.3px] text-neutral-400">{toYearMonthDay(item.createdAt)}</p>
-      </div>
+      </Link>
     </li>
   )
 }
