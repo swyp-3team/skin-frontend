@@ -61,7 +61,7 @@ function ResultProductGridCard({ from, onOpenProduct, product }: ResultProductGr
       </div>
 
       <div className="space-y-2">
-        <p className="line-clamp-2 min-h-[44.4px] text-[15px] font-medium leading-[22.2px] text-neutral-800">{product.name}</p>
+        <p className="line-clamp-2 text-[15px] font-medium leading-[22.2px] text-neutral-800">{product.name}</p>
         <div className="inline-flex items-baseline gap-1 text-neutral-800">
           <span className="text-[18px] font-bold leading-[25.56px]">{formatPrice(product.price)}</span>
           <span className="text-base font-medium leading-[23.68px]">원</span>

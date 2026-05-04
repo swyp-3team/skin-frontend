@@ -117,22 +117,24 @@ function NavMenuDialog({ triggerClassName }: NavMenuDialogProps) {
   }
 
   function handleItemClick(item: MenuItemConfig) {
-    if ((item.id === 'routine' || item.id === 'products') && (!isAuthenticated || latestResultId == null)) {
-      if (!isAuthenticated && location.pathname === APP_ROUTES.surveyResult && hasPreviewResult) {
+    if (item.id === 'routine' || item.id === 'products') {
+      if (!isAuthenticated) {
         handleOpenChange(false)
-        setLoginDialogVariant('result')
+        setLoginDialogVariant(location.pathname === APP_ROUTES.surveyResult && hasPreviewResult ? 'result' : 'default')
         setLoginDialogOpen(true)
         return
       }
 
-      handleOpenChange(false)
-      navigate(APP_ROUTES.survey, {
-        state: {
-          surveyEntryPoint:
-            item.id === 'routine' ? SURVEY_INTRO_ENTRY_POINTS.routine : SURVEY_INTRO_ENTRY_POINTS.products,
-        },
-      })
-      return
+      if (latestResultId == null) {
+        handleOpenChange(false)
+        navigate(APP_ROUTES.survey, {
+          state: {
+            surveyEntryPoint:
+              item.id === 'routine' ? SURVEY_INTRO_ENTRY_POINTS.routine : SURVEY_INTRO_ENTRY_POINTS.products,
+          },
+        })
+        return
+      }
     }
 
     const action = item.resolveAction(isAuthenticated, latestResultId)
