@@ -202,11 +202,6 @@ function HomePage() {
             <RoutineQuickStartCard tab="am" title={routineName} to={amRoutinePath} />
             <RoutineQuickStartCard tab="pm" title={routineName} to={pmRoutinePath} />
           </div>
-          {!hasRoutine ? (
-            <p className="mt-2 text-[12px] font-medium leading-[16.32px] text-neutral-400">
-              마이페이지에서 저장한 루틴을 확인할 수 있어요.
-            </p>
-          ) : null}
         </section>
 
         {resultQuery.error && !hasExpiredResultError ? (
