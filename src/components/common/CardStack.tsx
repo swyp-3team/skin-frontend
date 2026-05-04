@@ -8,7 +8,7 @@ import { cn } from '../../lib/utils'
 const PRODUCT_OVERLAP_HEIGHT = 95
 
 // 드래그로 접기/펼치기를 트리거할 최소 이동 거리(px)
-const DRAG_THRESHOLD = 50
+const DRAG_THRESHOLD = 10
 
 const SPRING = { type: 'spring', stiffness: 300, damping: 30, mass: 0.8 } as const
 
@@ -18,7 +18,7 @@ interface CardStackProps {
 }
 
 function CardStack({ children, className }: CardStackProps) {
-  const [isExpanded, setIsExpanded] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(true)
   const cards = React.Children.toArray(children)
 
   if (cards.length <= 1) {
