@@ -106,7 +106,7 @@ function PriceInfoPanel({ isOpen, panelId, formattedPriceDate, onClose }: PriceI
             </button>
           </div>
           <div className="px-4 pb-4 pt-1">
-            <p className="text-xs leading-[16.32px] text-[#000000]">
+            <p className="text-[13px] leading-[16.32px] text-[#000000]">
               {formattedPriceDate} 기준 가격입니다. 링크 연결 시 가격이 변동될 수 있습니다.
             </p>
           </div>
@@ -210,7 +210,7 @@ function ProductDetailPage() {
 
                 <div className="space-y-0">
                   <div className="flex items-center gap-1">
-                    <div className="flex items-end gap-0.5">
+                    <div className="flex items-center gap-0.5">
                       <strong className="text-[22px] leading-[29.7px] text-neutral-800">{formatPrice(product.price)}</strong>
                       <span className="text-[18px] leading-[25.56px] text-neutral-800">원</span>
                     </div>
@@ -222,7 +222,7 @@ function ProductDetailPage() {
                       onClick={() => setIsPriceInfoOpen((prev) => !prev)}
                       type="button"
                     >
-                      <img alt="" aria-hidden className="h-5 w-5" src={exclamationCircleIcon} />
+                      <img alt="" aria-hidden className="flex items-center h-5 w-5" src={exclamationCircleIcon} />
                     </button>
                   </div>
 

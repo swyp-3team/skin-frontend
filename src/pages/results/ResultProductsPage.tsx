@@ -50,7 +50,7 @@ interface ResultProductGridCardProps {
 function ResultProductGridCard({ from, onOpenProduct, product }: ResultProductGridCardProps) {
   return (
     <Link className="flex flex-col gap-3" onClick={onOpenProduct} state={{ from }} to={createProductDetailPath(product.productId)}>
-      <div className="overflow-hidden rounded h-full w-full bg-common-0">
+      <div className="overflow-hidden rounded w-full bg-common-0">
         <SafeImage
           alt={product.name}
           className="aspect-square w-full object-cover"
@@ -319,7 +319,7 @@ function ResultProductsPage() {
 
               <section className={cn('w-full mt-5 px-5 pb-10 transition-opacity duration-150', isTabSwitching && 'opacity-40')}>
                 {allProducts.length > 0 ? (
-                  <div className="grid grid-cols-2 justify-items-center gap-x-4 gap-y-6">
+                  <div className="grid grid-cols-2 items-start justify-items-center gap-x-4 gap-y-6">
                     {allProducts.map((product) => (
                       <ResultProductGridCard
                         key={product.productId}
