@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useState } from 'react'
-import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
 import { apiClient } from '../api'
 import { ApiError } from '../api/errors'
@@ -27,13 +27,19 @@ function isValidRoutineGroupId(routineGroupId: number) {
   return Number.isFinite(routineGroupId) && routineGroupId > 0
 }
 
+function getRoutineTabFromSearchParams(searchParams: URLSearchParams): RoutineTabId {
+  const tab = searchParams.get('tab')
+  return tab === 'pm' ? 'pm' : 'am'
+}
+
 function RoutineDetailPage() {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const location = useLocation()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { id } = useParams<{ id: string }>()
   const routineGroupId = Number(id)
-  const [activeTabId, setActiveTabId] = useState<RoutineTabId>('am')
+  const activeTabId = getRoutineTabFromSearchParams(searchParams)
   const [slideDirection, setSlideDirection] = useState(0)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const isValidId = isValidRoutineGroupId(routineGroupId)
@@ -155,7 +161,14 @@ function RoutineDetailPage() {
                   onClick={() => {
                     if (item.id === activeTabId) return
                     setSlideDirection(item.id === 'pm' ? 1 : -1)
-                    setActiveTabId(item.id)
+                    setSearchParams(
+                      (prevParams) => {
+                        const nextParams = new URLSearchParams(prevParams)
+                        nextParams.set('tab', item.id)
+                        return nextParams
+                      },
+                      { replace: true },
+                    )
                   }}
                   type="button"
                 >

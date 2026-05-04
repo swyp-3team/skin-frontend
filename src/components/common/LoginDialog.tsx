@@ -38,8 +38,8 @@ function LoginDialog({ open, variant, isPromoting, onOpenChange, onLogin }: Logi
         <div className="flex flex-1 flex-col items-center justify-between px-8 py-8">
           {/* 상단: 로고 + 설명 */}
           <div className="flex flex-col items-center gap-9">
-            <AppLogo variant="bold" />
-            <div className="flex flex-col items-center gap-1">
+            <AppLogo className="h-[30px]" variant="bold" />
+            <div className="px-6 flex flex-col items-center gap-1">
               <p
                 className={`text-center text-base font-medium leading-[1.48] ${copy.subtitleSub ? 'text-neutral-800' : 'text-neutral-400'}`}
               >

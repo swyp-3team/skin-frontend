@@ -23,5 +23,18 @@ export const createResultRoutinePath = (id: string | number) => `/results/${id}/
 export const createResultProductsPath = (id: string | number) => `/results/${id}/products`
 export const createResultProductsSearchPath = (id: string | number) => `/results/${id}/products/search`
 
-export const createRoutineDetailPath = (id: string | number) => `/mypage/routines/${id}`
+export type RoutineDetailTab = 'am' | 'pm'
+
+interface RoutineDetailPathOptions {
+  tab?: RoutineDetailTab
+}
+
+export const createRoutineDetailPath = (id: string | number, options?: RoutineDetailPathOptions) => {
+  const path = `/mypage/routines/${id}`
+  if (!options?.tab) {
+    return path
+  }
+
+  return `${path}?tab=${options.tab}`
+}
 export const createProductDetailPath = (id: string | number) => `/products/${id}`
