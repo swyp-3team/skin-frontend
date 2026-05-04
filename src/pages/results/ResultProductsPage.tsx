@@ -229,7 +229,12 @@ function ResultProductsPage() {
   return (
     <>
       <AnimatePresence>
-        {showLoading ? <LoadingScreen key="products-loading" text="제품을 고르는 중이에요" /> : null}
+        {showLoading ? (
+          <LoadingScreen
+            key="products-loading"
+            texts={['결과를 가져오고 있어요', '제품을 고르고 있어요']}
+          />
+        ) : null}
       </AnimatePresence>
 
       {!showLoading && (headerError || productsError || !header || !productsPages) ? (

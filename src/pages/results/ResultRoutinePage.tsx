@@ -303,7 +303,12 @@ function ResultRoutinePage() {
   return (
     <>
       <AnimatePresence>
-        {showLoading ? <LoadingScreen key="routine-loading" text="루틴을 구상하는 중이에요" /> : null}
+        {showLoading ? (
+          <LoadingScreen
+            key="routine-loading"
+            texts={['결과를 가져오고 있어요', '루틴을 구성하고 있어요']}
+          />
+        ) : null}
       </AnimatePresence>
 
       {!showLoading && (error || !recommendation || !header) ? (
