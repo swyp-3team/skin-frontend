@@ -333,12 +333,16 @@ function normalizePreviewResult(payload: unknown): PreviewResult {
   if (typeof payload.summary !== 'string') {
     throw new ApiError('summary is invalid.', 500, 'INVALID_PREVIEW_SUMMARY', payload)
   }
+  if (payload.imageUrl !== undefined && payload.imageUrl !== null && typeof payload.imageUrl !== 'string') {
+    throw new ApiError('imageUrl is invalid.', 500, 'INVALID_PREVIEW_IMAGE_URL', payload)
+  }
 
   return {
     diagnosedDate: payload.diagnosedDate,
     skinType: payload.skinType,
     subtitle: payload.subtitle,
     summary: payload.summary,
+    imageUrl: typeof payload.imageUrl === 'string' ? payload.imageUrl : null,
   }
 }
 
@@ -401,6 +405,9 @@ function normalizeResultDetail(payload: unknown, fallbackResultId?: number): Res
   if (typeof payload.summary !== 'string') {
     throw new ApiError('summary is invalid.', 500, 'INVALID_RESULT_SUMMARY', payload)
   }
+  if (payload.imageUrl !== undefined && payload.imageUrl !== null && typeof payload.imageUrl !== 'string') {
+    throw new ApiError('imageUrl is invalid.', 500, 'INVALID_RESULT_IMAGE_URL', payload)
+  }
 
   const concerns = Array.isArray(payload.concerns)
     ? payload.concerns.filter((item): item is string => typeof item === 'string')
@@ -416,6 +423,7 @@ function normalizeResultDetail(payload: unknown, fallbackResultId?: number): Res
     skinType: payload.skinType,
     subtitle: payload.subtitle,
     summary: payload.summary,
+    imageUrl: typeof payload.imageUrl === 'string' ? payload.imageUrl : null,
     concerns,
     subSummary: typeof payload.subSummary === 'string' ? payload.subSummary : '',
     ingredientMetas,

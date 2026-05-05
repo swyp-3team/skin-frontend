@@ -44,7 +44,7 @@ function ResultOverviewLayout({ viewModel, onRoutineCta, onProductsCta, routineO
 
             <SafeImage
               alt={viewModel.top.title}
-              className="h-[168px] w-[137px] rounded-[20px] object-cover"
+              className="h-[168px] w-auto object-contain"
               fallbackAlt={`${viewModel.top.title} 대표 이미지`}
               src={viewModel.top.imageUrl}
             />

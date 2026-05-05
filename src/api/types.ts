@@ -28,6 +28,7 @@ export interface PreviewResult {
   skinType: string
   subtitle: string
   summary: string
+  imageUrl?: string | null
 }
 
 export interface PreviewApiData {
@@ -57,6 +58,7 @@ export interface ResultDetail {
   skinType: string
   subtitle: string
   summary: string
+  imageUrl?: string | null
   concerns: string[]
   subSummary: string
   ingredientMetas: ResultIngredientMeta[]
