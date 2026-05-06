@@ -643,16 +643,12 @@ function createMockMyPageResponse(): MyPageResponse {
     .map((result) => ({
       resultId: result.resultId,
       createdAt: result.diagnosedAt,
+      typeName: result.skinType,
     }))
 
-  const routines = [...mockRoutineDb.values()]
+  const latestRoutine = [...mockRoutineDb.values()]
     .sort((a, b) => b.routineGroupId - a.routineGroupId)
-    .slice(0, 4)
-    .map((routine) => ({
-      routineGroupId: routine.routineGroupId,
-      routineGroupTitle: routine.title,
-      createdAt: routine.createdAt.slice(0, 10),
-    }))
+    .at(0)
 
   return {
     user: {
@@ -661,7 +657,13 @@ function createMockMyPageResponse(): MyPageResponse {
       profileImageUrl: null,
     },
     skinResults,
-    routines,
+    routine: latestRoutine
+      ? {
+          routineGroupId: latestRoutine.routineGroupId,
+          routineGroupTitle: latestRoutine.title,
+          createdAt: latestRoutine.createdAt.slice(0, 10),
+        }
+      : null,
   }
 }
 
@@ -732,6 +734,7 @@ export const mockApiClient: ApiClient = {
       results: page.map((result) => ({
         resultId: result.resultId,
         createdAt: result.diagnosedAt,
+        typeName: result.skinType,
       })),
       hasNext,
       nextCursor: hasNext && lastItem ? lastItem.resultId : null,

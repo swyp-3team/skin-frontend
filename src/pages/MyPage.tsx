@@ -91,7 +91,7 @@ function MyPage() {
   }, [shouldResetByMyPageError, clearSavedRoutine])
 
   const hasResultFromApi = (myPageQuery.data?.skinResults.length ?? 0) > 0
-  const hasRoutineFromApi = (myPageQuery.data?.routines.length ?? 0) > 0
+  const hasRoutineFromApi = myPageQuery.data?.routine != null
 
   let viewState: MyPageViewState = 'empty'
   if (hasRoutineFromApi && !shouldResetByMyPageError) {
@@ -100,7 +100,7 @@ function MyPage() {
     viewState = 'diagnosis_only'
   }
 
-  const latestRoutine = myPageQuery.data?.routines[0]
+  const latestRoutine = myPageQuery.data?.routine ?? null
   const routineName = savedRoutineName ?? latestRoutine?.routineGroupTitle ?? '저장한 루틴'
   const routineDate = latestRoutine ? toYearMonthDay(latestRoutine.createdAt) : 'YYYY.MM.DD'
   const hasRoutinePreview = hasRoutineFromApi
@@ -224,7 +224,7 @@ function MyPage() {
                       date={historyDateTime.date}
                       resultDetailPath={createResultDetailPath(resultItem.resultId)}
                       time={historyDateTime.time}
-                      title={RESULT_HISTORY_TITLE}
+                      title={resultItem.typeName ?? RESULT_HISTORY_TITLE}
                     />
                   )
                 })}

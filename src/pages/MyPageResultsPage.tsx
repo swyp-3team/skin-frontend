@@ -31,7 +31,7 @@ function ResultHistoryCard({ item }: ResultHistoryCardProps) {
               <span>{historyDateTime.date}</span>
               <span className="text-neutral-300">{historyDateTime.time}</span>
             </div>
-            <p className="text-xs leading-[16.32px] text-neutral-300">{RESULT_HISTORY_TITLE}</p>
+            <p className="text-xs leading-[16.32px] text-neutral-300">{item.typeName ?? RESULT_HISTORY_TITLE}</p>
           </div>
           <div className="inline-flex items-center gap-0.5 px-2 py-1 text-xs font-medium leading-[16.32px] text-primary-400">
             <span>결과보기</span>

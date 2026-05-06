@@ -450,6 +450,7 @@ function normalizeResultListItem(raw: unknown, index: number): ResultListItem {
   return {
     resultId,
     createdAt: raw.createdAt,
+    typeName: typeof raw.typeName === 'string' ? raw.typeName : null,
   }
 }
 
@@ -750,6 +751,7 @@ function normalizeMyPageSkinResultItem(payload: unknown, index: number): MyPageS
   return {
     resultId,
     createdAt: payload.createdAt,
+    typeName: typeof payload.typeName === 'string' ? payload.typeName : null,
   }
 }
 
@@ -783,14 +785,19 @@ function normalizeMyPageResponse(payload: unknown): MyPageResponse {
   if (!Array.isArray(payload.skinResults)) {
     throw new ApiError('My page skinResults is invalid.', 500, 'INVALID_MY_PAGE_SKIN_RESULTS', payload)
   }
-  if (!Array.isArray(payload.routines)) {
-    throw new ApiError('My page routines is invalid.', 500, 'INVALID_MY_PAGE_ROUTINES', payload)
+  if (!('routine' in payload)) {
+    throw new ApiError('My page routine is invalid.', 500, 'INVALID_MY_PAGE_ROUTINE', payload)
+  }
+
+  let routine: MyPageRoutineItem | null = null
+  if (payload.routine !== null) {
+    routine = normalizeMyPageRoutineItem(payload.routine, 0)
   }
 
   return {
     user: normalizeMyPageUserInfo(payload.user),
     skinResults: payload.skinResults.map((item, index) => normalizeMyPageSkinResultItem(item, index)),
-    routines: payload.routines.map((item, index) => normalizeMyPageRoutineItem(item, index)),
+    routine,
   }
 }
 

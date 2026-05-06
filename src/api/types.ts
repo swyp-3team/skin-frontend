@@ -67,6 +67,7 @@ export interface ResultDetail {
 export interface ResultListItem {
   resultId: number
   createdAt: string
+  typeName: string | null
 }
 
 export interface ResultListQuery {
@@ -89,6 +90,7 @@ export interface MyPageUserInfo {
 export interface MyPageSkinResultItem {
   resultId: number
   createdAt: string
+  typeName: string | null
 }
 
 export interface MyPageRoutineItem {
@@ -100,7 +102,7 @@ export interface MyPageRoutineItem {
 export interface MyPageResponse {
   user: MyPageUserInfo
   skinResults: MyPageSkinResultItem[]
-  routines: MyPageRoutineItem[]
+  routine: MyPageRoutineItem | null
 }
 
 // ── 루틴 목록/상세 API 타입 ────────────────────────────────────────────────────
