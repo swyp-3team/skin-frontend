@@ -14,6 +14,7 @@ import { queryKeys } from '../lib/queryKeys'
 
 const RESULT_LIST_PAGE_SIZE = 20
 const RESULT_HISTORY_TITLE = '피부 진단 결과'
+const RESULT_LIST_INITIAL_CURSOR = 1
 
 interface ResultHistoryCardProps {
   item: ResultListItem
@@ -58,9 +59,9 @@ function MyPageResultsPage() {
     queryFn: ({ pageParam }) =>
       apiClient.getResultList({
         size: RESULT_LIST_PAGE_SIZE,
-        cursor: typeof pageParam === 'number' ? pageParam : 0,
+        cursor: typeof pageParam === 'number' ? pageParam : RESULT_LIST_INITIAL_CURSOR,
       }),
-    initialPageParam: 0,
+    initialPageParam: RESULT_LIST_INITIAL_CURSOR,
     getNextPageParam: (lastPage) => (lastPage.hasNext ? lastPage.nextCursor ?? undefined : undefined),
     retry: false,
   })
