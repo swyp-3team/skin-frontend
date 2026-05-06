@@ -10,6 +10,7 @@ import type {
   PreviewApiData,
   PreviewResult,
   ProductDetail,
+  MyPageResponse,
   ProfileData,
   ResultDetail,
   ResultIngredientMeta,
@@ -634,6 +635,36 @@ function createMockProductSearchPage(query: ProductSearchQuery): ProductSearchPa
   }
 }
 
+function createMockMyPageResponse(): MyPageResponse {
+  const skinResults = [...mockResultsDb.values()]
+    .map((stored) => stored.detail)
+    .sort((a, b) => b.resultId - a.resultId)
+    .slice(0, 4)
+    .map((result) => ({
+      resultId: result.resultId,
+      createdAt: result.diagnosedAt,
+    }))
+
+  const routines = [...mockRoutineDb.values()]
+    .sort((a, b) => b.routineGroupId - a.routineGroupId)
+    .slice(0, 4)
+    .map((routine) => ({
+      routineGroupId: routine.routineGroupId,
+      routineGroupTitle: routine.title,
+      createdAt: routine.createdAt.slice(0, 10),
+    }))
+
+  return {
+    user: {
+      name: '',
+      email: 'mock.user@layerd.local',
+      profileImageUrl: null,
+    },
+    skinResults,
+    routines,
+  }
+}
+
 export const mockApiClient: ApiClient = {
   async getSurveyQuestions() {
     return withDelay(attachOptionCodes(MOCK_SURVEY_QUESTIONS))
@@ -689,7 +720,7 @@ export const mockApiClient: ApiClient = {
       .sort((a, b) => b.resultId - a.resultId)
 
     const startIndex =
-      cursor === undefined
+      cursor === undefined || cursor <= 0
         ? 0
         : allResults.findIndex((result) => result.resultId < cursor)
     const startIdx = startIndex === -1 ? allResults.length : Math.max(startIndex, 0)
@@ -700,8 +731,7 @@ export const mockApiClient: ApiClient = {
     return withDelay({
       results: page.map((result) => ({
         resultId: result.resultId,
-        diagnosedAt: result.diagnosedAt,
-        title: result.skinType,
+        createdAt: result.diagnosedAt,
       })),
       hasNext,
       nextCursor: hasNext && lastItem ? lastItem.resultId : null,
@@ -803,6 +833,10 @@ export const mockApiClient: ApiClient = {
       subtitle: copy.subtitle,
       summary: copy.summary,
     })
+  },
+
+  async getMyPage(): Promise<MyPageResponse> {
+    return withDelay(createMockMyPageResponse())
   },
 
   async getProductDetail(productId: number): Promise<ProductDetail> {

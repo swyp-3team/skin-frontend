@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom'
 
 import { apiClient } from '../api'
 import { ApiError } from '../api/errors'
-import type { ResultListResponse, RoutineListResponse } from '../api/types'
+import type { MyPageResponse } from '../api/types'
 import { APP_ROUTES, createResultDetailPath, createRoutineDetailPath } from '../app/routes'
 import ConfirmActionDialog from '../components/common/ConfirmActionDialog'
 import SectionTitle from '../components/common/SectionTitle'
@@ -27,6 +27,7 @@ type MyPageViewState = 'diagnosis_routine' | 'diagnosis_only' | 'empty'
 const MAX_VISIBLE_HISTORY_COUNT = 3
 const CARD_BOTTOM_ACTION_CLASS =
   'inline-flex items-center gap-0.5 px-2 py-1 text-xs font-medium leading-[16.32px] text-neutral-300'
+const RESULT_HISTORY_TITLE = '피부 진단 결과'
 
 
 interface HistoryRowProps {
@@ -67,52 +68,50 @@ function shouldResetByError(error: ApiError | null): boolean {
 
 function MyPage() {
   const isAuthenticated = useAuthStore(selectIsAuthenticated)
-  const user = useAuthStore((state) => state.user)
+  const authUser = useAuthStore((state) => state.user)
   const logout = useLogout()
   const [isWithdrawalDialogOpen, setIsWithdrawalDialogOpen] = useState(false)
 
   const savedRoutineName = useSurveyResultStore((state) => state.savedRoutineName)
   const clearSavedRoutine = useSurveyResultStore((state) => state.clearSavedRoutine)
 
-  const routineQuery = useQuery<RoutineListResponse, ApiError>({
-    queryKey: queryKeys.routineListPreview(),
-    queryFn: () => apiClient.getRoutineList({ size: 1 }),
+  const myPageQuery = useQuery<MyPageResponse, ApiError>({
+    queryKey: queryKeys.myPage(),
+    queryFn: () => apiClient.getMyPage(),
     enabled: isAuthenticated === true,
     staleTime: 0,
     retry: false,
   })
 
-  const resultListQuery = useQuery<ResultListResponse, ApiError>({
-    queryKey: queryKeys.resultListPreview(),
-    queryFn: () => apiClient.getResultList({ size: MAX_VISIBLE_HISTORY_COUNT }),
-    enabled: isAuthenticated === true,
-    staleTime: 0,
-    retry: false,
-  })
-
-  const shouldResetByRoutineError = shouldResetByError(routineQuery.error ?? null)
+  const shouldResetByMyPageError = shouldResetByError(myPageQuery.error ?? null)
 
   useEffect(() => {
-    if (!shouldResetByRoutineError) return
+    if (!shouldResetByMyPageError) return
     clearSavedRoutine()
-  }, [shouldResetByRoutineError, clearSavedRoutine])
+  }, [shouldResetByMyPageError, clearSavedRoutine])
 
-  const hasResultFromApi = (resultListQuery.data?.results.length ?? 0) > 0
-  const hasRoutineFromApi = (routineQuery.data?.routines.length ?? 0) > 0
+  const hasResultFromApi = (myPageQuery.data?.skinResults.length ?? 0) > 0
+  const hasRoutineFromApi = (myPageQuery.data?.routines.length ?? 0) > 0
 
-  {/*hasResultFromApi &&  나중에 추가 */}
   let viewState: MyPageViewState = 'empty'
-  if (hasRoutineFromApi && !shouldResetByRoutineError) {
+  if (hasRoutineFromApi && !shouldResetByMyPageError) {
     viewState = 'diagnosis_routine'
   } else if (hasResultFromApi) {
     viewState = 'diagnosis_only'
   }
 
-  const latestRoutine = routineQuery.data?.routines[0]
-  const routineName = savedRoutineName ?? latestRoutine?.title ?? '저장한 루틴'
+  const latestRoutine = myPageQuery.data?.routines[0]
+  const routineName = savedRoutineName ?? latestRoutine?.routineGroupTitle ?? '저장한 루틴'
   const routineDate = latestRoutine ? toYearMonthDay(latestRoutine.createdAt) : 'YYYY.MM.DD'
   const hasRoutinePreview = hasRoutineFromApi
-  const resultItems = (resultListQuery.data?.results ?? []).slice(0, MAX_VISIBLE_HISTORY_COUNT)
+  const resultItems = (myPageQuery.data?.skinResults ?? []).slice(0, MAX_VISIBLE_HISTORY_COUNT)
+  const userName = myPageQuery.data?.user.name.trim()
+  const userEmail = myPageQuery.data?.user.email.trim()
+  const displayName =
+    (userName && userName.length > 0 && userName) ||
+    authUser?.nickname ||
+    (userEmail && userEmail.length > 0 && userEmail) ||
+    AUTH_UI_TEXT.defaultNickname
 
   function handleWithdrawalClick() {
     setIsWithdrawalDialogOpen(true)
@@ -131,7 +130,7 @@ function MyPage() {
       <section className="space-y-5 pb-8">
         <SurfaceCard className="rounded-[12px] bg-common-0 p-4">
           <p className="text-base font-semibold leading-[23.68px] text-neutral-800">
-            {user?.nickname ?? AUTH_UI_TEXT.defaultNickname}
+            {displayName}
           </p>
         </SurfaceCard>
 
@@ -139,11 +138,11 @@ function MyPage() {
           <SectionTitle>나의 루틴</SectionTitle>
 
           {viewState === 'diagnosis_routine' ? (
-            routineQuery.isLoading ? (
+            myPageQuery.isLoading ? (
               <p className="rounded-lg border border-neutral-150 px-3 py-6 text-center text-sm text-neutral-400">
                 루틴 정보를 불러오는 중입니다.
               </p>
-            ) : routineQuery.error ? (
+            ) : myPageQuery.error ? (
               <p className="rounded-lg border border-neutral-150 px-3 py-6 text-center text-sm text-neutral-400">
                 루틴 정보를 불러오지 못했습니다.
               </p>
@@ -206,11 +205,11 @@ function MyPage() {
                 피부 진단하기
               </Link>
             </div>
-          ) : resultListQuery.isLoading ? (
+          ) : myPageQuery.isLoading ? (
             <p className="rounded-lg border border-neutral-150 px-3 py-6 text-center text-sm text-neutral-400">
               진단 이력을 불러오는 중입니다.
             </p>
-          ) : resultListQuery.error ? (
+          ) : myPageQuery.error ? (
             <p className="rounded-lg border border-neutral-150 px-3 py-6 text-center text-sm text-neutral-400">
               진단 이력을 불러오지 못했습니다.
             </p>
@@ -218,14 +217,14 @@ function MyPage() {
             <div className="space-y-3">
               <ul>
                 {resultItems.map((resultItem) => {
-                  const historyDateTime = toDateTimeDisplay(resultItem.diagnosedAt)
+                  const historyDateTime = toDateTimeDisplay(resultItem.createdAt)
                   return (
                     <HistoryRow
                       key={resultItem.resultId}
                       date={historyDateTime.date}
                       resultDetailPath={createResultDetailPath(resultItem.resultId)}
                       time={historyDateTime.time}
-                      title={resultItem.title}
+                      title={RESULT_HISTORY_TITLE}
                     />
                   )
                 })}

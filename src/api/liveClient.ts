@@ -4,6 +4,10 @@ import type { ApiClient } from './client'
 import type { ApiErrorPayload, ApiFieldError } from './contracts'
 import { ApiError } from './errors'
 import type {
+  MyPageResponse,
+  MyPageRoutineItem,
+  MyPageSkinResultItem,
+  MyPageUserInfo,
   ProductSearchPageData,
   ProductSearchQuery,
   PreviewApiData,
@@ -439,17 +443,13 @@ function normalizeResultListItem(raw: unknown, index: number): ResultListItem {
   if (resultId === null) {
     throw new ApiError(`Result list resultId is invalid. ([${index}])`, 500, 'INVALID_RESULT_LIST_ID', raw)
   }
-  if (typeof raw.diagnosedAt !== 'string') {
-    throw new ApiError(`Result list diagnosedAt is invalid. ([${index}])`, 500, 'INVALID_RESULT_LIST_DIAGNOSED_AT', raw)
-  }
-  if (typeof raw.title !== 'string') {
-    throw new ApiError(`Result list title is invalid. ([${index}])`, 500, 'INVALID_RESULT_LIST_TITLE', raw)
+  if (typeof raw.createdAt !== 'string') {
+    throw new ApiError(`Result list createdAt is invalid. ([${index}])`, 500, 'INVALID_RESULT_LIST_CREATED_AT', raw)
   }
 
   return {
     resultId,
-    diagnosedAt: raw.diagnosedAt,
-    title: raw.title,
+    createdAt: raw.createdAt,
   }
 }
 
@@ -457,17 +457,17 @@ function normalizeResultListResponse(payload: unknown): ResultListResponse {
   if (!isRecord(payload)) {
     throw new ApiError('Result list response is invalid.', 500, 'INVALID_RESULT_LIST_FORMAT', payload)
   }
-  if (!Array.isArray(payload.results)) {
-    throw new ApiError('Result list results field is invalid.', 500, 'INVALID_RESULT_LIST_ITEMS', payload)
+  if (!Array.isArray(payload.skinResults)) {
+    throw new ApiError('Result list skinResults field is invalid.', 500, 'INVALID_RESULT_LIST_ITEMS', payload)
   }
   if (typeof payload.hasNext !== 'boolean') {
     throw new ApiError('Result list hasNext is invalid.', 500, 'INVALID_RESULT_LIST_HAS_NEXT', payload)
   }
 
   return {
-    results: payload.results.map((item, index) => normalizeResultListItem(item, index)),
+    results: payload.skinResults.map((item, index) => normalizeResultListItem(item, index)),
     hasNext: payload.hasNext,
-    nextCursor: typeof payload.nextCursor === 'number' ? payload.nextCursor : null,
+    nextCursor: toOptionalNumber(payload.nextCursor),
   }
 }
 
@@ -716,6 +716,84 @@ function normalizeProductSearchPage(payload: unknown): ProductSearchPageData {
   }
 }
 
+function normalizeMyPageUserInfo(payload: unknown): MyPageUserInfo {
+  if (!isRecord(payload)) {
+    throw new ApiError('My page user info is invalid.', 500, 'INVALID_MY_PAGE_USER_INFO', payload)
+  }
+  if (typeof payload.name !== 'string') {
+    throw new ApiError('My page user name is invalid.', 500, 'INVALID_MY_PAGE_USER_NAME', payload)
+  }
+  if (typeof payload.email !== 'string') {
+    throw new ApiError('My page user email is invalid.', 500, 'INVALID_MY_PAGE_USER_EMAIL', payload)
+  }
+
+  return {
+    name: payload.name,
+    email: payload.email,
+    profileImageUrl: typeof payload.profileImageUrl === 'string' ? payload.profileImageUrl : null,
+  }
+}
+
+function normalizeMyPageSkinResultItem(payload: unknown, index: number): MyPageSkinResultItem {
+  if (!isRecord(payload)) {
+    throw new ApiError(`My page skin result item is invalid. ([${index}])`, 500, 'INVALID_MY_PAGE_SKIN_RESULT_ITEM', payload)
+  }
+
+  const resultId = toOptionalNumber(payload.resultId)
+  if (resultId === null) {
+    throw new ApiError(`My page skin resultId is invalid. ([${index}])`, 500, 'INVALID_MY_PAGE_SKIN_RESULT_ID', payload)
+  }
+  if (typeof payload.createdAt !== 'string') {
+    throw new ApiError(`My page skin createdAt is invalid. ([${index}])`, 500, 'INVALID_MY_PAGE_SKIN_CREATED_AT', payload)
+  }
+
+  return {
+    resultId,
+    createdAt: payload.createdAt,
+  }
+}
+
+function normalizeMyPageRoutineItem(payload: unknown, index: number): MyPageRoutineItem {
+  if (!isRecord(payload)) {
+    throw new ApiError(`My page routine item is invalid. ([${index}])`, 500, 'INVALID_MY_PAGE_ROUTINE_ITEM', payload)
+  }
+
+  const routineGroupId = toOptionalNumber(payload.routineGroupId)
+  if (routineGroupId === null) {
+    throw new ApiError(`My page routineGroupId is invalid. ([${index}])`, 500, 'INVALID_MY_PAGE_ROUTINE_ID', payload)
+  }
+  if (typeof payload.routineGroupTitle !== 'string') {
+    throw new ApiError(`My page routineGroupTitle is invalid. ([${index}])`, 500, 'INVALID_MY_PAGE_ROUTINE_TITLE', payload)
+  }
+  if (typeof payload.createdAt !== 'string') {
+    throw new ApiError(`My page routine createdAt is invalid. ([${index}])`, 500, 'INVALID_MY_PAGE_ROUTINE_CREATED_AT', payload)
+  }
+
+  return {
+    routineGroupId,
+    routineGroupTitle: payload.routineGroupTitle,
+    createdAt: payload.createdAt,
+  }
+}
+
+function normalizeMyPageResponse(payload: unknown): MyPageResponse {
+  if (!isRecord(payload)) {
+    throw new ApiError('My page response is invalid.', 500, 'INVALID_MY_PAGE_RESPONSE', payload)
+  }
+  if (!Array.isArray(payload.skinResults)) {
+    throw new ApiError('My page skinResults is invalid.', 500, 'INVALID_MY_PAGE_SKIN_RESULTS', payload)
+  }
+  if (!Array.isArray(payload.routines)) {
+    throw new ApiError('My page routines is invalid.', 500, 'INVALID_MY_PAGE_ROUTINES', payload)
+  }
+
+  return {
+    user: normalizeMyPageUserInfo(payload.user),
+    skinResults: payload.skinResults.map((item, index) => normalizeMyPageSkinResultItem(item, index)),
+    routines: payload.routines.map((item, index) => normalizeMyPageRoutineItem(item, index)),
+  }
+}
+
 function normalizeAuthUser(body: unknown): AuthUser {
   if (!isRecord(body)) {
     throw new ApiError('Auth user response is invalid.', 500, 'INVALID_AUTH_USER', body)
@@ -942,6 +1020,11 @@ export function createLiveApiClient(baseUrl: string): ApiClient {
       const url = resultId != null ? `${baseUrl}/profile?skinResultId=${resultId}` : `${baseUrl}/profile`
       const payload = await requestApi<unknown>(url, { method: 'GET' })
       return normalizeProfileData(payload)
+    },
+
+    async getMyPage(): Promise<MyPageResponse> {
+      const payload = await requestApi<unknown>(`${baseUrl}/users/me`, { method: 'GET' })
+      return normalizeMyPageResponse(payload)
     },
 
     async getMe(): Promise<AuthUser> {

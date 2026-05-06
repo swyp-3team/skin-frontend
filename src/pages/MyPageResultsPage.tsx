@@ -13,13 +13,14 @@ import { toDateTimeDisplay } from '../lib/dateDisplay'
 import { queryKeys } from '../lib/queryKeys'
 
 const RESULT_LIST_PAGE_SIZE = 20
+const RESULT_HISTORY_TITLE = '피부 진단 결과'
 
 interface ResultHistoryCardProps {
   item: ResultListItem
 }
 
 function ResultHistoryCard({ item }: ResultHistoryCardProps) {
-  const historyDateTime = toDateTimeDisplay(item.diagnosedAt)
+  const historyDateTime = toDateTimeDisplay(item.createdAt)
 
   return (
     <li className="rounded-[8px] bg-common-0">
@@ -30,7 +31,7 @@ function ResultHistoryCard({ item }: ResultHistoryCardProps) {
               <span>{historyDateTime.date}</span>
               <span className="text-neutral-300">{historyDateTime.time}</span>
             </div>
-            <p className="text-xs leading-[16.32px] text-neutral-300">{item.title}</p>
+            <p className="text-xs leading-[16.32px] text-neutral-300">{RESULT_HISTORY_TITLE}</p>
           </div>
           <div className="inline-flex items-center gap-0.5 px-2 py-1 text-xs font-medium leading-[16.32px] text-primary-400">
             <span>결과보기</span>
@@ -57,7 +58,7 @@ function MyPageResultsPage() {
     queryFn: ({ pageParam }) =>
       apiClient.getResultList({
         size: RESULT_LIST_PAGE_SIZE,
-        cursor: typeof pageParam === 'number' && pageParam > 0 ? pageParam : undefined,
+        cursor: typeof pageParam === 'number' ? pageParam : 0,
       }),
     initialPageParam: 0,
     getNextPageParam: (lastPage) => (lastPage.hasNext ? lastPage.nextCursor ?? undefined : undefined),

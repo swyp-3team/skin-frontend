@@ -5,6 +5,7 @@ import type {
   PreviewApiData,
   ProductDetail,
   ProfileData,
+  MyPageResponse,
   ResultDetail,
   ResultListQuery,
   ResultListResponse,
@@ -36,6 +37,7 @@ export interface ApiClient {
   searchProducts(query: ProductSearchQuery): Promise<ProductSearchPageData>
   getProductDetail(productId: number): Promise<ProductDetail>
   getProfile(resultId?: number): Promise<ProfileData>
+  getMyPage(): Promise<MyPageResponse>
 
   // 인증 메서드
   getMe(): Promise<AuthUser>

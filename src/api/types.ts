@@ -66,8 +66,7 @@ export interface ResultDetail {
 
 export interface ResultListItem {
   resultId: number
-  diagnosedAt: string
-  title: string
+  createdAt: string
 }
 
 export interface ResultListQuery {
@@ -79,6 +78,29 @@ export interface ResultListResponse {
   results: ResultListItem[]
   hasNext: boolean
   nextCursor: number | null
+}
+
+export interface MyPageUserInfo {
+  name: string
+  email: string
+  profileImageUrl: string | null
+}
+
+export interface MyPageSkinResultItem {
+  resultId: number
+  createdAt: string
+}
+
+export interface MyPageRoutineItem {
+  routineGroupId: number
+  routineGroupTitle: string
+  createdAt: string
+}
+
+export interface MyPageResponse {
+  user: MyPageUserInfo
+  skinResults: MyPageSkinResultItem[]
+  routines: MyPageRoutineItem[]
 }
 
 // ── 루틴 목록/상세 API 타입 ────────────────────────────────────────────────────

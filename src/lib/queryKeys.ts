@@ -8,6 +8,7 @@ export const queryKeys = {
   routineListPreview: () => ['routine-list', 'preview'] as const,
   routineListInfinite: () => ['routine-list', 'infinite'] as const,
   routineDetail: (routineGroupId: number) => ['routine-detail', routineGroupId] as const,
+  myPage: () => ['my-page'] as const,
   resultProducts: (resultId: number, tabId: ResultProductTabId) => ['result-products', resultId, tabId] as const,
   resultProductsSearchSource: (resultId: number, keyword: string) =>
     ['result-products-search-source', resultId, keyword] as const,
