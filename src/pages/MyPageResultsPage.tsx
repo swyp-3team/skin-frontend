@@ -82,7 +82,7 @@ function MyPageResultsPage() {
           void fetchNextPage()
         }
       },
-      { rootMargin: '160px 0px' },
+      { rootMargin: '0px', threshold: 1 },
     )
 
     observer.observe(sentinel)
