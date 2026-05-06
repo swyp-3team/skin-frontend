@@ -33,6 +33,7 @@ createRoot(document.getElementById('root')!).render(
         />
         <Toaster
           id="result-routine-saved"
+          className="toaster group result-routine-saved"
           position="top-center"
           offset={resultRoutineToasterOffset}
           mobileOffset={resultRoutineToasterOffset}

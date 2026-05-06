@@ -229,7 +229,7 @@
   max-width: calc(390px - 80px);
 }
 
-[data-sonner-toaster][data-x-position='center']#result-routine-saved {
+[data-sonner-toaster][data-x-position='center'].result-routine-saved {
   max-width: calc(390px - 40px);
 }
 
