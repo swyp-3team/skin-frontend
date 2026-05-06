@@ -1039,6 +1039,10 @@ export function createLiveApiClient(baseUrl: string): ApiClient {
       return unwrapMeResponse(body)
     },
 
+    async withdraw(): Promise<void> {
+      await requestApi<null>(`${baseUrl}/users`, { method: 'DELETE' })
+    },
+
     async logout(): Promise<void> {
       await requestApi<null>(`${baseUrl}/auth/logout`, { method: 'POST' })
     },

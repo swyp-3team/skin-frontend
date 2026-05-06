@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { ChevronRight } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -83,6 +83,17 @@ function MyPage() {
     retry: false,
   })
 
+  const withdrawMutation = useMutation<void, ApiError>({
+    mutationFn: () => apiClient.withdraw(),
+    onSuccess: () => {
+      notify.success('회원 탈퇴가 완료되었습니다.')
+      logout()
+    },
+    onError: (withdrawError) => {
+      notify.error(withdrawError.message || '회원 탈퇴에 실패했습니다.')
+    },
+  })
+
   const shouldResetByMyPageError = shouldResetByError(myPageQuery.error ?? null)
 
   useEffect(() => {
@@ -114,12 +125,14 @@ function MyPage() {
     AUTH_UI_TEXT.defaultNickname
 
   function handleWithdrawalClick() {
+    if (withdrawMutation.isPending) return
     setIsWithdrawalDialogOpen(true)
   }
 
   function handleWithdrawalConfirm() {
+    if (withdrawMutation.isPending) return
     setIsWithdrawalDialogOpen(false)
-    notify.info('회원탈퇴 기능은 준비중입니다.')
+    withdrawMutation.mutate()
   }
 
   return (
@@ -259,6 +272,7 @@ function MyPage() {
           <div className="flex w-full justify-center">
             <button
               className="inline-flex items-center gap-0.5 px-2 py-1 text-xs font-medium leading-[16.32px] text-red-400 opacity-70"
+              disabled={withdrawMutation.isPending}
               onClick={handleWithdrawalClick}
               type="button"
             >
@@ -271,6 +285,8 @@ function MyPage() {
 
       <ConfirmActionDialog
         description="탈퇴하면 모든 데이터가 삭제되며 복구할 수 없습니다. 탈퇴하시겠습니까?"
+        confirmDisabled={withdrawMutation.isPending}
+        confirmLabel={withdrawMutation.isPending ? '탈퇴 중...' : '확인'}
         onConfirm={handleWithdrawalConfirm}
         onOpenChange={setIsWithdrawalDialogOpen}
         open={isWithdrawalDialogOpen}

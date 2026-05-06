@@ -860,6 +860,10 @@ export const mockApiClient: ApiClient = {
     })
   },
 
+  async withdraw(): Promise<void> {
+    return withDelay(undefined as unknown as void)
+  },
+
   async logout(): Promise<void> {
     return withDelay(undefined as unknown as void)
   },

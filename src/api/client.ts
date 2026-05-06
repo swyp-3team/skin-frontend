@@ -33,6 +33,7 @@ export interface ApiClient {
   getRoutineList(query?: RoutineListQuery): Promise<RoutineListResponse>
   getRoutineDetail(routineGroupId: number): Promise<RoutineDetailResponse>
   deleteRoutine(routineGroupId: number): Promise<void>
+  withdraw(): Promise<void>
   getRecommendedProducts(query: ResultProductsQuery): Promise<ResultProductsPageData>
   searchProducts(query: ProductSearchQuery): Promise<ProductSearchPageData>
   getProductDetail(productId: number): Promise<ProductDetail>
