@@ -12,7 +12,7 @@ import MobilePage from '../components/MobilePage'
 import { toDateTimeDisplay } from '../lib/dateDisplay'
 import { queryKeys } from '../lib/queryKeys'
 
-const RESULT_LIST_PAGE_SIZE = 20
+const RESULT_LIST_PAGE_SIZE = 10
 const RESULT_HISTORY_TITLE = '피부 진단 결과'
 
 interface ResultHistoryCardProps {
