@@ -13,11 +13,11 @@ export function useLogout() {
   const clearSavedRoutine = useSurveyResultStore((state) => state.clearSavedRoutine)
 
   return () => {
+    navigate(APP_ROUTES.home)
     clearAuth()
     queryClient.clear()
     clearLatestResultId()
     clearSavedRoutine()
     apiClient.logout().catch(() => {})
-    navigate(APP_ROUTES.home)
   }
 }
