@@ -44,13 +44,6 @@ function createAuthGuardedAction(getPath: (id: number) => string): MenuItemConfi
   }
 }
 
-function createLoginRequiredAction(path: string): MenuItemConfig['resolveAction'] {
-  return (isAuthenticated) => {
-    if (!isAuthenticated) return { type: 'alert', message: ALERT_MESSAGES.loginRequired }
-    return { type: 'navigate', path }
-  }
-}
-
 const MENU_ITEMS: MenuItemConfig[] = [
   {
     id: 'home',
@@ -75,18 +68,35 @@ const MENU_ITEMS: MenuItemConfig[] = [
   {
     id: 'myPage',
     label: '마이페이지',
-    resolveAction: createLoginRequiredAction(APP_ROUTES.myPage),
+    resolveAction: () => ({ type: 'navigate', path: APP_ROUTES.myPage }),
   },
 ]
 
 interface UserAvatarProps {
   nickname: string | undefined
+  profileImageUrl: string | null | undefined
 }
 
-function UserAvatar({ nickname }: UserAvatarProps) {
+function UserAvatar({ nickname, profileImageUrl }: UserAvatarProps) {
+  const [imageLoadFailed, setImageLoadFailed] = useState(false)
+
+  const hasProfileImage =
+    !imageLoadFailed &&
+    typeof profileImageUrl === 'string' &&
+    profileImageUrl.trim().length > 0
+
   return (
     <div className="size-12 shrink-0 overflow-hidden rounded-full bg-neutral-100 flex items-center justify-center text-sm font-medium text-neutral-800">
-      {nickname?.charAt(0) ?? '?'}
+      {hasProfileImage ? (
+        <img
+          alt={nickname ? `${nickname} 프로필 이미지` : '프로필 이미지'}
+          className="size-full object-cover"
+          onError={() => setImageLoadFailed(true)}
+          src={profileImageUrl}
+        />
+      ) : (
+        nickname?.charAt(0) ?? '?'
+      )}
     </div>
   )
 }
@@ -105,6 +115,7 @@ function NavMenuDialog({ triggerClassName }: NavMenuDialogProps) {
 
   const isAuthenticated = useAuthStore(selectIsAuthenticated)
   const nickname = useAuthStore((s) => s.user?.nickname)
+  const profileImageUrl = useAuthStore((s) => s.user?.profileImageUrl)
   const latestResultId = useSurveyResultStore((s) => s.latestResultId)
   const hasPreviewResult = useSurveyProgressStore((s) => s.previewResult !== null)
   const logout = useLogout()
@@ -117,7 +128,7 @@ function NavMenuDialog({ triggerClassName }: NavMenuDialogProps) {
   }
 
   function handleItemClick(item: MenuItemConfig) {
-    if (item.id === 'routine' || item.id === 'products') {
+    if (item.id === 'routine' || item.id === 'products' || item.id === 'myPage') {
       if (!isAuthenticated) {
         handleOpenChange(false)
         setLoginDialogVariant(location.pathname === APP_ROUTES.surveyResult && hasPreviewResult ? 'result' : 'default')
@@ -125,7 +136,7 @@ function NavMenuDialog({ triggerClassName }: NavMenuDialogProps) {
         return
       }
 
-      if (latestResultId == null) {
+      if ((item.id === 'routine' || item.id === 'products') && latestResultId == null) {
         handleOpenChange(false)
         navigate(APP_ROUTES.survey, {
           state: {
@@ -198,7 +209,7 @@ function NavMenuDialog({ triggerClassName }: NavMenuDialogProps) {
           <div className="shrink-0 px-5 pb-10 pt-8">
             {isAuthenticated ? (
               <div className="flex items-center gap-3">
-                <UserAvatar nickname={nickname} />
+                <UserAvatar nickname={nickname} profileImageUrl={profileImageUrl} />
                 <div className="flex flex-col gap-0.5">
                   <span className="text-[18px] font-bold leading-[27.6px] text-neutral-800">
                     {nickname ?? AUTH_UI_TEXT.defaultNickname}
