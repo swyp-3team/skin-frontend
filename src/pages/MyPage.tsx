@@ -121,8 +121,8 @@ function MyPage() {
   const displayName =
     (userName && userName.length > 0 && userName) ||
     authUser?.nickname ||
-    (userEmail && userEmail.length > 0 && userEmail) ||
     AUTH_UI_TEXT.defaultNickname
+  const displayEmail = userEmail && userEmail.length > 0 ? userEmail : null
 
   function handleWithdrawalClick() {
     if (withdrawMutation.isPending) return
@@ -142,9 +142,16 @@ function MyPage() {
     >
       <section className="space-y-5 pb-8">
         <SurfaceCard className="rounded-[12px] bg-common-0 p-4">
-          <p className="text-base font-semibold leading-[23.68px] text-neutral-800">
-            {displayName}
-          </p>
+          <div className="flex flex-col gap-0.5">
+            <p className="text-base font-semibold leading-[23.68px] text-neutral-800">
+              {displayName}
+            </p>
+            {displayEmail ? (
+              <p className="break-all text-xs font-normal leading-[16.32px] text-neutral-800">
+                {displayEmail}
+              </p>
+            ) : null}
+          </div>
         </SurfaceCard>
 
         <SurfaceCard className="space-y-4 rounded-[12px] bg-common-0 p-4">

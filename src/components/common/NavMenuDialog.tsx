@@ -1,7 +1,11 @@
 import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { ChevronRight, X } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
+import { apiClient } from '@/api'
+import { ApiError } from '@/api/errors'
+import type { MyPageResponse } from '@/api/types'
 import { saveIntent } from '@/auth/postLoginIntent'
 import { buildOAuthStartUrl } from '@/auth/oauthStartUrl'
 import { APP_ROUTES, createResultProductsPath, createResultRoutinePath } from '@/app/routes'
@@ -14,6 +18,7 @@ import { AUTH_UI_TEXT } from '@/constants/auth'
 import type { LoginDialogVariant, OAuthProvider } from '@/constants/auth'
 import { SURVEY_INTRO_ENTRY_POINTS } from '@/constants/surveyEntry'
 import { useLogout } from '@/hooks/useLogout'
+import { queryKeys } from '@/lib/queryKeys'
 import { cn } from '@/lib/utils'
 import { selectIsAuthenticated, useAuthStore } from '@/stores/authStore'
 import { useSurveyProgressStore } from '@/stores/surveyProgressStore'
@@ -118,9 +123,23 @@ function NavMenuDialog({ triggerClassName }: NavMenuDialogProps) {
   const profileImageUrl = useAuthStore((s) => s.user?.profileImageUrl)
   const latestResultId = useSurveyResultStore((s) => s.latestResultId)
   const hasPreviewResult = useSurveyProgressStore((s) => s.previewResult !== null)
+  const myPageQuery = useQuery<MyPageResponse, ApiError>({
+    queryKey: queryKeys.myPage(),
+    queryFn: () => apiClient.getMyPage(),
+    enabled: isAuthenticated === true,
+    staleTime: 0,
+    retry: false,
+  })
   const logout = useLogout()
   const location = useLocation()
   const navigate = useNavigate()
+  const userName = myPageQuery.data?.user.name.trim()
+  const userEmail = myPageQuery.data?.user.email.trim()
+  const displayName =
+    (userName && userName.length > 0 && userName) ||
+    nickname ||
+    AUTH_UI_TEXT.defaultNickname
+  const displayEmail = userEmail && userEmail.length > 0 ? userEmail : null
 
   function handleOpenChange(nextOpen: boolean) {
     if (nextOpen) setInlineAlert(null)
@@ -209,11 +228,16 @@ function NavMenuDialog({ triggerClassName }: NavMenuDialogProps) {
           <div className="shrink-0 px-5 pb-10 pt-8">
             {isAuthenticated ? (
               <div className="flex items-center gap-3">
-                <UserAvatar nickname={nickname} profileImageUrl={profileImageUrl} />
+                <UserAvatar nickname={displayName} profileImageUrl={profileImageUrl} />
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-[18px] font-bold leading-[27.6px] text-neutral-800">
-                    {nickname ?? AUTH_UI_TEXT.defaultNickname}
+                  <span className="text-[18px] font-bold leading-[25.56px] text-neutral-800">
+                    {displayName}
                   </span>
+                  {displayEmail ? (
+                    <span className="break-all text-[14px] font-normal leading-[20.44px] text-neutral-800">
+                      {displayEmail}
+                    </span>
+                  ) : null}
                 </div>
               </div>
             ) : (
