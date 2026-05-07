@@ -20,6 +20,15 @@ interface DiagnosedAtDisplay {
 }
 
 function toDiagnosedAtDisplay(value: string): DiagnosedAtDisplay {
+  const matchedDate = value.match(/^(\d{4})[./-](\d{2})[./-](\d{2})(?:\s+(\d{2}):(\d{2}))?$/)
+  if (matchedDate) {
+    const [, year, month, day, hour, minute] = matchedDate
+    return {
+      date: `${year}.${month}.${day}`,
+      time: hour && minute ? `${hour}:${minute}` : null,
+    }
+  }
+
   const parsedDate = new Date(value)
   if (!Number.isNaN(parsedDate.getTime())) {
     const year = parsedDate.getFullYear()
@@ -31,15 +40,6 @@ function toDiagnosedAtDisplay(value: string): DiagnosedAtDisplay {
     return {
       date: `${year}.${month}.${day}`,
       time: `${hour}:${minute}`,
-    }
-  }
-
-  const matchedDate = value.match(/^(\d{4})[./-](\d{2})[./-](\d{2})(?:\s+(\d{2}):(\d{2}))?$/)
-  if (matchedDate) {
-    const [, year, month, day, hour, minute] = matchedDate
-    return {
-      date: `${year}.${month}.${day}`,
-      time: hour && minute ? `${hour}:${minute}` : null,
     }
   }
 
