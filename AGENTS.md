@@ -36,6 +36,11 @@
   - `api/client.ts` 인터페이스
   - `api/mockClient.ts`, `api/liveClient.ts`
   - `api/index.ts`에서 `VITE_API_MODE` 기반 선택
+  - live 모드 인증 복구:
+    - 모든 API 요청은 `credentials: 'include'`를 사용합니다.
+    - `401` 응답 시 `POST /api/v1/auth/refresh`를 1회 호출해 accessToken 재발급을 시도합니다.
+    - 재발급 성공 시 원요청을 1회 재시도합니다.
+    - 재발급 실패 시 클라이언트 인증/캐시 상태를 정리하고 `/landing`으로 이동합니다.
 - 설문 결과 페이지(`/survey/result`)와 전체 결과 페이지(`/results/:id`)는 공통 화면 컴포넌트(`ResultOverviewScreen`)를 사용합니다.
   - 미리보기는 상단 데이터만 실제값을 사용하고, 하단 섹션은 블러 게이트를 통해 로그인 전 노출을 제한합니다.
   - 결과/미리보기 화면은 `MobilePage`의 `max-w-[390px]` 기준 폭을 따릅니다.

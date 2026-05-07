@@ -20,6 +20,11 @@
 - `zustand` 기반 설문 상태 관리 + `persist`
 - 단계별 응답 저장 후 마지막 단계에서 1회 제출
 - API 클라이언트 `mock/live` 전환 구조
+- live 인증 복구 정책
+  - 모든 API 요청은 `credentials: 'include'`로 쿠키를 포함합니다.
+  - `401` 응답 시 `POST /api/v1/auth/refresh`로 accessToken 재발급을 1회 시도합니다.
+  - refresh 성공 시 원요청을 1회 재시도합니다.
+  - refresh 실패 시 인증/캐시 상태를 정리하고 `/landing`으로 이동합니다.
 - 설문 결과(`/survey/result`)와 전체 결과(`/results/:id`)는 공통 화면 컴포넌트를 사용하며, 미리보기는 블러 게이트만 추가됩니다.
 
 ## 마이페이지 상태 규칙

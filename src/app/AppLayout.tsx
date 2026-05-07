@@ -1,11 +1,13 @@
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 
 import { apiClient } from '../api'
 import { clearIntent } from '../auth/postLoginIntent'
+import { addSessionExpiredListener } from '../auth/sessionEvents'
 import { queryClient } from '../lib/queryClient'
 import { useAuthStore } from '../stores/authStore'
 import { useSurveyResultStore } from '../stores/surveyResultStore'
+import { APP_ROUTES } from './routes'
 
 function AppLayout() {
   const location = useLocation()
@@ -16,6 +18,14 @@ function AppLayout() {
   const clearLatestResultId = useSurveyResultStore((state) => state.clearLatestResultId)
   const clearSavedRoutine = useSurveyResultStore((state) => state.clearSavedRoutine)
   const initializedRef = useRef(false)
+
+  const clearClientAuthState = useCallback(() => {
+    clearAuth()
+    clearIntent()
+    queryClient.clear()
+    clearLatestResultId()
+    clearSavedRoutine()
+  }, [clearAuth, clearLatestResultId, clearSavedRoutine])
 
   useEffect(() => {
     if (initializedRef.current) return
@@ -48,13 +58,18 @@ function AppLayout() {
   useEffect(() => {
     if (!location.state?.pendingLogout) return
     navigate(location.pathname, { replace: true, state: null })
-    clearAuth()
-    clearIntent()
-    queryClient.clear()
-    clearLatestResultId()
-    clearSavedRoutine()
+    clearClientAuthState()
     apiClient.logout().catch(() => {})
-  }, [location, navigate, clearAuth, clearLatestResultId, clearSavedRoutine])
+  }, [location, navigate, clearClientAuthState])
+
+  useEffect(() => {
+    const unsubscribe = addSessionExpiredListener(() => {
+      clearClientAuthState()
+      navigate(APP_ROUTES.landing, { replace: true })
+    })
+
+    return unsubscribe
+  }, [clearClientAuthState, navigate])
 
   return (
     <div className="min-h-[100dvh] bg-white text-neutral-800">

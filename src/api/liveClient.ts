@@ -1,4 +1,5 @@
 import { isConcernCode, isSkinTypeCode } from '../domain/surveyCodes'
+import { notifySessionExpired } from '../auth/sessionEvents'
 import type { AuthUser } from '../types/auth'
 import type { ApiClient } from './client'
 import type { ApiErrorPayload, ApiFieldError } from './contracts'
@@ -48,6 +49,13 @@ const ROUTINE_STEP_CATEGORY_SET = new Set<RoutineStepCategory>([
   'PREPARE', 'INTENSIVE_CARE', 'MOISTURIZER', 'SUN_CARE',
 ])
 
+const REFRESH_PATH = '/api/v1/auth/refresh'
+const SESSION_EXPIRED_MESSAGE = 'Session has expired. Please sign in again.'
+
+let refreshEndpointUrl: string | null = null
+let refreshPromise: Promise<boolean> | null = null
+let hasNotifiedSessionExpired = false
+
 function isRecord(value: unknown): value is WireRecord {
   return typeof value === 'object' && value !== null
 }
@@ -88,6 +96,51 @@ async function readBody(response: Response): Promise<unknown> {
   }
 
   return response.text()
+}
+
+function toUrl(input: string): URL | null {
+  try {
+    return new URL(input)
+  } catch {
+    try {
+      return new URL(input, 'http://localhost')
+    } catch {
+      return null
+    }
+  }
+}
+
+function isRefreshRequestUrl(url: string): boolean {
+  if (!refreshEndpointUrl) {
+    return false
+  }
+
+  if (url === refreshEndpointUrl) {
+    return true
+  }
+
+  const requestUrl = toUrl(url)
+  const refreshUrl = toUrl(refreshEndpointUrl)
+
+  if (!requestUrl || !refreshUrl) {
+    return false
+  }
+
+  return requestUrl.origin === refreshUrl.origin && requestUrl.pathname === refreshUrl.pathname
+}
+
+function notifySessionExpiredOnce() {
+  if (hasNotifiedSessionExpired) {
+    return
+  }
+
+  hasNotifiedSessionExpired = true
+  notifySessionExpired({ reason: 'refresh_failed' })
+}
+
+function resolveRefreshEndpoint(baseUrl: string): string {
+  const base = toUrl(baseUrl)
+  return `${base!.origin}${REFRESH_PATH}`
 }
 
 function normalizeFieldError(raw: unknown): ApiFieldError | null {
@@ -198,9 +251,7 @@ function unwrapEnvelope<T>(body: unknown, status: number): T {
   return body.data as T
 }
 
-async function requestApi<T>(url: string, init: RequestInit, _token?: string): Promise<T> {
-  void _token
-
+async function requestApi<T>(url: string, init: RequestInit, retryCount = 0): Promise<T> {
   const headers = new Headers(init.headers)
 
   if (init.body !== undefined && !headers.has('Content-Type')) {
@@ -211,7 +262,7 @@ async function requestApi<T>(url: string, init: RequestInit, _token?: string): P
   try {
     response = await fetch(url, { ...init, headers, credentials: 'include' })
   } catch (error) {
-    throw new ApiError('네트워크 요청에 실패했습니다. API 연결 상태를 확인해 주세요.', 0, 'NETWORK_ERROR', error)
+    throw new ApiError('Network request failed. Please check your API connection.', 0, 'NETWORK_ERROR', error)
   }
 
   let body: unknown
@@ -219,6 +270,15 @@ async function requestApi<T>(url: string, init: RequestInit, _token?: string): P
     body = await readBody(response)
   } catch (error) {
     throw new ApiError('Response body could not be parsed.', response.status, 'INVALID_RESPONSE_BODY', error)
+  }
+
+  if (response.status === 401 && retryCount === 0 && !isRefreshRequestUrl(url)) {
+    await refreshAccessToken()
+    if (init.body instanceof FormData || init.body instanceof ReadableStream || init.body instanceof Blob) {
+      throw new ApiError('Request body cannot be retried safely after token refresh.', 500, 'UNRETRIABLE_REQUEST_BODY')
+    }
+
+    return requestApi<T>(url, { ...init }, 1)
   }
 
   if (!response.ok) {
@@ -234,6 +294,44 @@ async function requestApi<T>(url: string, init: RequestInit, _token?: string): P
   }
 
   return unwrapEnvelope<T>(body, response.status)
+}
+
+async function refreshAccessToken(): Promise<boolean> {
+  if (!refreshEndpointUrl) {
+    notifySessionExpiredOnce()
+    throw new ApiError(SESSION_EXPIRED_MESSAGE, 401, 'AUTH_SESSION_EXPIRED')
+  }
+
+  if (!refreshPromise) {
+    refreshPromise = (async () => {
+      try {
+        const response = await fetch(refreshEndpointUrl as string, {
+          method: 'POST',
+          credentials: 'include',
+        })
+
+        if (!response.ok) {
+          notifySessionExpiredOnce()
+          return false
+        }
+
+        hasNotifiedSessionExpired = false
+        return true
+      } catch {
+        notifySessionExpiredOnce()
+        return false
+      }
+    })().finally(() => {
+      refreshPromise = null
+    })
+  }
+
+  const refreshed = await refreshPromise
+  if (!refreshed) {
+    throw new ApiError(SESSION_EXPIRED_MESSAGE, 401, 'AUTH_SESSION_EXPIRED')
+  }
+
+  return refreshed
 }
 
 
@@ -887,6 +985,10 @@ function normalizeProductDetail(payload: unknown): ProductDetail {
 }
 
 export function createLiveApiClient(baseUrl: string): ApiClient {
+  refreshEndpointUrl = resolveRefreshEndpoint(baseUrl)
+  hasNotifiedSessionExpired = false
+  refreshPromise = null
+
   async function getResultDetail(resultId: number): Promise<ResultDetail> {
     const payload = await requestApi<unknown>(`${baseUrl}/results/${resultId}`, { method: 'GET' })
     return normalizeResultDetail(payload, resultId)
@@ -1044,7 +1146,10 @@ export function createLiveApiClient(baseUrl: string): ApiClient {
     },
 
     async logout(): Promise<void> {
-      await requestApi<null>(`${baseUrl}/auth/logout`, { method: 'POST' })
+      // retryCount=1: 로그아웃 중 401이 와도 refresh를 시도하지 않습니다.
+      // 이미 세션이 만료된 상태에서 logout을 호출했을 때 의도치 않은 세션 만료 이벤트가
+      // 발행되는 것을 방지합니다.
+      await requestApi<null>(`${baseUrl}/auth/logout`, { method: 'POST' }, 1)
     },
   }
 }
