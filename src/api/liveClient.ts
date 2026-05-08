@@ -541,13 +541,13 @@ function normalizeResultListItem(raw: unknown, index: number): ResultListItem {
   if (resultId === null) {
     throw new ApiError(`Result list resultId is invalid. ([${index}])`, 500, 'INVALID_RESULT_LIST_ID', raw)
   }
-  if (typeof raw.createdAt !== 'string') {
-    throw new ApiError(`Result list createdAt is invalid. ([${index}])`, 500, 'INVALID_RESULT_LIST_CREATED_AT', raw)
+  if (typeof raw.diagnosedAt !== 'string') {
+    throw new ApiError(`Result list diagnosedAt is invalid. ([${index}])`, 500, 'INVALID_RESULT_LIST_DIAGNOSED_AT', raw)
   }
 
   return {
     resultId,
-    createdAt: raw.createdAt,
+    createdAt: raw.diagnosedAt,
     typeName: typeof raw.typeName === 'string' ? raw.typeName : null,
   }
 }
