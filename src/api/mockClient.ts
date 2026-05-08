@@ -857,6 +857,8 @@ export const mockApiClient: ApiClient = {
       nickname: '레이어드 사용자',
       role: 'USER',
       profileImageUrl: null,
+      name: '레이어드 사용자',
+      email: 'mock.user@layerd.local',
     })
   },
 

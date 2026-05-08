@@ -26,6 +26,8 @@ function MockLoginButton({ className }: MockLoginButtonProps) {
       nickname: 'Mock User',
       role: 'USER',
       profileImageUrl: null,
+      name: 'Mock User',
+      email: 'mock.user@layerd.local',
     })
   }
 

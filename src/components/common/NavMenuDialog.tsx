@@ -1,11 +1,7 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
 import { ChevronRight, X } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
-import { apiClient } from '@/api'
-import { ApiError } from '@/api/errors'
-import type { MyPageResponse } from '@/api/types'
 import { saveIntent } from '@/auth/postLoginIntent'
 import { buildOAuthStartUrl } from '@/auth/oauthStartUrl'
 import { APP_ROUTES, createResultProductsPath, createResultRoutinePath } from '@/app/routes'
@@ -18,7 +14,6 @@ import { AUTH_UI_TEXT } from '@/constants/auth'
 import type { LoginDialogVariant, OAuthProvider } from '@/constants/auth'
 import { SURVEY_INTRO_ENTRY_POINTS } from '@/constants/surveyEntry'
 import { useLogout } from '@/hooks/useLogout'
-import { queryKeys } from '@/lib/queryKeys'
 import { cn } from '@/lib/utils'
 import { selectIsAuthenticated, useAuthStore } from '@/stores/authStore'
 import { useSurveyProgressStore } from '@/stores/surveyProgressStore'
@@ -119,22 +114,15 @@ function NavMenuDialog({ triggerClassName }: NavMenuDialogProps) {
     typeof document === 'undefined' ? null : document.querySelector<HTMLElement>('[data-mobile-portal]')
 
   const isAuthenticated = useAuthStore(selectIsAuthenticated)
+  const userName = useAuthStore((s) => s.user?.name?.trim())
+  const userEmail = useAuthStore((s) => s.user?.email?.trim())
   const nickname = useAuthStore((s) => s.user?.nickname)
   const profileImageUrl = useAuthStore((s) => s.user?.profileImageUrl)
   const latestResultId = useSurveyResultStore((s) => s.latestResultId)
   const hasPreviewResult = useSurveyProgressStore((s) => s.previewResult !== null)
-  const myPageQuery = useQuery<MyPageResponse, ApiError>({
-    queryKey: queryKeys.myPage(),
-    queryFn: () => apiClient.getMyPage(),
-    enabled: isAuthenticated === true,
-    staleTime: 0,
-    retry: false,
-  })
   const logout = useLogout()
   const location = useLocation()
   const navigate = useNavigate()
-  const userName = myPageQuery.data?.user.name.trim()
-  const userEmail = myPageQuery.data?.user.email.trim()
   const displayName =
     (userName && userName.length > 0 && userName) ||
     nickname ||

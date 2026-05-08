@@ -922,6 +922,8 @@ function normalizeAuthUser(body: unknown): AuthUser {
     nickname: body.nickname,
     role: body.role,
     profileImageUrl: typeof body.profileImageUrl === 'string' ? body.profileImageUrl : null,
+    name: typeof body.name === 'string' ? body.name : null,
+    email: typeof body.email === 'string' ? body.email : null,
   }
 }
 

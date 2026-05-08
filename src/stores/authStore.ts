@@ -25,7 +25,22 @@ export const useAuthStore = create<AuthStore>()(
       user: undefined,
       authCheckCompleted: false,
       setUser: (user) => {
-        set({ user })
+        set((state) => {
+          const currentUser = state.user
+          if (!currentUser || currentUser.userId !== user.userId) {
+            return { user }
+          }
+
+          return {
+            user: {
+              ...currentUser,
+              ...user,
+              name: user.name ?? currentUser.name,
+              email: user.email ?? currentUser.email,
+              profileImageUrl: user.profileImageUrl ?? currentUser.profileImageUrl,
+            },
+          }
+        })
       },
       setAuthCheckCompleted: (completed) => {
         set({ authCheckCompleted: completed })

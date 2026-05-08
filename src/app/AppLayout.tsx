@@ -34,8 +34,10 @@ function AppLayout() {
     let isActive = true
 
     const bootstrapAuth = async () => {
+      let authUser: Awaited<ReturnType<typeof apiClient.getMe>> | null = null
       try {
         const user = await apiClient.getMe()
+        authUser = user
         if (!isActive) return
         setUser(user)
       } catch {
@@ -45,6 +47,28 @@ function AppLayout() {
         if (isActive) {
           setAuthCheckCompleted(true)
         }
+      }
+
+      if (!authUser) {
+        return
+      }
+
+      try {
+        const myPage = await apiClient.getMyPage()
+        if (!isActive) return
+        if (useAuthStore.getState().user?.userId !== authUser.userId) return
+
+        const trimmedName = myPage.user.name.trim()
+        const trimmedEmail = myPage.user.email.trim()
+
+        setUser({
+          ...authUser,
+          name: trimmedName.length > 0 ? trimmedName : null,
+          email: trimmedEmail.length > 0 ? trimmedEmail : null,
+          profileImageUrl: myPage.user.profileImageUrl,
+        })
+      } catch {
+        // 프로필 보강 실패 시 인증 상태는 유지한다.
       }
     }
 
