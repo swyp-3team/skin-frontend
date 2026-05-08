@@ -842,13 +842,18 @@ function normalizeMyPageSkinResultItem(payload: unknown, index: number): MyPageS
   if (resultId === null) {
     throw new ApiError(`My page skin resultId is invalid. ([${index}])`, 500, 'INVALID_MY_PAGE_SKIN_RESULT_ID', payload)
   }
-  if (typeof payload.createdAt !== 'string') {
-    throw new ApiError(`My page skin createdAt is invalid. ([${index}])`, 500, 'INVALID_MY_PAGE_SKIN_CREATED_AT', payload)
+  if (typeof payload.diagnosedAt !== 'string') {
+    throw new ApiError(
+      `My page skin diagnosedAt is invalid. ([${index}])`,
+      500,
+      'INVALID_MY_PAGE_SKIN_DIAGNOSED_AT',
+      payload,
+    )
   }
 
   return {
     resultId,
-    createdAt: payload.createdAt,
+    createdAt: payload.diagnosedAt,
     typeName: typeof payload.typeName === 'string' ? payload.typeName : null,
   }
 }

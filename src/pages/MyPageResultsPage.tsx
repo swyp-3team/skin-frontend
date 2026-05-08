@@ -62,6 +62,7 @@ function MyPageResultsPage() {
       }),
     initialPageParam: undefined,
     getNextPageParam: (lastPage) => (lastPage.hasNext ? lastPage.nextCursor ?? undefined : undefined),
+    staleTime: 0,
     retry: false,
   })
 
