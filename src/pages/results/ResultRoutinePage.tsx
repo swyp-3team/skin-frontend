@@ -373,7 +373,7 @@ function ResultRoutinePage() {
                         exit: (dir: number) => ({ x: dir > 0 ? '-40%' : '40%', opacity: 0 }),
                       }}
                     >
-                      <CardStack className="px-5 pb-10 pt-2">
+                      <CardStack className="px-5 pb-10 pt-5">
                         {products.map((product, index) => (
                           <RoutineStepCard
                             key={product.productId}
