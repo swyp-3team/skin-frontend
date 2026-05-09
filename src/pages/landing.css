@@ -1,0 +1,150 @@
+.layer {
+  transform: scale(0);
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: spread 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.layer-1 {
+  animation-delay: 0.1s;
+  left: 0;
+  top: 0;
+  min-height: 650px;
+  height: 100dvh;
+  width: 390px;
+  background: linear-gradient(180deg, rgba(108, 209, 204, 0.15) 50%, rgba(108, 209, 204, 0.02) 100%);
+}
+
+.layer-2 {
+  animation-delay: 0.25s;
+  left: 12px;
+  top: 36px;
+  min-height: 640px;
+  height: calc(100dvh - 72px);
+  width: 366px;
+  background: rgba(108, 209, 204, 0.15);
+}
+
+.layer-3 {
+  animation-delay: 0.4s;
+  left: 24px;
+  top: 64px;
+  min-height: 568px;
+  height: calc(100dvh - 144px);
+  width: 342px;
+  background: rgba(108, 209, 204, 0.15);
+}
+
+@keyframes spread {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.landing-hero-copy {
+  opacity: 0;
+  transform: translateY(30px);
+  animation: fade-up 1s ease forwards;
+  animation-delay: 0.8s;
+}
+
+@keyframes fade-up {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.landing-hero-cta-pulse {
+  animation-name: cta-pulse;
+  animation-duration: 2.8s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-delay: 2.2s;
+  will-change: transform, box-shadow;
+}
+
+@keyframes cta-pulse {
+  0% {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 0 0 0 rgba(108, 209, 204, 0);
+  }
+
+  35% {
+    transform: translateY(0) scale(1.02);
+    box-shadow: 0 6px 18px 0 rgba(108, 209, 204, 0.28);
+  }
+
+  100% {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 0 0 0 rgba(108, 209, 204, 0);
+  }
+}
+
+.step {
+  opacity: 0;
+  transform: translateY(50px);
+  transition: transform 0.8s ease, opacity 0.8s ease;
+}
+
+.step.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.bubble {
+  animation-name: bubble-float;
+  animation-duration: 3s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+@keyframes bubble-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.glow {
+  animation: glow-pulse 3s infinite;
+}
+
+@keyframes glow-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.15);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .layer,
+  .landing-hero-copy,
+  .landing-hero-cta-pulse,
+  .step,
+  .bubble,
+  .glow {
+    animation: none !important;
+    transition: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .step {
+    opacity: 1;
+  }
+}
