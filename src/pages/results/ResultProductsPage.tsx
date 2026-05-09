@@ -288,7 +288,11 @@ function ResultProductsPage() {
                 isHeaderScrolled ? 'overflow-y-auto' : 'overflow-hidden',
               )}
             >
-              <div className="sticky top-0 z-9 bg-gradient-to-b from-common-0 from-40% to-common-0/70 px-4 pt-4 pb-3">
+              <div className="shrink-0 bg-common-0 px-5 py-3">
+                <RecommendationNotice description={PRODUCTS_PAGE_COPY.recommendationNoticeDescription} />
+              </div>
+
+              <div className="sticky top-0 z-9 bg-gradient-to-b from-common-0 from-40% to-common-0/70 px-5 pt-5 pb-5">
                 <div style={{width: '100%', height: '100%', justifyContent: 'flex-start', alignItems: 'flex-start', gap: 8, display: 'inline-flex', flexWrap: 'wrap', alignContent: 'flex-start'}}>
                   {RESULT_PRODUCT_TABS.map((tab) => {
                     const isActive = activeTabId === tab.id
@@ -325,25 +329,21 @@ function ResultProductsPage() {
                 </div>
               </div>
 
-              <section className={cn('w-full mt-3 px-5 pb-10 transition-opacity duration-150', isTabSwitching && 'opacity-40')}>
-                <RecommendationNotice description={PRODUCTS_PAGE_COPY.recommendationNoticeDescription} />
-
-                <div className="mt-5">
-                  {allProducts.length > 0 ? (
-                    <div className="grid grid-cols-2 items-start justify-items-center gap-x-4 gap-y-6">
-                      {allProducts.map((product) => (
-                        <ResultProductGridCard
-                          key={product.productId}
-                          from={location.pathname + location.search + location.hash}
-                          onOpenProduct={saveScrollSnapshot}
-                          product={product}
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="py-8 text-center text-sm text-neutral-400">표시할 제품이 없습니다.</p>
-                  )}
-                </div>
+              <section className={cn('w-full px-5 pb-10 transition-opacity duration-150', isTabSwitching && 'opacity-40')}>
+                {allProducts.length > 0 ? (
+                  <div className="grid grid-cols-2 items-start justify-items-center gap-x-4 gap-y-6">
+                    {allProducts.map((product) => (
+                      <ResultProductGridCard
+                        key={product.productId}
+                        from={location.pathname + location.search + location.hash}
+                        onOpenProduct={saveScrollSnapshot}
+                        product={product}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="py-8 text-center text-sm text-neutral-400">표시할 제품이 없습니다.</p>
+                )}
 
                 <div className="h-1 w-full" ref={sentinelRef} />
 
