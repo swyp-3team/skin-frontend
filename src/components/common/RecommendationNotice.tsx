@@ -50,7 +50,7 @@ function RecommendationNotice({
   const contentVariants = shouldReduceMotion ? CONTENT_VARIANTS_REDUCED : CONTENT_VARIANTS
 
   return (
-    <div className={cn('rounded-lg bg-neutral-50 p-3', className)}>
+    <div className={cn('rounded-lg bg-neutral-50 px-3 py-2', className)}>
       <button
         aria-controls={panelId}
         aria-expanded={isOpen}
