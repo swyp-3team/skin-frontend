@@ -14,9 +14,9 @@ export const surveyOptionCardVariants = cva(
       },
     },
     compoundVariants: [
-      { layout: 'default', selected: false, class: 'border-neutral-150 bg-common-0 hover:bg-primary-50' },
+      { layout: 'default', selected: false, class: 'border-neutral-150 bg-common-0 hover:bg-primary-50 active:bg-primary-50' },
       { layout: 'default', selected: true, class: 'border-neutral-150 bg-primary-100' },
-      { layout: 'grid', selected: false, class: 'border-neutral-150 bg-common-0 hover:bg-primary-50' },
+      { layout: 'grid', selected: false, class: 'border-neutral-150 bg-common-0 hover:bg-primary-50 active:bg-primary-50' },
       { layout: 'grid', selected: true, class: 'border-neutral-150 bg-primary-100' },
     ],
     defaultVariants: {

@@ -28,7 +28,7 @@ export interface ApiClient {
   submitSurveyResult(input: SurveyResultInput): Promise<ResultDetail>
   getResult(resultId: number): Promise<ResultDetail>
   getResultList(query?: ResultListQuery): Promise<ResultListResponse>
-  getRoutineRecommendation(skinResultId: number): Promise<RoutineRecommendationWithToken>
+  getRoutineRecommendation(skinResultId?: number): Promise<RoutineRecommendationWithToken>
   saveRoutine(request: SaveRoutineRequest): Promise<SaveRoutineResponse>
   getRoutineList(query?: RoutineListQuery): Promise<RoutineListResponse>
   getRoutineDetail(routineGroupId: number): Promise<RoutineDetailResponse>

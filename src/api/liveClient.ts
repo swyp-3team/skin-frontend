@@ -1046,10 +1046,14 @@ export function createLiveApiClient(baseUrl: string): ApiClient {
       return normalizeResultListResponse(payload)
     },
 
-    async getRoutineRecommendation(skinResultId: number) {
-      const params = new URLSearchParams({ skinResultId: String(skinResultId) })
+    async getRoutineRecommendation(skinResultId?: number) {
+      const params = new URLSearchParams()
+      if (skinResultId != null) {
+        params.set('skinResultId', String(skinResultId))
+      }
+      const query = params.toString()
       const payload = await requestApi<unknown>(
-        `${baseUrl}/routines/recommendation?${params.toString()}`,
+        `${baseUrl}/routines/recommendation${query ? `?${query}` : ''}`,
         { method: 'GET' },
       )
       return normalizeRoutineRecommendationWithToken(payload)

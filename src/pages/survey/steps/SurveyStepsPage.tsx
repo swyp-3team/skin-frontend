@@ -90,6 +90,7 @@ function SurveyStepsPage() {
   const activeQuestion = questions[safeCurrentStep - 1]
   const isConcernStep = activeQuestion?.step === CONCERN_STEP
   const activeAnswer = activeQuestion ? answersByStep[activeQuestion.step] : undefined
+  const isNextEnabled = activeQuestion ? isAnswered(activeAnswer) : false
   const selectedOptionNumbers = toSelectedOptionNumbers(activeAnswer)
 
   const slideVariants = {
@@ -296,7 +297,8 @@ function SurveyStepsPage() {
 
               <SurveyStepActions
                 currentStep={safeCurrentStep}
-                isNextHighlighted={isOptionPressed}
+                isNextEnabled={isNextEnabled}
+                isOptionActive={isOptionPressed}
                 isFinalStep={isFinalStep}
                 isSubmitting={submitMutation.isPending}
                 onNext={handleNext}

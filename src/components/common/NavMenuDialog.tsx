@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { ChevronRight, X } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
+import { apiClient } from '@/api'
 import { saveIntent } from '@/auth/postLoginIntent'
 import { buildOAuthStartUrl } from '@/auth/oauthStartUrl'
 import { APP_ROUTES, createResultProductsPath, createResultRoutinePath } from '@/app/routes'
@@ -119,6 +120,7 @@ function NavMenuDialog({ triggerClassName }: NavMenuDialogProps) {
   const nickname = useAuthStore((s) => s.user?.nickname)
   const profileImageUrl = useAuthStore((s) => s.user?.profileImageUrl)
   const latestResultId = useSurveyResultStore((s) => s.latestResultId)
+  const setLatestResultId = useSurveyResultStore((s) => s.setLatestResultId)
   const hasPreviewResult = useSurveyProgressStore((s) => s.previewResult !== null)
   const logout = useLogout()
   const location = useLocation()
@@ -134,6 +136,18 @@ function NavMenuDialog({ triggerClassName }: NavMenuDialogProps) {
     setOpen(nextOpen)
   }
 
+  async function tryNavigateRoutineWithRecommendation(): Promise<boolean> {
+    try {
+      const { recommendation } = await apiClient.getRoutineRecommendation()
+      const recommendedResultId = recommendation.resultId
+      setLatestResultId(recommendedResultId)
+      navigate(createResultRoutinePath(recommendedResultId))
+      return true
+    } catch {
+      return false
+    }
+  }
+
   function handleItemClick(item: MenuItemConfig) {
     if (item.id === 'routine' || item.id === 'products' || item.id === 'myPage') {
       if (!isAuthenticated) {
@@ -143,12 +157,27 @@ function NavMenuDialog({ triggerClassName }: NavMenuDialogProps) {
         return
       }
 
-      if ((item.id === 'routine' || item.id === 'products') && latestResultId == null) {
+      if (item.id === 'routine' && latestResultId == null) {
+        handleOpenChange(false)
+        void (async () => {
+          const moved = await tryNavigateRoutineWithRecommendation()
+          if (moved) {
+            return
+          }
+          navigate(APP_ROUTES.survey, {
+            state: {
+              surveyEntryPoint: SURVEY_INTRO_ENTRY_POINTS.routine,
+            },
+          })
+        })()
+        return
+      }
+
+      if (item.id === 'products' && latestResultId == null) {
         handleOpenChange(false)
         navigate(APP_ROUTES.survey, {
           state: {
-            surveyEntryPoint:
-              item.id === 'routine' ? SURVEY_INTRO_ENTRY_POINTS.routine : SURVEY_INTRO_ENTRY_POINTS.products,
+            surveyEntryPoint: SURVEY_INTRO_ENTRY_POINTS.products,
           },
         })
         return

@@ -741,10 +741,13 @@ export const mockApiClient: ApiClient = {
     })
   },
 
-  async getRoutineRecommendation(skinResultId: number): Promise<RoutineRecommendationWithToken> {
-    const stored = mockResultsDb.get(skinResultId)
+  async getRoutineRecommendation(skinResultId?: number): Promise<RoutineRecommendationWithToken> {
+    const latestResultId = [...mockResultsDb.keys()].sort((a, b) => b - a)[0]
+    const targetResultId = skinResultId ?? latestResultId
+    const stored = targetResultId != null ? mockResultsDb.get(targetResultId) : undefined
     if (!stored) {
-      throw new ApiError(`Result not found. (ID: ${skinResultId})`, 404, 'RESULT_NOT_FOUND')
+      const message = targetResultId != null ? `Result not found. (ID: ${targetResultId})` : 'Result not found.'
+      throw new ApiError(message, 404, 'RESULT_NOT_FOUND')
     }
     return withDelay(createRoutineRecommendationWithToken(stored))
   },
