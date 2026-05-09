@@ -8,6 +8,7 @@ import { APP_ROUTES } from '../../app/routes'
 import { apiClient } from '../../api'
 import AlertMessage from '../../components/common/AlertMessage'
 import LoadingScreen from '../../components/common/LoadingScreen'
+import RecommendationNotice from '../../components/common/RecommendationNotice'
 import CardStack from '../../components/common/CardStack'
 import RoutineStepCard from '../../components/common/RoutineStepCard'
 import MobilePage from '../../components/MobilePage'
@@ -49,6 +50,8 @@ const ROUTINE_PAGE_COPY = {
   savedToastTitle: '루틴을 저장했어요!',
   savedToastDescription: '저장한 루틴은 마이페이지에서 확인할 수 있어요.',
   savedToastAction: '마이페이지 바로가기',
+  recommendationNoticeDescription:
+    '이 추천은 설문 응답을 기반으로 한 참고 정보이며, 의학적 진단·처방을 대신하지 않아요. 루틴 내 성분 조합은 일반적인 기준으로, 개인 피부 반응에 따라 다를 수 있어요. 최종 선택은 고객님께 있으며, 피부 고민이 심하거나 이상 반응이 나타나면 즉시 사용을 중단하고 전문의 상담을 받으세요.',
 } as const
 
 const ROUTINE_TAB_ITEMS = [
@@ -365,7 +368,10 @@ function ResultRoutinePage() {
                         exit: (dir: number) => ({ x: dir > 0 ? '-40%' : '40%', opacity: 0 }),
                       }}
                     >
-                      <CardStack className="px-4 pb-10 pt-5">
+                      <div className="px-4 pt-5">
+                        <RecommendationNotice description={ROUTINE_PAGE_COPY.recommendationNoticeDescription} />
+                      </div>
+                      <CardStack className="px-4 pb-10 pt-3">
                         {products.map((product, index) => (
                           <RoutineStepCard
                             key={product.productId}

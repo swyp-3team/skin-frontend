@@ -71,12 +71,26 @@ const ROUTINE_ITEMS = [
 
 function LandingPage() {
   const pageRef = useRef<HTMLDivElement | null>(null)
+  const nextSectionRef = useRef<HTMLElement | null>(null)
   const location = useLocation()
   const authRedirectState = isAuthRedirectState(location.state) ? location.state : null
   const hasAuthRedirect = authRedirectState !== null
 
   useLandingStepReveal(pageRef)
   useHeroParallax(pageRef)
+
+  const handleHeroScrollClick = () => {
+    const target = nextSectionRef.current
+    if (!target) {
+      return
+    }
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    target.scrollIntoView({
+      behavior: prefersReducedMotion ? 'auto' : 'smooth',
+      block: 'start',
+    })
+  }
 
   return (
     <MobilePage
@@ -127,17 +141,19 @@ function LandingPage() {
             </div>
 
             <MockLoginButton className="landing-hero-copy mt-3 h-12 w-[calc(100%-128px)]" />
-            <img
-              alt=""
-              aria-hidden
-              className="pointer-events-none absolute bottom-8 left-1/2 z-[2] h-[25px] w-[36px] -translate-x-1/2 select-none"
-              src={heroScrollArrow}
-            />
+            <button
+              aria-label="다음 섹션으로 이동"
+              className="absolute bottom-23 left-1/2 z-[2] h-[25px] w-[36px] -translate-x-1/2 cursor-pointer transition-transform duration-200 hover:translate-y-[5px]"
+              onClick={handleHeroScrollClick}
+              type="button"
+            >
+              <img alt="" aria-hidden className="h-full w-full select-none" src={heroScrollArrow} />
+            </button>
           </div>
 
         </section>
 
-        <section className="bg-neutral-50 px-5 pb-20 pt-10">
+        <section className="bg-neutral-50 px-5 pb-20 pt-10" ref={nextSectionRef}>
           <header className="mb-15 mt-10">
             <h2 className="w-[240px] text-[24px] font-bold leading-[32.4px] text-neutral-800">
               3단계로 완성하는

@@ -12,7 +12,7 @@
   min-height: 650px;
   height: 100dvh;
   width: 390px;
-  background: linear-gradient(180deg, rgba(108, 209, 204, 0.15) 50%, rgba(108, 209, 204, 0.02) 100%);
+  background: linear-gradient(180deg, rgba(108, 209, 204, 0.15) 50%, rgba(108, 209, 204, 0.08) 100%);
 }
 
 .layer-2 {

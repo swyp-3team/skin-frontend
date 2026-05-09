@@ -19,7 +19,7 @@ function ResultTopSection({ intro, resultId, header, initialCollapsed = false }:
     <>
       <div ref={sentinelRef} aria-hidden className="-mx-4 h-px bg-primary-150" />
 
-      <section className="-mx-4 flex flex-col items-center gap-5 bg-primary-150 px-5 pb-7 pt-10">
+      <section className="-mx-4 flex flex-col items-center gap-5 bg-primary-150 px-5 pb-5 pt-10">
         <p className="max-w-[350px] whitespace-pre-line text-center text-[16px] font-medium leading-[25.56px] text-common-1000">
           {intro}
         </p>
