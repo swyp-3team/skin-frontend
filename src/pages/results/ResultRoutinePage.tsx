@@ -333,9 +333,14 @@ function ResultRoutinePage() {
                 ref={whiteShellRef}
                 className="-mx-4 sticky top-12 flex h-[calc(100dvh-48px)] flex-col bg-common-0"
               >
-                <div className="relative z-10 shrink-0 bg-common-0 px-4">
+                <div className="shrink-0 bg-common-0 px-5 py-3">
+                  <RecommendationNotice description={ROUTINE_PAGE_COPY.recommendationNoticeDescription} />
+                </div>
+
+                <div className="relative z-10 shrink-0 bg-common-0 px-5">
                   <ResultTabBar
                     activeTabId={activeTabId}
+                    className="pt-2"
                     items={ROUTINE_TAB_ITEMS}
                     mode="equal"
                     onChange={(tabId) => {
@@ -368,10 +373,7 @@ function ResultRoutinePage() {
                         exit: (dir: number) => ({ x: dir > 0 ? '-40%' : '40%', opacity: 0 }),
                       }}
                     >
-                      <div className="px-4 pt-5">
-                        <RecommendationNotice description={ROUTINE_PAGE_COPY.recommendationNoticeDescription} />
-                      </div>
-                      <CardStack className="px-4 pb-10 pt-3">
+                      <CardStack className="px-5 pb-10 pt-2">
                         {products.map((product, index) => (
                           <RoutineStepCard
                             key={product.productId}
