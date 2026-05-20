@@ -35,7 +35,7 @@ export interface ResultOverviewSkinStateScoreViewModel {
   isTopRank: boolean
 }
 
-export type ResultOverviewSkinStateAxis = 'DRYNESS' | 'SEBUM' | 'ACNE' | 'SENSITIVITY' | 'PIGMENTATION' | 'AGING'
+export type ResultOverviewSkinStateAxis = IngredientGroup
 
 interface ResultOverviewSkinStateViewModel {
   sectionTitle: string
@@ -80,12 +80,14 @@ const PREVIEW_PLACEHOLDER_CARDS = [
 ] as const
 
 const SKIN_STATE_AXES = [
-  { axis: 'DRYNESS', label: '수분', sourceGroup: 'HYDRATION' },
+  { axis: 'HYDRATION', label: '수분', sourceGroup: 'HYDRATION' },
   { axis: 'ACNE', label: '트러블', sourceGroup: 'ACNE' },
-  { axis: 'SENSITIVITY', label: '민감도', sourceGroup: 'SOOTHING' },
-  { axis: 'SEBUM', label: '유분', sourceGroup: 'SEBUM_CONTROL' },
-  { axis: 'PIGMENTATION', label: '색소', sourceGroup: 'BRIGHTENING' },
-  { axis: 'AGING', label: '탄력', sourceGroup: 'ANTI_AGING' },
+  { axis: 'SOOTHING', label: '민감도', sourceGroup: 'SOOTHING' },
+  { axis: 'SEBUM_CONTROL', label: '유분', sourceGroup: 'SEBUM_CONTROL' },
+  { axis: 'BRIGHTENING', label: '색소', sourceGroup: 'BRIGHTENING' },
+  { axis: 'ANTI_AGING', label: '탄력', sourceGroup: 'ANTI_AGING' },
+  { axis: 'TURNOVER', label: '재생', sourceGroup: 'TURNOVER' },
+  { axis: 'BARRIER', label: '장벽', sourceGroup: 'BARRIER' },
 ] as const satisfies readonly {
   axis: ResultOverviewSkinStateAxis
   label: string
@@ -101,13 +103,16 @@ const SKIN_STATE_AXIS_ORDER = SKIN_STATE_AXES.reduce<Record<ResultOverviewSkinSt
 )
 
 const PREVIEW_PLACEHOLDER_AXIS_SCORE: Record<ResultOverviewSkinStateAxis, number> = {
-  DRYNESS: 55,
-  SEBUM: 54,
-  ACNE: 51,
-  SENSITIVITY: 57,
-  PIGMENTATION: 52,
-  AGING: 56,
+  BARRIER: 74,
+  ANTI_AGING: 71,
+  SEBUM_CONTROL: 59,
+  BRIGHTENING: 58,
+  HYDRATION: 55,
+  TURNOVER: 53,
+  SOOTHING: 53,
+  ACNE: 41,
 }
+const SKIN_STATE_RENDER_AXIS_COUNT = 6
 
 const RESULT_IMAGE_URL_BY_TITLE: Record<string, string> = {
   '촉촉한 수분 결핍형': '/images/results/HYDRATION.png',
@@ -235,30 +240,63 @@ function markTopRanks(
   }))
 }
 
-function toSkinStateScoresFromResult(ingredientGroupScores: ResultIngredientGroupScore[]): ResultOverviewSkinStateScoreViewModel[] {
-  const scoreMap = new Map<IngredientGroup, number>()
+function selectTopSkinStateAxes(
+  scores: Omit<ResultOverviewSkinStateScoreViewModel, 'isTopRank'>[],
+): Set<ResultOverviewSkinStateAxis> {
+  const selected = [...scores]
+    .sort((a, b) => b.score - a.score || SKIN_STATE_AXIS_ORDER[a.axis] - SKIN_STATE_AXIS_ORDER[b.axis])
+    .slice(0, SKIN_STATE_RENDER_AXIS_COUNT)
+    .map((item) => item.axis)
 
-  ingredientGroupScores.forEach((item) => {
-    scoreMap.set(item.ingredientGroup, normalizeScore(item.score))
-  })
+  if (selected.length >= SKIN_STATE_RENDER_AXIS_COUNT) {
+    return new Set(selected)
+  }
 
-  const scores = SKIN_STATE_AXES.map((axis) => ({
+  const selectedSet = new Set(selected)
+  for (const axis of SKIN_STATE_AXES) {
+    if (selectedSet.has(axis.axis)) {
+      continue
+    }
+
+    selectedSet.add(axis.axis)
+    if (selectedSet.size >= SKIN_STATE_RENDER_AXIS_COUNT) {
+      break
+    }
+  }
+
+  return selectedSet
+}
+
+function toSkinStateScoresFromAxisScoreMap(
+  scoreByAxis: Record<ResultOverviewSkinStateAxis, number>,
+): ResultOverviewSkinStateScoreViewModel[] {
+  const baseScores = SKIN_STATE_AXES.map((axis) => ({
     axis: axis.axis,
     label: axis.label,
-    score: scoreMap.get(axis.sourceGroup) ?? 0,
+    score: normalizeScore(scoreByAxis[axis.axis]),
   }))
 
-  return markTopRanks(scores)
+  const selectedAxes = selectTopSkinStateAxes(baseScores)
+  const selectedScores = baseScores.filter((item) => selectedAxes.has(item.axis))
+
+  return markTopRanks(selectedScores)
+}
+
+function toSkinStateScoresFromResult(ingredientGroupScores: ResultIngredientGroupScore[]): ResultOverviewSkinStateScoreViewModel[] {
+  const scoreByAxis = SKIN_STATE_AXES.reduce<Record<ResultOverviewSkinStateAxis, number>>((accumulator, axis) => {
+    accumulator[axis.axis] = 0
+    return accumulator
+  }, {} as Record<ResultOverviewSkinStateAxis, number>)
+
+  ingredientGroupScores.forEach((item) => {
+    scoreByAxis[item.ingredientGroup] = normalizeScore(item.score)
+  })
+
+  return toSkinStateScoresFromAxisScoreMap(scoreByAxis)
 }
 
 function toSkinStateScoresForPreview(): ResultOverviewSkinStateScoreViewModel[] {
-  const scores = SKIN_STATE_AXES.map((axis) => ({
-    axis: axis.axis,
-    label: axis.label,
-    score: PREVIEW_PLACEHOLDER_AXIS_SCORE[axis.axis],
-  }))
-
-  return markTopRanks(scores)
+  return toSkinStateScoresFromAxisScoreMap(PREVIEW_PLACEHOLDER_AXIS_SCORE)
 }
 
 export function fromResultDetail(result: ResultDetail): ResultOverviewViewModel {
