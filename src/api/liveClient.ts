@@ -1,6 +1,7 @@
 import { isConcernCode, isSkinTypeCode } from '../domain/surveyCodes'
 import { notifySessionExpired } from '../auth/sessionEvents'
 import type { AuthUser } from '../types/auth'
+import type { IngredientGroup } from '../types/domain'
 import type { ApiClient } from './client'
 import type { ApiErrorPayload, ApiFieldError } from './contracts'
 import { ApiError } from './errors'
@@ -16,6 +17,7 @@ import type {
   ProductDetail,
   ProfileData,
   ResultDetail,
+  ResultIngredientGroupScore,
   ResultIngredientMeta,
   ResultListItem,
   ResultListQuery,
@@ -49,6 +51,10 @@ const ROUTINE_STEP_CATEGORY_SET = new Set<RoutineStepCategory>([
   'PREPARE', 'INTENSIVE_CARE', 'MOISTURIZER', 'SUN_CARE',
 ])
 
+const INGREDIENT_GROUP_SET = new Set<IngredientGroup>([
+  'BARRIER', 'ANTI_AGING', 'SEBUM_CONTROL', 'BRIGHTENING', 'HYDRATION', 'TURNOVER', 'SOOTHING', 'ACNE',
+])
+
 const REFRESH_PATH = '/api/v1/auth/refresh'
 const SESSION_EXPIRED_MESSAGE = 'Session has expired. Please sign in again.'
 
@@ -66,6 +72,10 @@ function isRoutineProductCategory(value: unknown): value is RoutineProductCatego
 
 function isRoutineStepCategory(value: unknown): value is RoutineStepCategory {
   return typeof value === 'string' && ROUTINE_STEP_CATEGORY_SET.has(value as RoutineStepCategory)
+}
+
+function isIngredientGroup(value: unknown): value is IngredientGroup {
+  return typeof value === 'string' && INGREDIENT_GROUP_SET.has(value as IngredientGroup)
 }
 
 function toOptionalNumber(value: unknown): number | null {
@@ -486,6 +496,51 @@ function normalizeIngredientMeta(raw: unknown, index: number): ResultIngredientM
   }
 }
 
+function normalizeIngredientGroupScore(raw: unknown, index: number): ResultIngredientGroupScore {
+  if (!isRecord(raw)) {
+    throw new ApiError(
+      `Ingredient group score is invalid. (ingredientGroupScores[${index}])`,
+      500,
+      'INVALID_RESULT_INGREDIENT_GROUP_SCORE',
+      raw,
+    )
+  }
+
+  if (!isIngredientGroup(raw.ingredientGroup)) {
+    throw new ApiError(
+      `Ingredient group is invalid. (ingredientGroupScores[${index}])`,
+      500,
+      'INVALID_RESULT_INGREDIENT_GROUP',
+      raw,
+    )
+  }
+
+  if (typeof raw.ingredientGroupName !== 'string') {
+    throw new ApiError(
+      `Ingredient group name is invalid. (ingredientGroupScores[${index}])`,
+      500,
+      'INVALID_RESULT_INGREDIENT_GROUP_NAME',
+      raw,
+    )
+  }
+
+  const normalizedScore = toOptionalNumber(raw.score)
+  if (normalizedScore === null) {
+    throw new ApiError(
+      `Ingredient group score value is invalid. (ingredientGroupScores[${index}])`,
+      500,
+      'INVALID_RESULT_INGREDIENT_GROUP_SCORE_VALUE',
+      raw,
+    )
+  }
+
+  return {
+    ingredientGroup: raw.ingredientGroup,
+    ingredientGroupName: raw.ingredientGroupName,
+    score: Math.max(0, Math.min(100, normalizedScore)),
+  }
+}
+
 function normalizeResultDetail(payload: unknown, fallbackResultId?: number): ResultDetail {
   if (!isRecord(payload)) {
     throw new ApiError('Result response is invalid.', 500, 'INVALID_RESULT_FORMAT', payload)
@@ -519,6 +574,10 @@ function normalizeResultDetail(payload: unknown, fallbackResultId?: number): Res
     ? payload.ingredientMetas.map((item, index) => normalizeIngredientMeta(item, index))
     : []
 
+  const ingredientGroupScores = Array.isArray(payload.ingredientGroupScores)
+    ? payload.ingredientGroupScores.map((item, index) => normalizeIngredientGroupScore(item, index))
+    : []
+
   return {
     resultId,
     diagnosedAt: payload.diagnosedAt,
@@ -529,6 +588,7 @@ function normalizeResultDetail(payload: unknown, fallbackResultId?: number): Res
     concerns,
     subSummary: typeof payload.subSummary === 'string' ? payload.subSummary : '',
     ingredientMetas,
+    ingredientGroupScores,
   }
 }
 

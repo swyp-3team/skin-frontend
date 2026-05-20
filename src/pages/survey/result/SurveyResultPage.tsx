@@ -28,6 +28,24 @@ function RoutineBlurOverlay({ onLoginClick }: { onLoginClick: () => void }) {
   )
 }
 
+function SkinStateBlurOverlay({ onLoginClick }: { onLoginClick: () => void }) {
+  return (
+    <div className="-mx-4 pointer-events-none absolute inset-0 z-1">
+      <div className="pointer-events-auto absolute inset-0 bg-common-0/50 backdrop-blur-[4px]" />
+      <div className="flex justify-center pointer-events-auto absolute inset-x-4 top-1/2 -translate-y-1/2">
+        <Button
+          className="h-auto w-fit rounded-full border border-neutral-100 bg-common-0 px-12 py-3 text-base font-semibold text-neutral-600"
+          onClick={onLoginClick}
+          type="button"
+          variant="outline"
+        >
+          로그인하고 전체 결과보기
+        </Button>
+      </div>
+    </div>
+  )
+}
+
 function IngredientsBlurOverlay({ onLoginClick }: { onLoginClick: () => void }) {
   return (
     <div className="-mx-8 -mt-4 pointer-events-none absolute inset-x-0 top-0 z-1" style={{ bottom: '-7.5rem' }}>
@@ -68,6 +86,7 @@ function SurveyResultPage() {
         viewModel={fromPreviewResult(previewResult)}
         onRoutineCta={openLoginDialog}
         onProductsCta={openLoginDialog}
+        skinStateOverlay={<SkinStateBlurOverlay onLoginClick={openLoginDialog} />}
         routineOverlay={<RoutineBlurOverlay onLoginClick={openLoginDialog} />}
         ingredientsOverlay={<IngredientsBlurOverlay onLoginClick={openLoginDialog} />}
       />

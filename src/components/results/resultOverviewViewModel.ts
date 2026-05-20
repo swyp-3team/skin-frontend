@@ -1,4 +1,5 @@
-import type { PreviewResult, ResultDetail, ResultIngredientMeta } from '@/api/types'
+﻿import type { PreviewResult, ResultDetail, ResultIngredientGroupScore, ResultIngredientMeta } from '@/api/types'
+import type { IngredientGroup } from '@/types/domain'
 
 interface ResultOverviewTopViewModel {
   diagnosedDate: string | null
@@ -27,8 +28,24 @@ interface ResultOverviewIngredientsViewModel {
   ctaLabel: string
 }
 
+export interface ResultOverviewSkinStateScoreViewModel {
+  axis: ResultOverviewSkinStateAxis
+  label: string
+  score: number
+  isTopRank: boolean
+}
+
+export type ResultOverviewSkinStateAxis = 'DRYNESS' | 'SEBUM' | 'ACNE' | 'SENSITIVITY' | 'PIGMENTATION' | 'AGING'
+
+interface ResultOverviewSkinStateViewModel {
+  sectionTitle: string
+  subtitle: string
+  scores: ResultOverviewSkinStateScoreViewModel[]
+}
+
 export interface ResultOverviewViewModel {
   top: ResultOverviewTopViewModel
+  skinState: ResultOverviewSkinStateViewModel
   routine: ResultOverviewRoutineViewModel
   ingredients: ResultOverviewIngredientsViewModel
 }
@@ -61,6 +78,36 @@ const PREVIEW_PLACEHOLDER_CARDS = [
       '미리보기 화면입니다. 로그인 하고 모든 결과를 확인하세요.',
   },
 ] as const
+
+const SKIN_STATE_AXES = [
+  { axis: 'DRYNESS', label: '수분', sourceGroup: 'HYDRATION' },
+  { axis: 'ACNE', label: '트러블', sourceGroup: 'ACNE' },
+  { axis: 'SENSITIVITY', label: '민감도', sourceGroup: 'SOOTHING' },
+  { axis: 'SEBUM', label: '유분', sourceGroup: 'SEBUM_CONTROL' },
+  { axis: 'PIGMENTATION', label: '색소', sourceGroup: 'BRIGHTENING' },
+  { axis: 'AGING', label: '탄력', sourceGroup: 'ANTI_AGING' },
+] as const satisfies readonly {
+  axis: ResultOverviewSkinStateAxis
+  label: string
+  sourceGroup: IngredientGroup
+}[]
+
+const SKIN_STATE_AXIS_ORDER = SKIN_STATE_AXES.reduce<Record<ResultOverviewSkinStateAxis, number>>(
+  (accumulator, axis, index) => {
+    accumulator[axis.axis] = index
+    return accumulator
+  },
+  {} as Record<ResultOverviewSkinStateAxis, number>,
+)
+
+const PREVIEW_PLACEHOLDER_AXIS_SCORE: Record<ResultOverviewSkinStateAxis, number> = {
+  DRYNESS: 55,
+  SEBUM: 54,
+  ACNE: 51,
+  SENSITIVITY: 57,
+  PIGMENTATION: 52,
+  AGING: 56,
+}
 
 const RESULT_IMAGE_URL_BY_TITLE: Record<string, string> = {
   '촉촉한 수분 결핍형': '/images/results/HYDRATION.png',
@@ -165,6 +212,55 @@ function resolveTopImageUrl(title: string, imageUrl?: string | null): string | n
   return resolveTitleImageUrl(title)
 }
 
+function normalizeScore(value: number): number {
+  if (!Number.isFinite(value)) {
+    return 0
+  }
+  return Math.max(0, Math.min(100, value))
+}
+
+function markTopRanks(
+  scores: Omit<ResultOverviewSkinStateScoreViewModel, 'isTopRank'>[],
+): ResultOverviewSkinStateScoreViewModel[] {
+  const topRankAxes = new Set(
+    [...scores]
+      .sort((a, b) => b.score - a.score || SKIN_STATE_AXIS_ORDER[a.axis] - SKIN_STATE_AXIS_ORDER[b.axis])
+      .slice(0, 3)
+      .map((item) => item.axis),
+  )
+
+  return scores.map((item) => ({
+    ...item,
+    isTopRank: topRankAxes.has(item.axis),
+  }))
+}
+
+function toSkinStateScoresFromResult(ingredientGroupScores: ResultIngredientGroupScore[]): ResultOverviewSkinStateScoreViewModel[] {
+  const scoreMap = new Map<IngredientGroup, number>()
+
+  ingredientGroupScores.forEach((item) => {
+    scoreMap.set(item.ingredientGroup, normalizeScore(item.score))
+  })
+
+  const scores = SKIN_STATE_AXES.map((axis) => ({
+    axis: axis.axis,
+    label: axis.label,
+    score: scoreMap.get(axis.sourceGroup) ?? 0,
+  }))
+
+  return markTopRanks(scores)
+}
+
+function toSkinStateScoresForPreview(): ResultOverviewSkinStateScoreViewModel[] {
+  const scores = SKIN_STATE_AXES.map((axis) => ({
+    axis: axis.axis,
+    label: axis.label,
+    score: PREVIEW_PLACEHOLDER_AXIS_SCORE[axis.axis],
+  }))
+
+  return markTopRanks(scores)
+}
+
 export function fromResultDetail(result: ResultDetail): ResultOverviewViewModel {
   return {
     top: {
@@ -172,6 +268,11 @@ export function fromResultDetail(result: ResultDetail): ResultOverviewViewModel 
       title: result.skinType,
       summary: result.summary,
       imageUrl: resolveTopImageUrl(result.skinType, result.imageUrl),
+    },
+    skinState: {
+      sectionTitle: '내 피부,\n지금 이런 상태예요',
+      subtitle: result.subtitle,
+      scores: toSkinStateScoresFromResult(result.ingredientGroupScores),
     },
     routine: {
       sectionTitle: RESULT_PAGE_COPY.routineSectionTitle,
@@ -194,6 +295,11 @@ export function fromPreviewResult(preview: PreviewResult): ResultOverviewViewMod
       title: preview.skinType,
       summary: preview.summary,
       imageUrl: resolveTopImageUrl(preview.skinType, preview.imageUrl),
+    },
+    skinState: {
+      sectionTitle: '내 피부,\n지금 이런 상태예요',
+      subtitle: preview.subtitle,
+      scores: toSkinStateScoresForPreview(),
     },
     routine: {
       sectionTitle: RESULT_PAGE_COPY.routineSectionTitle,

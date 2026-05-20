@@ -1,11 +1,12 @@
 import type { ReactNode } from 'react'
 
 import MobilePage from '@/components/MobilePage'
+import CtaButton from '@/components/common/CtaButton'
 import PageHeader from '@/components/headers/PageHeader'
 import SafeImage from '@/components/common/SafeImage'
-import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
+import IngredientGroupRadarChart from './IngredientGroupRadarChart'
 import ResultIngredientCarousel from './ResultIngredientCarousel'
 import type { ResultOverviewViewModel } from './resultOverviewViewModel'
 
@@ -19,11 +20,19 @@ interface ResultOverviewLayoutProps {
   viewModel: ResultOverviewViewModel
   onRoutineCta: () => void
   onProductsCta: () => void
+  skinStateOverlay?: ReactNode
   routineOverlay?: ReactNode
   ingredientsOverlay?: ReactNode
 }
 
-function ResultOverviewLayout({ viewModel, onRoutineCta, onProductsCta, routineOverlay, ingredientsOverlay }: ResultOverviewLayoutProps) {
+function ResultOverviewLayout({
+  viewModel,
+  onRoutineCta,
+  onProductsCta,
+  skinStateOverlay,
+  routineOverlay,
+  ingredientsOverlay,
+}: ResultOverviewLayoutProps) {
   return (
     <MobilePage
       className="bg-neutral-800"
@@ -57,7 +66,25 @@ function ResultOverviewLayout({ viewModel, onRoutineCta, onProductsCta, routineO
 
         {/* 화이트 카드 영역 */}
         <section className="relative -mt-[246px] mx-3 rounded-t-2xl bg-common-0 px-4 pb-30 pt-6 text-neutral-800">
-          <div className="space-y-25">
+          <div className="space-y-23">
+            <section>
+              <div className="pb-0 text-[20px] font-bold leading-[27.6px] tracking-[-0.02em] text-neutral-800">
+                <div className="relative inline-block">
+                  <span aria-hidden className="absolute inset-x-0 bottom-0.5 h-4 bg-primary-100" />
+                  <span className="relative z-10 whitespace-pre-line">{viewModel.skinState.sectionTitle}</span>
+                </div>
+              </div>
+
+              <div className="relative mt-6 space-y-5">
+                <IngredientGroupRadarChart scores={viewModel.skinState.scores} />
+
+                <div className="rounded-lg bg-neutral-50 p-4">
+                  <p className="text-sm leading-[20.44px] text-neutral-800">{viewModel.skinState.subtitle}</p>
+                </div>
+
+                {skinStateOverlay}
+              </div>
+            </section>
             {/* 루틴 섹션 */}
             <section>
               <div className="pb-3 text-[20px] font-bold leading-[27.6px] tracking-[-0.02em] text-neutral-800">
@@ -90,21 +117,16 @@ function ResultOverviewLayout({ viewModel, onRoutineCta, onProductsCta, routineO
                   <p className="text-sm leading-[20.44px] text-neutral-800">{viewModel.routine.highlightDescription}</p>
                 </div>
 
-                <Button
-                  className="h-auto w-full rounded-lg px-5 py-2.5 text-[15px] font-medium leading-[22.2px]"
-                  onClick={onRoutineCta}
-                  type="button"
-                  variant="dark"
-                >
+                <CtaButton onClick={onRoutineCta}>
                   {viewModel.routine.ctaLabel}
-                </Button>
+                </CtaButton>
 
                 {routineOverlay}
               </div>
             </section>
 
             {/* 성분 섹션 */}
-            <section>
+            <section className='pt-3 pb-10'>
               <div className="text-[20px] font-bold leading-[27.6px] tracking-[-0.02em] text-neutral-800">
                 <div className="inline-flex items-end">
                   <div className="relative w-fit">
@@ -115,20 +137,15 @@ function ResultOverviewLayout({ viewModel, onRoutineCta, onProductsCta, routineO
                 </div>
               </div>
 
-              <div className="relative mt-10 space-y-10">
+              <div className="relative mt-15 space-y-6">
                 <ResultIngredientCarousel
                   cards={viewModel.ingredients.cards}
                   key={viewModel.ingredients.cards.map((card) => `${card.rank}-${card.name}-${card.isPrimary}`).join('|')}
                 />
 
-                <Button
-                  className="h-auto w-full rounded-lg px-5 py-2.5 text-[15px] font-medium leading-[22.2px]"
-                  onClick={onProductsCta}
-                  type="button"
-                  variant="dark"
-                >
+                <CtaButton onClick={onProductsCta}>
                   {viewModel.ingredients.ctaLabel}
-                </Button>
+                </CtaButton>
 
                 {ingredientsOverlay}
               </div>

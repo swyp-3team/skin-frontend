@@ -1,4 +1,4 @@
-import type { Concern, SkinType } from '../types/domain'
+import type { Concern, IngredientGroup, SkinType } from '../types/domain'
 
 export interface SurveyOption {
   optionNumber: number
@@ -52,6 +52,12 @@ export interface ResultIngredientMeta {
   description: string
 }
 
+export interface ResultIngredientGroupScore {
+  ingredientGroup: IngredientGroup
+  ingredientGroupName: string
+  score: number
+}
+
 export interface ResultDetail {
   resultId: number
   diagnosedAt: string
@@ -62,6 +68,7 @@ export interface ResultDetail {
   concerns: string[]
   subSummary: string
   ingredientMetas: ResultIngredientMeta[]
+  ingredientGroupScores: ResultIngredientGroupScore[]
 }
 
 export interface ResultListItem {

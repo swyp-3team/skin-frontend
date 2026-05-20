@@ -13,6 +13,7 @@ import type {
   MyPageResponse,
   ProfileData,
   ResultDetail,
+  ResultIngredientGroupScore,
   ResultIngredientMeta,
   ResultListQuery,
   ResultListResponse,
@@ -38,6 +39,17 @@ interface MockTopIngredientGroup {
   ingredients: string[]
   reason: string
 }
+
+const INGREDIENT_GROUP_ORDER: readonly IngredientGroup[] = [
+  'BARRIER',
+  'ANTI_AGING',
+  'SEBUM_CONTROL',
+  'BRIGHTENING',
+  'HYDRATION',
+  'TURNOVER',
+  'SOOTHING',
+  'ACNE',
+]
 
 const SKIN_TYPE_CODE_BY_OPTION_NUMBER: Record<number, SkinType> = {
   1: 'DRY',
@@ -68,14 +80,25 @@ const CONCERN_LABELS: Record<Concern, string> = {
 }
 
 const INGREDIENT_GROUP_LABELS: Record<IngredientGroup, string> = {
-  HYDRATION: 'Hydration',
-  BARRIER: 'Barrier',
-  ACNE: 'Blemish Care',
-  SEBUM_CONTROL: 'Sebum Control',
-  SOOTHING: 'Soothing',
-  BRIGHTENING: 'Brightening',
-  TURNOVER: 'Texture Care',
-  ANTI_AGING: 'Elasticity Care',
+  BARRIER: '피부 장벽 강화',
+  ANTI_AGING: '주름 개선 / 탄력 강화',
+  SEBUM_CONTROL: '피지 조절',
+  BRIGHTENING: '미백 / 톤 개선',
+  HYDRATION: '수분 공급',
+  TURNOVER: '각질 제거 / 재생',
+  SOOTHING: '진정',
+  ACNE: '여드름 케어',
+}
+
+const MOCK_INGREDIENT_GROUP_BASE_SCORES: Record<IngredientGroup, number> = {
+  BARRIER: 64,
+  ANTI_AGING: 60,
+  SEBUM_CONTROL: 58,
+  BRIGHTENING: 56,
+  HYDRATION: 62,
+  TURNOVER: 54,
+  SOOTHING: 63,
+  ACNE: 52,
 }
 
 const GROUP_INGREDIENTS: Record<IngredientGroup, string[]> = {
@@ -445,6 +468,21 @@ function toIngredientMetas(top3: MockTopIngredientGroup[]): ResultIngredientMeta
   }))
 }
 
+function toIngredientGroupScores(top3: MockTopIngredientGroup[]): ResultIngredientGroupScore[] {
+  const scoreByGroup: Record<IngredientGroup, number> = { ...MOCK_INGREDIENT_GROUP_BASE_SCORES }
+  const topGroupScore: readonly number[] = [82, 74, 68]
+
+  top3.slice(0, 3).forEach((item, index) => {
+    scoreByGroup[item.group] = topGroupScore[index] ?? scoreByGroup[item.group]
+  })
+
+  return INGREDIENT_GROUP_ORDER.map((group) => ({
+    ingredientGroup: group,
+    ingredientGroupName: INGREDIENT_GROUP_LABELS[group],
+    score: scoreByGroup[group],
+  }))
+}
+
 function toConcernLabels(concerns: Concern[]): string[] {
   if (concerns.length === 0) {
     return ['Balanced Care']
@@ -466,6 +504,7 @@ function createResultDetail(payload: SurveySubmitPayload, resultId: number): Res
     concerns: toConcernLabels(payload.concerns),
     subSummary: copy.subSummary,
     ingredientMetas: toIngredientMetas(top3),
+    ingredientGroupScores: toIngredientGroupScores(top3),
   }
 }
 
