@@ -1,8 +1,8 @@
 import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
 import { ChevronRight } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
-import { useShallow } from 'zustand/react/shallow'
 
 import { APP_ROUTES } from '../../app/routes'
 import { apiClient } from '../../api'
@@ -19,8 +19,8 @@ import ResultTopSection from '../../components/results/ResultTopSection'
 import { useScrollCollapse } from '../../hooks/useScrollCollapse'
 import { useWindowSnapToElement } from '../../hooks/useWindowSnapToElement'
 import { notify } from '../../lib/notify'
+import { queryKeys } from '../../lib/queryKeys'
 import { cn } from '../../lib/utils'
-import { useSurveyResultStore } from '../../stores/surveyResultStore'
 import type { RoutineTabId } from '../../components/results/types'
 import { useProfileHeader } from './useResultDetail'
 import { useRoutineRecommendation } from './useResultRoutine'
@@ -81,6 +81,7 @@ function RoutineSavedToast({ onMoveToMyPage }: RoutineSavedToastProps) {
 }
 
 function ResultRoutinePage() {
+  const queryClient = useQueryClient()
   const navigate = useNavigate()
   const location = useLocation()
   const { id } = useParams<{ id: string }>()
@@ -89,13 +90,8 @@ function ResultRoutinePage() {
   const [slideDirection, setSlideDirection] = useState(0)
   const [isSaveSheetOpen, setIsSaveSheetOpen] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
-  const { savedResultId, savedRoutineName, markRoutineSavedByResultId } = useSurveyResultStore(
-    useShallow((state) => ({
-      savedResultId: state.savedResultId,
-      savedRoutineName: state.savedRoutineName,
-      markRoutineSavedByResultId: state.markRoutineSavedByResultId,
-    })),
-  )
+  const [savedResultId, setSavedResultId] = useState<number | null>(null)
+  const [savedRoutineName, setSavedRoutineName] = useState<string>('')
   const { data: header, isLoading: isHeaderLoading, error: headerError } = useProfileHeader(resultId)
   const { data: routineData, isLoading: isRoutineLoading, error: routineError } = useRoutineRecommendation(resultId)
 
@@ -264,8 +260,14 @@ function ResultRoutinePage() {
 
     setIsSaving(true)
     try {
-      await apiClient.saveRoutine({ title: trimmedRoutineName, previewToken })
-      markRoutineSavedByResultId(skinResultId, trimmedRoutineName)
+      const savedRoutine = await apiClient.saveRoutine({ title: trimmedRoutineName, previewToken })
+      setSavedResultId(skinResultId)
+      setSavedRoutineName(savedRoutine.title.trim() || trimmedRoutineName)
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.routineListPreview() }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.routineListInfinite() }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.myPage() }),
+      ])
       setIsSaveSheetOpen(false)
       showRoutineSavedToast()
     } finally {
@@ -383,7 +385,7 @@ function ResultRoutinePage() {
 
           <RoutineNameBottomSheet
             closeAriaLabel="루틴 저장 시트 닫기"
-            initialValue={savedResultId === resultId ? (savedRoutineName ?? '') : ''}
+            initialValue={savedResultId === skinResultId ? savedRoutineName : ''}
             isSubmitting={isSaving}
             onOpenChange={handleSaveSheetOpenChange}
             onSubmit={handleSaveRoutineSubmit}

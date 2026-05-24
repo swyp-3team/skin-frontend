@@ -16,7 +16,6 @@ function AppLayout() {
   const clearAuth = useAuthStore((state) => state.clearAuth)
   const setAuthCheckCompleted = useAuthStore((state) => state.setAuthCheckCompleted)
   const clearLatestResultId = useSurveyResultStore((state) => state.clearLatestResultId)
-  const clearSavedRoutine = useSurveyResultStore((state) => state.clearSavedRoutine)
   const initializedRef = useRef(false)
 
   const clearClientAuthState = useCallback(() => {
@@ -24,8 +23,7 @@ function AppLayout() {
     clearIntent()
     queryClient.clear()
     clearLatestResultId()
-    clearSavedRoutine()
-  }, [clearAuth, clearLatestResultId, clearSavedRoutine])
+  }, [clearAuth, clearLatestResultId])
 
   useEffect(() => {
     if (initializedRef.current) return

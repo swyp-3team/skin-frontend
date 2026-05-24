@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { ChevronRight } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { apiClient } from '../api'
@@ -21,7 +21,6 @@ import { notify } from '../lib/notify'
 import { queryKeys } from '../lib/queryKeys'
 import { cn } from '../lib/utils'
 import { selectIsAuthenticated, useAuthStore } from '../stores/authStore'
-import { useSurveyResultStore } from '../stores/surveyResultStore'
 
 type MyPageViewState = 'diagnosis_routine' | 'diagnosis_only' | 'empty'
 const MAX_VISIBLE_HISTORY_COUNT = 3
@@ -72,9 +71,6 @@ function MyPage() {
   const logout = useLogout()
   const [isWithdrawalDialogOpen, setIsWithdrawalDialogOpen] = useState(false)
 
-  const savedRoutineName = useSurveyResultStore((state) => state.savedRoutineName)
-  const clearSavedRoutine = useSurveyResultStore((state) => state.clearSavedRoutine)
-
   const myPageQuery = useQuery<MyPageResponse, ApiError>({
     queryKey: queryKeys.myPage(),
     queryFn: () => apiClient.getMyPage(),
@@ -96,11 +92,6 @@ function MyPage() {
 
   const shouldResetByMyPageError = shouldResetByError(myPageQuery.error ?? null)
 
-  useEffect(() => {
-    if (!shouldResetByMyPageError) return
-    clearSavedRoutine()
-  }, [shouldResetByMyPageError, clearSavedRoutine])
-
   const hasResultFromApi = (myPageQuery.data?.skinResults.length ?? 0) > 0
   const hasRoutineFromApi = myPageQuery.data?.routine != null
 
@@ -112,7 +103,7 @@ function MyPage() {
   }
 
   const latestRoutine = myPageQuery.data?.routine ?? null
-  const routineName = savedRoutineName ?? latestRoutine?.routineGroupTitle ?? '저장한 루틴'
+  const routineName = latestRoutine?.routineGroupTitle ?? '저장한 루틴'
   const routineDate = latestRoutine ? toYearMonthDay(latestRoutine.createdAt) : 'YYYY.MM.DD'
   const hasRoutinePreview = hasRoutineFromApi
   const resultItems = (myPageQuery.data?.skinResults ?? []).slice(0, MAX_VISIBLE_HISTORY_COUNT)

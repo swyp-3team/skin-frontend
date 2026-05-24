@@ -98,8 +98,6 @@ function HomePage() {
   const nickname = useAuthStore((state) => state.user?.nickname)
   const latestResultId = useSurveyResultStore((state) => state.latestResultId)
   const clearLatestResultId = useSurveyResultStore((state) => state.clearLatestResultId)
-  const savedRoutineName = useSurveyResultStore((state) => state.savedRoutineName)
-  const clearSavedRoutine = useSurveyResultStore((state) => state.clearSavedRoutine)
   const profileResultId = latestResultId ?? undefined
 
   const resultQuery = useQuery<ProfileData, ApiError>({
@@ -127,8 +125,7 @@ function HomePage() {
   useEffect(() => {
     if (!hasExpiredResultError) return
     clearLatestResultId()
-    clearSavedRoutine()
-  }, [hasExpiredResultError, clearLatestResultId, clearSavedRoutine])
+  }, [hasExpiredResultError, clearLatestResultId])
 
   if (shouldRedirectToLanding || hasExpiredResultError) {
     return <Navigate replace to={APP_ROUTES.landing} />
@@ -139,7 +136,7 @@ function HomePage() {
   const elapsedDaysLabel = result ? getElapsedDaysLabel(result.diagnosedAt) : 'N일'
   const latestRoutine = routinePreviewQuery.data?.routines[0] ?? null
   const hasRoutine = latestRoutine !== null
-  const routineName = savedRoutineName ?? latestRoutine?.title ?? '저장한 루틴'
+  const routineName = latestRoutine?.title ?? '저장한 루틴'
   const routineTitle = hasRoutine ? `${routineName} 시작하기` : '저장한 루틴이 없어요'
   const amRoutinePath = latestRoutine ? createRoutineDetailPath(latestRoutine.routineGroupId, { tab: 'am' }) : undefined
   const pmRoutinePath = latestRoutine ? createRoutineDetailPath(latestRoutine.routineGroupId, { tab: 'pm' }) : undefined

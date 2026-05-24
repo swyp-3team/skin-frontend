@@ -19,10 +19,9 @@ export function usePromotePreview() {
   const { clearPreviewResult } = useSurveyProgressStore(
     useShallow((state) => ({ clearPreviewResult: state.clearPreviewResult })),
   )
-  const { setLatestResultId, clearSavedRoutine } = useSurveyResultStore(
+  const { setLatestResultId } = useSurveyResultStore(
     useShallow((state) => ({
       setLatestResultId: state.setLatestResultId,
-      clearSavedRoutine: state.clearSavedRoutine,
     })),
   )
 
@@ -43,7 +42,6 @@ export function usePromotePreview() {
       queryClient.setQueryData(queryKeys.result(result.resultId), result)
       clearPreviewResult()
       setLatestResultId(result.resultId)
-      clearSavedRoutine()
       navigate(createResultDetailPath(result.resultId))
     },
   })

@@ -125,10 +125,9 @@ export function useSurveySubmit() {
       clearProgress: state.clearProgress,
     })),
   )
-  const { setLatestResultId, clearSavedRoutine } = useSurveyResultStore(
+  const { setLatestResultId } = useSurveyResultStore(
     useShallow((state) => ({
       setLatestResultId: state.setLatestResultId,
-      clearSavedRoutine: state.clearSavedRoutine,
     })),
   )
 
@@ -161,7 +160,6 @@ export function useSurveySubmit() {
         queryClient.setQueryData(queryKeys.result(outcome.result.resultId), outcome.result)
         clearPreviewResult()
         setLatestResultId(outcome.result.resultId)
-        clearSavedRoutine()
       }
     },
   })

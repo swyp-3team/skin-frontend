@@ -59,10 +59,9 @@ function AuthCallbackPage() {
 
   const previewToken = useSurveyProgressStore((state) => state.previewToken)
   const clearPreviewResult = useSurveyProgressStore((state) => state.clearPreviewResult)
-  const { setLatestResultId, clearSavedRoutine } = useSurveyResultStore(
+  const { setLatestResultId } = useSurveyResultStore(
     useShallow((state) => ({
       setLatestResultId: state.setLatestResultId,
-      clearSavedRoutine: state.clearSavedRoutine,
     })),
   )
 
@@ -92,7 +91,6 @@ function AuthCallbackPage() {
           const result = await apiClient.submitSurveyResult({ previewToken })
           setLatestResultId(result.resultId)
           clearPreviewResult()
-          clearSavedRoutine()
           navigate(createResultDetailPath(result.resultId), { replace: true })
         } catch {
           navigate('/', { replace: true })
@@ -129,7 +127,6 @@ function AuthCallbackPage() {
   }, [
     clearAuth,
     clearPreviewResult,
-    clearSavedRoutine,
     navigate,
     previewToken,
     setAuthCheckCompleted,
