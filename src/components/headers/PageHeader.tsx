@@ -52,7 +52,7 @@ function PageHeader({
         <h1 className={SUB_TITLE_CLASS}>{title}</h1>
 
         <div className="absolute flex right-5 top-1/2 -translate-y-1/2">
-          <NavMenuDialog />
+          {actionSlot ?? <NavMenuDialog />}
         </div>
       </header>
     )
@@ -96,4 +96,3 @@ function PageHeader({
 }
 
 export default PageHeader
-

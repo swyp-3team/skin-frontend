@@ -5,15 +5,19 @@ import { useLocation, useNavigate, useParams, useSearchParams } from 'react-rout
 
 import { apiClient } from '../api'
 import { ApiError } from '../api/errors'
+import moreVerticalDetailIcon from '../assets/icons/routine/more-vertical-detail.svg'
 import { APP_ROUTES } from '../app/routes'
 import AlertMessage from '../components/common/AlertMessage'
 import ConfirmActionDialog from '../components/common/ConfirmActionDialog'
+import RoutineMoreBottomSheet from '../components/common/RoutineMoreBottomSheet'
+import RoutineNameBottomSheet from '../components/common/RoutineNameBottomSheet'
 import RoutineStepCard from '../components/common/RoutineStepCard'
 import MobilePage from '../components/MobilePage'
 import PageHeader from '../components/headers/PageHeader'
 import { notify } from '../lib/notify'
 import { queryKeys } from '../lib/queryKeys'
 import { cn } from '../lib/utils'
+import type { UpdateRoutineResponse } from '../api/types'
 
 type RoutineTabId = 'am' | 'pm'
 
@@ -40,6 +44,8 @@ function RoutineDetailPage() {
   const routineGroupId = Number(id)
   const activeTabId = getRoutineTabFromSearchParams(searchParams)
   const [slideDirection, setSlideDirection] = useState(0)
+  const [isMoreSheetOpen, setIsMoreSheetOpen] = useState(false)
+  const [isRenameSheetOpen, setIsRenameSheetOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const isValidId = isValidRoutineGroupId(routineGroupId)
 
@@ -78,20 +84,67 @@ function RoutineDetailPage() {
       notify.error(deleteError.message || '루틴 삭제에 실패했습니다.')
     },
   })
+  const updateRoutineNameMutation = useMutation<UpdateRoutineResponse, ApiError, { routineGroupId: number; title: string }>({
+    mutationFn: ({ routineGroupId: targetRoutineGroupId, title }) =>
+      apiClient.updateRoutineName(targetRoutineGroupId, { title }),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.routineDetail(routineGroupId) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.routineListInfinite() }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.routineListPreview() }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.myPage() }),
+      ])
+      notify.success('루틴 이름을 변경했습니다.')
+    },
+    onError: (updateError) => {
+      notify.error(updateError.message || '루틴 이름 변경에 실패했습니다.')
+    },
+  })
+  const isRoutineActionPending = deleteRoutineMutation.isPending || updateRoutineNameMutation.isPending
 
-  function handleDeleteRoutineClick() {
-    if (!isValidId || deleteRoutineMutation.isPending) {
+  function handleOpenMoreSheet() {
+    if (!isValidId || isRoutineActionPending) {
+      return
+    }
+    setIsMoreSheetOpen(true)
+  }
+
+  function handleEditRoutineClick() {
+    if (!isValidId || isRoutineActionPending) {
+      return
+    }
+    setIsMoreSheetOpen(false)
+    setIsRenameSheetOpen(true)
+  }
+
+  async function handleRenameRoutineSubmit(nextRoutineName: string) {
+    if (!isValidId || isRoutineActionPending) {
       return
     }
 
+    try {
+      await updateRoutineNameMutation.mutateAsync({
+        routineGroupId,
+        title: nextRoutineName,
+      })
+      setIsRenameSheetOpen(false)
+    } catch {
+      // onError에서 사용자 메시지를 처리하므로 여기서는 추가 처리하지 않습니다.
+    }
+  }
+
+  function handleDeleteRoutineClick() {
+    if (!isValidId || isRoutineActionPending) {
+      return
+    }
+    setIsMoreSheetOpen(false)
     setIsDeleteDialogOpen(true)
   }
 
   function handleDeleteRoutineConfirm() {
-    if (!isValidId || deleteRoutineMutation.isPending) {
+    if (!isValidId || isRoutineActionPending) {
       return
     }
-
     setIsDeleteDialogOpen(false)
     deleteRoutineMutation.mutate(routineGroupId)
   }
@@ -133,16 +186,18 @@ function RoutineDetailPage() {
     <MobilePage
       header={
         <PageHeader
-          leftSlot={
+          actionSlot={
             <button
-              className="inline-flex items-center px-2 py-1 text-[14px] font-normal leading-[20.44px] text-red-400 disabled:text-neutral-300"
-              disabled={deleteRoutineMutation.isPending}
-              onClick={handleDeleteRoutineClick}
+              aria-label="루틴 더보기"
+              className="inline-flex size-5 items-center justify-center disabled:opacity-50"
+              disabled={isRoutineActionPending}
+              onClick={handleOpenMoreSheet}
               type="button"
             >
-              {deleteRoutineMutation.isPending ? '삭제 중...' : '삭제'}
+              <img alt="" aria-hidden className="size-5" src={moreVerticalDetailIcon} />
             </button>
           }
+          backTo={APP_ROUTES.myPageRoutines}
           title={routineDetail.title}
         />
       }
@@ -228,20 +283,32 @@ function RoutineDetailPage() {
         </div>
       </section>
 
+      <RoutineMoreBottomSheet
+        actionDisabled={isRoutineActionPending}
+        onDelete={handleDeleteRoutineClick}
+        onEdit={handleEditRoutineClick}
+        onOpenChange={setIsMoreSheetOpen}
+        open={isMoreSheetOpen}
+      />
+
+      <RoutineNameBottomSheet
+        closeAriaLabel="루틴 이름 변경 시트 닫기"
+        initialValue={routineDetail.title}
+        isSubmitting={updateRoutineNameMutation.isPending}
+        onOpenChange={setIsRenameSheetOpen}
+        onSubmit={handleRenameRoutineSubmit}
+        open={isRenameSheetOpen}
+        title="루틴 이름 변경"
+      />
+
       <ConfirmActionDialog
-        confirmDisabled={deleteRoutineMutation.isPending}
+        confirmDisabled={isRoutineActionPending}
         confirmLabel={deleteRoutineMutation.isPending ? '삭제 중...' : '확인'}
-        description={
-          <>
-            삭제된 루틴은 복구할 수 없습니다.
-            <br />
-            삭제하시겠습니까?
-          </>
-        }
+        description="삭제된 루틴은 복구할 수 없습니다."
         onConfirm={handleDeleteRoutineConfirm}
         onOpenChange={setIsDeleteDialogOpen}
         open={isDeleteDialogOpen}
-        title="루틴 삭제 확인"
+        title="루틴을 삭제하시겠습니까?"
       />
     </MobilePage>
   )

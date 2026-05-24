@@ -17,6 +17,8 @@ import type {
   RoutineRecommendationWithToken,
   SaveRoutineRequest,
   SaveRoutineResponse,
+  UpdateRoutineRequest,
+  UpdateRoutineResponse,
   SurveyQuestion,
   SurveyResultInput,
   SurveySubmitPayload,
@@ -30,6 +32,7 @@ export interface ApiClient {
   getResultList(query?: ResultListQuery): Promise<ResultListResponse>
   getRoutineRecommendation(skinResultId?: number): Promise<RoutineRecommendationWithToken>
   saveRoutine(request: SaveRoutineRequest): Promise<SaveRoutineResponse>
+  updateRoutineName(routineGroupId: number, request: UpdateRoutineRequest): Promise<UpdateRoutineResponse>
   getRoutineList(query?: RoutineListQuery): Promise<RoutineListResponse>
   getRoutineDetail(routineGroupId: number): Promise<RoutineDetailResponse>
   deleteRoutine(routineGroupId: number): Promise<void>

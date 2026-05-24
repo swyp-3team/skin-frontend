@@ -197,6 +197,15 @@ export interface SaveRoutineResponse {
   message: string
 }
 
+export interface UpdateRoutineRequest {
+  title: string
+}
+
+export interface UpdateRoutineResponse {
+  routineGroupId: number
+  title: string
+}
+
 export interface ResultProductItem {
   productId: number
   name: string

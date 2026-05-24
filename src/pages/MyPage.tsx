@@ -291,13 +291,13 @@ function MyPage() {
       </section>
 
       <ConfirmActionDialog
-        description="탈퇴하면 모든 데이터가 삭제되며 복구할 수 없습니다. 탈퇴하시겠습니까?"
+        description="탈퇴하면 모든 데이터가 삭제되며 복구할 수 없습니다."
         confirmDisabled={withdrawMutation.isPending}
         confirmLabel={withdrawMutation.isPending ? '탈퇴 중...' : '확인'}
         onConfirm={handleWithdrawalConfirm}
         onOpenChange={setIsWithdrawalDialogOpen}
         open={isWithdrawalDialogOpen}
-        title="회원탈퇴 확인"
+        title="탈퇴하시겠습니까?"
       />
     </MobilePage>
   )

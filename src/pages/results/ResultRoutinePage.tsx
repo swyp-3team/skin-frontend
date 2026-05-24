@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'motion/react'
-import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { ChevronRight, X } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { ChevronRight } from 'lucide-react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useShallow } from 'zustand/react/shallow'
 
@@ -10,13 +10,12 @@ import AlertMessage from '../../components/common/AlertMessage'
 import LoadingScreen from '../../components/common/LoadingScreen'
 import RecommendationNotice from '../../components/common/RecommendationNotice'
 import CardStack from '../../components/common/CardStack'
+import RoutineNameBottomSheet from '../../components/common/RoutineNameBottomSheet'
 import RoutineStepCard from '../../components/common/RoutineStepCard'
 import MobilePage from '../../components/MobilePage'
 import PageHeader from '../../components/headers/PageHeader'
 import ResultTabBar from '../../components/results/ResultTabBar'
 import ResultTopSection from '../../components/results/ResultTopSection'
-import { DrawerContentBottom, DrawerRoot } from '../../components/ui/drawer'
-import { Input } from '../../components/ui/input'
 import { useScrollCollapse } from '../../hooks/useScrollCollapse'
 import { useWindowSnapToElement } from '../../hooks/useWindowSnapToElement'
 import { notify } from '../../lib/notify'
@@ -26,15 +25,10 @@ import type { RoutineTabId } from '../../components/results/types'
 import { useProfileHeader } from './useResultDetail'
 import { useRoutineRecommendation } from './useResultRoutine'
 
-type RoutineNameFieldState = 'placeholder' | 'focus' | 'typed'
-
-const ROUTINE_NAME_MAX_LENGTH = 10
 const SAVE_ROUTINE_BUTTON_CLASS =
   'inline-flex w-full items-center justify-center rounded-lg border border-neutral-100 bg-common-0 px-6 py-3 text-base font-semibold leading-[23.68px] text-neutral-600'
 const GO_MYPAGE_LINK_CLASS =
   'inline-flex w-full items-center justify-center rounded-lg bg-neutral-800 px-6 py-3 text-base font-semibold leading-[23.68px] text-common-0'
-const SAVE_SHEET_CLOSE_BUTTON_CLASS =
-  'inline-flex items-center justify-center rounded-full bg-[#1212121A] p-1 outline outline-[0.5px] -outline-offset-[0.5px] outline-neutral-100 backdrop-blur-[2px]'
 const ROUTINE_SAVED_TOASTER_ID = 'result-routine-saved'
 const ROUTINE_SAVED_TOAST_ID = 'result-routine-saved-toast'
 const ROUTINE_SAVED_TOAST_WRAPPER_CLASS = 'w-full rounded-[8px] border-0 bg-none p-0 shadow-none'
@@ -46,7 +40,7 @@ const ROUTINE_PAGE_COPY = {
   goMyPage: '마이페이지 바로가기',
   saveSheetTitle: '루틴 저장',
   saveSheetPlaceholder: '루틴 이름을 입력하세요. (예: 여름 아침 루틴)',
-  saveSheetSubmit: '완료',
+  saveSheetSubmit: '저장',
   savedToastTitle: '루틴을 저장했어요!',
   savedToastDescription: '저장한 루틴은 마이페이지에서 확인할 수 있어요.',
   savedToastAction: '마이페이지 바로가기',
@@ -94,8 +88,6 @@ function ResultRoutinePage() {
   const [activeTabId, setActiveTabId] = useState<RoutineTabId>('am')
   const [slideDirection, setSlideDirection] = useState(0)
   const [isSaveSheetOpen, setIsSaveSheetOpen] = useState(false)
-  const [routineNameDraft, setRoutineNameDraft] = useState('')
-  const [isRoutineNameFocused, setIsRoutineNameFocused] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const { savedResultId, savedRoutineName, markRoutineSavedByResultId } = useSurveyResultStore(
     useShallow((state) => ({
@@ -237,11 +229,6 @@ function ResultRoutinePage() {
   const showLoading = isLoading || isDelaying
   const skinResultId = recommendation?.resultId ?? 0
   const isRoutineSaved = savedResultId === skinResultId
-  const routineNameLength = routineNameDraft.length
-  const trimmedRoutineName = routineNameDraft.trim()
-  const canSubmitRoutineName = trimmedRoutineName.length > 0
-  const routineNameFieldState: RoutineNameFieldState =
-    routineNameLength > 0 ? 'typed' : isRoutineNameFocused ? 'focus' : 'placeholder'
 
   function handleMoveToMyPage() {
     notify.dismiss(ROUTINE_SAVED_TOAST_ID)
@@ -263,20 +250,15 @@ function ResultRoutinePage() {
 
   function handleSaveSheetOpenChange(nextOpen: boolean) {
     setIsSaveSheetOpen(nextOpen)
-    if (!nextOpen) {
-      setIsRoutineNameFocused(false)
-    }
   }
 
   function handleOpenSaveSheet() {
-    setRoutineNameDraft(savedResultId === resultId ? (savedRoutineName ?? '') : '')
-    setIsRoutineNameFocused(false)
     setIsSaveSheetOpen(true)
   }
 
-  async function handleSaveRoutineSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    if (!canSubmitRoutineName || !previewToken || isSaving) {
+  async function handleSaveRoutineSubmit(routineName: string) {
+    const trimmedRoutineName = routineName.trim()
+    if (trimmedRoutineName.length === 0 || !previewToken || isSaving) {
       return
     }
 
@@ -284,8 +266,6 @@ function ResultRoutinePage() {
     try {
       await apiClient.saveRoutine({ title: trimmedRoutineName, previewToken })
       markRoutineSavedByResultId(skinResultId, trimmedRoutineName)
-      setRoutineNameDraft(trimmedRoutineName)
-      setIsRoutineNameFocused(false)
       setIsSaveSheetOpen(false)
       showRoutineSavedToast()
     } finally {
@@ -401,74 +381,17 @@ function ResultRoutinePage() {
             </section>
           </MobilePage>
 
-          <DrawerRoot open={isSaveSheetOpen} onOpenChange={handleSaveSheetOpenChange}>
-            <DrawerContentBottom aria-label={ROUTINE_PAGE_COPY.saveSheetTitle}>
-              <div className="w-full pt-2.5">
-                <div className="inline-flex w-full items-center justify-between px-5 py-2.5">
-                  <div className="flex flex-1 items-center justify-center pl-8">
-                    <h2 className="text-base font-medium leading-[23.68px] text-neutral-800">{ROUTINE_PAGE_COPY.saveSheetTitle}</h2>
-                  </div>
-                  <button
-                    aria-label="루틴 저장 시트 닫기"
-                    className={SAVE_SHEET_CLOSE_BUTTON_CLASS}
-                    onClick={() => handleSaveSheetOpenChange(false)}
-                    type="button"
-                  >
-                    <X className="size-6 text-common-0" strokeWidth={1.5} />
-                  </button>
-                </div>
-              </div>
-
-              <form className="w-full" onSubmit={handleSaveRoutineSubmit}>
-                <div className="flex w-full flex-col gap-2.5 p-5">
-                  <div
-                    className={cn(
-                      'flex flex-col gap-3 rounded-lg p-3',
-                      routineNameFieldState === 'focus'
-                        ? 'outline outline-2 -outline-offset-2 outline-primary-300'
-                        : 'outline outline-1 -outline-offset-1 outline-neutral-150',
-                    )}
-                  >
-                    <div className="inline-flex w-full items-center gap-2.5 px-1">
-                      <Input
-                        aria-label="루틴 이름을 입력하세요"
-                        className={cn(
-                          'h-auto border-0 bg-transparent p-0 text-[15px] font-normal leading-[22.2px] shadow-none focus-visible:border-0 focus-visible:ring-0 placeholder:text-neutral-200',
-                          routineNameFieldState === 'typed' ? 'text-neutral-800' : 'text-neutral-200',
-                        )}
-                        maxLength={ROUTINE_NAME_MAX_LENGTH}
-                        onBlur={() => setIsRoutineNameFocused(false)}
-                        onChange={(event) => setRoutineNameDraft(event.target.value)}
-                        onFocus={() => setIsRoutineNameFocused(true)}
-                        placeholder={ROUTINE_PAGE_COPY.saveSheetPlaceholder}
-                        value={routineNameDraft}
-                      />
-                    </div>
-
-                    <div className="flex w-full flex-col items-end justify-center gap-2.5">
-                      <div className="inline-flex w-full items-center justify-end px-1">
-                        <span className="text-xs font-medium leading-[16.32px] text-neutral-300">{routineNameLength}</span>
-                        <span className="text-xs font-medium leading-[16.32px] text-neutral-300">/{ROUTINE_NAME_MAX_LENGTH}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex w-full flex-col gap-2.5 px-5 pb-5">
-                  <button
-                    className={cn(
-                      'inline-flex w-full min-w-[70px] items-center justify-center rounded-lg px-6 py-3 text-base font-medium leading-[23.68px] transition-colors',
-                      canSubmitRoutineName && !isSaving ? 'bg-neutral-800 text-common-0 hover:bg-neutral-900' : 'bg-neutral-100 text-neutral-300',
-                    )}
-                    disabled={!canSubmitRoutineName || isSaving}
-                    type="submit"
-                  >
-                    {isSaving ? '저장 중...' : ROUTINE_PAGE_COPY.saveSheetSubmit}
-                  </button>
-                </div>
-              </form>
-            </DrawerContentBottom>
-          </DrawerRoot>
+          <RoutineNameBottomSheet
+            closeAriaLabel="루틴 저장 시트 닫기"
+            initialValue={savedResultId === resultId ? (savedRoutineName ?? '') : ''}
+            isSubmitting={isSaving}
+            onOpenChange={handleSaveSheetOpenChange}
+            onSubmit={handleSaveRoutineSubmit}
+            open={isSaveSheetOpen}
+            placeholder={ROUTINE_PAGE_COPY.saveSheetPlaceholder}
+            submitLabel={ROUTINE_PAGE_COPY.saveSheetSubmit}
+            title={ROUTINE_PAGE_COPY.saveSheetTitle}
+          />
         </>
       ) : null}
     </>

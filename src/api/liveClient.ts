@@ -36,6 +36,8 @@ import type {
   RoutineStepCategory,
   SaveRoutineRequest,
   SaveRoutineResponse,
+  UpdateRoutineRequest,
+  UpdateRoutineResponse,
   SurveyQuestion,
   SurveyResultInput,
   SurveySubmitPayload,
@@ -812,6 +814,22 @@ function normalizeSaveRoutineResponse(payload: unknown): SaveRoutineResponse {
   }
 }
 
+function normalizeUpdateRoutineResponse(payload: unknown): UpdateRoutineResponse {
+  if (!isRecord(payload)) {
+    throw new ApiError('Update routine response is invalid.', 500, 'INVALID_UPDATE_ROUTINE_FORMAT', payload)
+  }
+
+  const routineGroupId = toOptionalNumber(payload.routineGroupId)
+  if (routineGroupId === null) {
+    throw new ApiError('routineGroupId is invalid.', 500, 'INVALID_UPDATE_ROUTINE_GROUP_ID', payload)
+  }
+
+  return {
+    routineGroupId,
+    title: typeof payload.title === 'string' ? payload.title : '',
+  }
+}
+
 function normalizeResultProductItem(raw: unknown, index: number) {
   if (!isRecord(raw)) {
     throw new ApiError(`Result product is invalid. (products[${index}])`, 500, 'INVALID_RESULT_PRODUCT_FORMAT', raw)
@@ -1125,6 +1143,14 @@ export function createLiveApiClient(baseUrl: string): ApiClient {
         body: JSON.stringify(request),
       })
       return normalizeSaveRoutineResponse(payload)
+    },
+
+    async updateRoutineName(routineGroupId: number, request: UpdateRoutineRequest) {
+      const payload = await requestApi<unknown>(`${baseUrl}/routines/${routineGroupId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(request),
+      })
+      return normalizeUpdateRoutineResponse(payload)
     },
 
     async getRoutineList(query?: RoutineListQuery) {

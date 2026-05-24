@@ -27,6 +27,8 @@ import type {
   RoutineSection,
   SaveRoutineRequest,
   SaveRoutineResponse,
+  UpdateRoutineRequest,
+  UpdateRoutineResponse,
   SurveyQuestion,
   SurveyResultInput,
   SurveySubmitPayload,
@@ -813,6 +815,24 @@ export const mockApiClient: ApiClient = {
       routineGroupId,
       title: request.title,
       message: '루틴이 저장되었습니다.',
+    })
+  },
+
+  async updateRoutineName(routineGroupId: number, request: UpdateRoutineRequest): Promise<UpdateRoutineResponse> {
+    const stored = mockRoutineDb.get(routineGroupId)
+    if (!stored) {
+      throw new ApiError(`Routine not found. (ID: ${routineGroupId})`, 404, 'ROUTINE_NOT_FOUND')
+    }
+
+    const nextTitle = request.title
+    mockRoutineDb.set(routineGroupId, {
+      ...stored,
+      title: nextTitle,
+    })
+
+    return withDelay({
+      routineGroupId,
+      title: nextTitle,
     })
   },
 
