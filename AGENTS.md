@@ -1,4 +1,4 @@
-﻿# AGENTS.md
+# AGENTS.md
 
 ## Project Overview
 
@@ -6,67 +6,80 @@
 - 엔트리포인트는 `src/main.tsx`이며, `src/app/router.tsx`에서 라우팅을 구성합니다.
 - 현재 주요 라우트:
   - `/` (로그인 + 최근 진단 결과 사용자용 홈)
-  - `/landing` (기존 랜딩 페이지)
+  - `/landing` (랜딩 페이지)
+  - `/oauth2/callback` (OAuth 콜백 처리)
   - `/survey`
   - `/survey/steps`
   - `/survey/result`
+  - `/products/:id`
+  - `/terms`
+  - `/privacy`
   - `/results/:id` (보호 라우트)
   - `/results/:id/routine` (보호 라우트)
   - `/results/:id/products` (보호 라우트)
+  - `/results/:id/products/search` (보호 라우트)
   - `/mypage` (보호 라우트)
   - `/mypage/results` (보호 라우트)
   - `/mypage/routines` (보호 라우트)
   - `/mypage/routines/:id` (보호 라우트)
-  - `/products/:id`
 - 설문은 단계형 UI이며, 마지막 단계에서만 결과 API를 호출합니다.
 
 ## Architecture and Design Patterns
 
 - 앱 구조: `main.tsx` → `app/router.tsx` → `pages/*`.
-- 공통 레이아웃은 `app/AppLayout.tsx`에서 관리합니다.
-- 보호 라우트는 `app/ProtectedRoute.tsx`에서 모의 인증 상태(`authStore`) 기준으로 처리합니다.
-- 상태 관리는 `zustand`를 사용합니다.
-  - `surveyStore`: 설문 단계/응답/피부타입/고민/제출 상태
-  - `authStore`: 모의 로그인 세션
-- 영속화는 `zustand persist`로 처리합니다.
-  - 레거시 키: `survey.selectedSkinType`
-  - 설문 세션 키: `survey.session`
-  - 인증 세션 키: `auth.mockSession`
+- 공통 레이아웃은 `app/AppLayout.tsx`에서 관리합니다 (흰색 배경 `bg-white`).
+- 보호 라우트는 `app/ProtectedRoute.tsx`에서 인증 상태(`authStore`) 기준으로 처리합니다. 단, `VITE_API_MODE=mock`(기본값)에서는 인증 검사를 건너뛰며, 보호는 `live` 모드에서만 실제 적용됩니다. 미인증 시 `/landing`으로 이동합니다.
+- 상태 관리는 `zustand`를 사용하며, 설문 상태는 **두 스토어로 분리**되어 있습니다.
+  - `useAuthStore`: 인증 세션
+  - `useSurveyProgressStore`: 설문 진행 상태(`currentStep`, `answersByStep`, `previewResult` 등)
+  - `useSurveyResultStore`: 최근 결과 식별자(`latestResultId`) 등
+- 영속화는 `zustand persist` 등으로 처리합니다.
+  - `auth.session` (localStorage) — 인증 세션
+  - `auth.postLoginIntent` (sessionStorage) — 로그인 후 복귀 인텐트
+  - `survey.progress` (sessionStorage) — 설문 진행 상태
+  - `survey.result` (localStorage) — 설문 결과
+  - `survey.selectedSkinType` — 레거시 상수(정의만 있고 현재 미사용)
 - API 계층은 인터페이스 기반으로 분리합니다.
-  - `api/client.ts` 인터페이스
-  - `api/mockClient.ts`, `api/liveClient.ts`
-  - `api/index.ts`에서 `VITE_API_MODE` 기반 선택
+  - `api/client.ts` 인터페이스(`ApiClient`)
+  - `api/mockClient.ts`(`mockApiClient`), `api/liveClient.ts`(`createLiveApiClient(baseUrl)`)
+  - `api/index.ts`에서 `VITE_API_MODE` 기반 선택 후 `apiClient` 싱글턴으로 내보냄
   - live 모드 인증 복구:
     - 모든 API 요청은 `credentials: 'include'`를 사용합니다.
-    - `401` 응답 시 `POST /api/v1/auth/refresh`를 1회 호출해 accessToken 재발급을 시도합니다.
+    - `401` 응답 시 `POST /api/v1/auth/refresh`를 1회 호출해 accessToken 재발급을 시도합니다 (본문을 안전하게 재전송할 수 없으면 재시도하지 않음).
     - 재발급 성공 시 원요청을 1회 재시도합니다.
-    - 재발급 실패 시 클라이언트 인증/캐시 상태를 정리하고 `/landing`으로 이동합니다.
-- 설문 결과 페이지(`/survey/result`)와 전체 결과 페이지(`/results/:id`)는 공통 화면 컴포넌트(`ResultOverviewScreen`)를 사용합니다.
-  - 미리보기는 상단 데이터만 실제값을 사용하고, 하단 섹션은 블러 게이트를 통해 로그인 전 노출을 제한합니다.
+    - 재발급 실패 시 `auth:session-expired` 이벤트로 인증/캐시 상태를 정리하고 `/landing`으로 이동합니다.
+- 설문 결과 페이지(`/survey/result`)와 전체 결과 페이지(`/results/:id`)는 공통 결과 화면 컴포넌트를 공유합니다.
+  - 미리보기는 `resultOverviewViewModel`의 `fromPreviewResult`로 렌더링하며, 상단 데이터만 실제값을 사용하고 하단 섹션은 블러 게이트로 로그인 전 노출을 제한합니다.
+  - 미리보기 화면에서 로그인하면 `useLoginAndPromote`의 `promoteToFullResult`로 전체 결과로 승격합니다.
   - 결과/미리보기 화면은 `MobilePage`의 `max-w-[390px]` 기준 폭을 따릅니다.
-- 마이페이지는 상태 기반 렌더링을 사용합니다.
+- 마이페이지는 상태 기반 렌더링을 사용합니다 (판단 기준은 마이페이지 API 응답).
   - `diagnosis_routine`: 진단 결과 O + 루틴 저장 O
   - `diagnosis_only`: 진단 결과 O + 루틴 저장 X
   - `empty`: 진단 결과 X + 루틴 저장 X
-  - 미리보기는 진단 이력 3건, 루틴 1건만 노출합니다.
+  - 미리보기는 진단 이력 최대 3건(`MAX_VISIBLE_HISTORY_COUNT`), 루틴 1건만 노출합니다.
   - `전체보기`는 각각 `/mypage/results`, `/mypage/routines` 페이지로 이동합니다.
 
 ## Repository Layout
 
 - `src/main.tsx`: 앱 엔트리
-- `src/app/`: 라우팅, 레이아웃, 보호 라우트, 경로 상수
-- `src/pages/`: URL 단위 페이지 컴포넌트
-- `src/stores/`: zustand 스토어
+- `src/app/`: 라우팅, 레이아웃, 보호 라우트, 경로 상수(`routes.ts`)
+- `src/pages/`: URL 단위 페이지 컴포넌트 (`survey/`, `results/`, `product/`, `auth/`, `home/` 등). 단계형 설문 UI는 `src/pages/survey/steps/SurveyStepsPage.tsx`
+- `src/stores/`: zustand 스토어 (`authStore`, `surveyProgressStore`, `surveyResultStore`)
 - `src/api/`: API 클라이언트/타입/에러
+- `src/auth/`: OAuth 시작 URL, 로그인 인텐트, 세션 이벤트
+- `src/domain/`: 설문 코드(`surveyCodes.ts`)·라벨 설정(`surveyConfig.ts`)
+- `src/constants/`: 상수 (`storage.ts`, `survey.ts` 등)
+- `src/components/`: 공통 UI 컴포넌트
+- `src/hooks/`, `src/lib/`: 커스텀 훅, 유틸(`env.ts`, `queryClient.ts` 등)
+- `src/content/`: 약관·개인정보 처리방침 마크다운
 - `src/types/`: 도메인 타입
-- `src/SurveyPage.tsx`: 단계형 설문 UI
 - `src/index.css`: Tailwind import 및 테마 토큰
 
 ## Setup Commands
 
 사전 요구사항:
 
-- Node.js LTS (권장: 최신 LTS)
+- Node.js LTS (저장소에 `engines`·`.nvmrc`로 버전이 고정돼 있지 않으므로 팀 환경 버전에 맞춰 사용)
 - npm (이 프로젝트는 `package-lock.json` 기반 npm 사용)
 
 초기 설정 및 실행:
@@ -76,6 +89,7 @@
 - 프로덕션 빌드: `npm run build`
 - 빌드 결과 미리보기: `npm run preview`
 - 린트 실행: `npm run lint`
+- 포맷팅: `npm run format` / 포맷 검사: `npm run format:check`
 
 ## Development Workflow
 
@@ -93,7 +107,6 @@
 - 패키지 매니저는 npm만 사용합니다.
 - 빌드 산출물(`dist/`)은 직접 수정하지 않습니다.
 - 주요 로직 변경 시 `README.md`와 본 문서(`AGENTS.md`)를 함께 갱신합니다.
-- `AGENTS.md`를 수정했다면 호환 파일 `AGENT.md`도 동일 내용으로 동기화합니다.
 
 ## Testing Instructions
 
@@ -125,21 +138,21 @@
 - 불필요한 미사용 변수/파라미터를 남기지 않습니다.
 - import 순서는 외부 패키지 → 로컬 모듈을 유지합니다.
 - 라우트 문자열 하드코딩을 피하고 `src/app/routes.ts`를 사용합니다.
-- 설문 제출 payload는 질문 순서가 아닌 `questionId` 기준으로 생성합니다.
+- 설문 제출 payload는 질문 배열 순서가 아닌 각 문항의 `step` 값 기준으로 생성합니다.
 - 에러 처리는 `ApiError`로 정규화합니다.
 
 ## Build and Deployment
 
 - 빌드 명령: `npm run build`
 - 빌드 출력 디렉터리: `dist/`
-- 현재 저장소에는 배포 스크립트/플랫폼별 배포 설정 파일이 없습니다.
-- CI/CD 워크플로우(`.github/workflows`)가 없어, 로컬 검증(`lint`, `build`)이 기본 품질 게이트입니다.
+- 배포는 Vercel을 사용합니다 (`vercel.json`, `.vercel/`).
+- CI/CD 워크플로우(`.github/workflows`)는 없어, 로컬 검증(`lint`, `build`)이 기본 품질 게이트입니다.
 
 ## Security Considerations
 
 - 비밀값(토큰/키/인증정보)은 코드나 저장소에 커밋하지 않습니다.
-- 환경변수를 도입할 경우 Vite 규칙(`VITE_` 접두사)을 따릅니다.
-- 로컬 저장소에는 설문 상태/모의 인증 정보만 저장합니다.
+- 환경변수는 Vite 규칙(`VITE_` 접두사)을 따릅니다.
+- 브라우저 저장소에는 인증 세션/설문 상태만 보관합니다.
 
 ## Pull Request Guidelines
 
@@ -156,12 +169,12 @@
   1. `node_modules` 상태 확인
   2. `npm install` 재실행
 - 타입 빌드 캐시 이슈 시:
-  - `node_modules/.tmp` 캐시 확인 후 `npm run build` 재실행
+  - `npm run build` 재실행
 - API 연동 점검 시:
-  - `VITE_API_MODE`, `VITE_API_BASE_URL` 값 확인
+  - `VITE_API_MODE`, `VITE_API_BASE_URL`(필요 시 `VITE_OAUTH_BASE_URL`) 값 확인
 - 마이페이지 상태가 맞지 않을 때:
-  - 결과 조회 `401/404` 발생 시 `latestResultId`와 `savedRoutineKey`가 초기화되는지 확인
-  - 루틴 조회 `401/404` 발생 시 `savedRoutineKey`만 초기화되는지 확인
+  - 마이페이지 API 응답(`skinResults`, `routine`)이 기대대로 오는지 확인
+  - 결과 조회 `401/404` 시 인증/캐시 상태가 정리되는지 확인
 
 ## Monorepo Notes
 
