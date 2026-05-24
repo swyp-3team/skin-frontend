@@ -94,7 +94,6 @@ function RoutineDetailPage() {
         queryClient.invalidateQueries({ queryKey: queryKeys.routineListPreview() }),
         queryClient.invalidateQueries({ queryKey: queryKeys.myPage() }),
       ])
-      notify.success('루틴 이름을 변경했습니다.')
     },
     onError: (updateError) => {
       notify.error(updateError.message || '루틴 이름 변경에 실패했습니다.')
