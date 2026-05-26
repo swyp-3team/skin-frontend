@@ -251,10 +251,11 @@ function ResultRoutinePage() {
     setIsSaveSheetOpen(true)
   }
 
-  async function fetchRoutineRecommendation() {
+  async function fetchRoutineRecommendation(forceNetwork = false) {
     return queryClient.fetchQuery({
       queryKey: queryKeys.routineRecommendation(resultId),
       queryFn: () => apiClient.getRoutineRecommendation(resultId),
+      staleTime: forceNetwork ? 0 : undefined,
     })
   }
 
@@ -268,7 +269,7 @@ function ResultRoutinePage() {
     try {
       let nextPreviewToken = previewToken
       if (!nextPreviewToken) {
-        const refreshed = await fetchRoutineRecommendation()
+        const refreshed = await fetchRoutineRecommendation(true)
         if (refreshed.alreadySaved) {
           setIsSaveSheetOpen(false)
           return
@@ -290,7 +291,7 @@ function ResultRoutinePage() {
       ])
       setIsSaveSheetOpen(false)
       showRoutineSavedToast()
-      void fetchRoutineRecommendation()
+      void fetchRoutineRecommendation(true)
         .catch(() => {})
         .finally(() => {
           setIsRoutineSavedOptimistic(false)
