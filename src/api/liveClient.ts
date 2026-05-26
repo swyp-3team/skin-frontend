@@ -787,13 +787,16 @@ function normalizeRoutineRecommendationWithToken(payload: unknown): RoutineRecom
   if (!isRecord(payload)) {
     throw new ApiError('Routine recommendation with token response is invalid.', 500, 'INVALID_ROUTINE_REC_WITH_TOKEN', payload)
   }
-  if (typeof payload.previewToken !== 'string') {
-    throw new ApiError('previewToken is invalid.', 500, 'INVALID_ROUTINE_REC_PREVIEW_TOKEN', payload)
-  }
+
+  const normalizedPreviewToken =
+    typeof payload.previewToken === 'string' ? payload.previewToken : payload.previewToken === null ? null : null
+
+  const normalizedAlreadySaved = typeof payload.alreadySaved === 'boolean' ? payload.alreadySaved : false
 
   return {
     recommendation: normalizeRoutineRecommendation(payload.recommendation),
-    previewToken: payload.previewToken,
+    previewToken: normalizedPreviewToken,
+    alreadySaved: normalizedAlreadySaved,
   }
 }
 

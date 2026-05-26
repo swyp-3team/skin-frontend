@@ -171,7 +171,8 @@ export interface RoutineRecommendation {
 
 export interface RoutineRecommendationWithToken {
   recommendation: RoutineRecommendation
-  previewToken: string
+  previewToken: string | null
+  alreadySaved: boolean
 }
 
 export interface RoutineDetailResponse {

@@ -564,6 +564,11 @@ function createRoutineRecommendationWithToken(stored: StoredResult): RoutineReco
     { productId: 208, productCategory: 'CREAM', routineStepCategory: 'MOISTURIZER' },
   ]
 
+  const existingRoutine = [...mockRoutineDb.values()]
+    .sort((a, b) => b.routineGroupId - a.routineGroupId)
+    .find((routine) => routine.resultId === stored.detail.resultId)
+  const alreadySaved = existingRoutine != null
+
   return {
     recommendation: {
       resultId: stored.detail.resultId,
@@ -573,7 +578,8 @@ function createRoutineRecommendationWithToken(stored: StoredResult): RoutineReco
       amRoutine: buildRoutineSection(amSpecs, 'AM'),
       pmRoutine: buildRoutineSection(pmSpecs, 'PM'),
     },
-    previewToken: `mock-routine-token-${stored.detail.resultId}`,
+    previewToken: alreadySaved ? null : `mock-routine-token-${stored.detail.resultId}`,
+    alreadySaved,
   }
 }
 

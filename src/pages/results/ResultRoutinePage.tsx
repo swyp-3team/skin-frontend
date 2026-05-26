@@ -90,8 +90,7 @@ function ResultRoutinePage() {
   const [slideDirection, setSlideDirection] = useState(0)
   const [isSaveSheetOpen, setIsSaveSheetOpen] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
-  const [savedResultId, setSavedResultId] = useState<number | null>(null)
-  const [savedRoutineName, setSavedRoutineName] = useState<string>('')
+  const [isRoutineSavedOptimistic, setIsRoutineSavedOptimistic] = useState(false)
   const { data: header, isLoading: isHeaderLoading, error: headerError } = useProfileHeader(resultId)
   const { data: routineData, isLoading: isRoutineLoading, error: routineError } = useRoutineRecommendation(resultId)
 
@@ -101,6 +100,7 @@ function ResultRoutinePage() {
   const loadDelayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const error = headerError ?? routineError
   const recommendation = routineData?.recommendation ?? null
+  const alreadySavedFromApi = routineData?.alreadySaved ?? false
   const previewToken = routineData?.previewToken ?? null
   const selectedRoutine = recommendation ? (activeTabId === 'am' ? recommendation.amRoutine : recommendation.pmRoutine) : null
   const products = selectedRoutine ? selectedRoutine.products : []
@@ -223,8 +223,7 @@ function ResultRoutinePage() {
   }
 
   const showLoading = isLoading || isDelaying
-  const skinResultId = recommendation?.resultId ?? 0
-  const isRoutineSaved = savedResultId === skinResultId
+  const isRoutineSaved = alreadySavedFromApi || isRoutineSavedOptimistic
 
   function handleMoveToMyPage() {
     notify.dismiss(ROUTINE_SAVED_TOAST_ID)
@@ -252,17 +251,38 @@ function ResultRoutinePage() {
     setIsSaveSheetOpen(true)
   }
 
+  async function fetchRoutineRecommendation() {
+    return queryClient.fetchQuery({
+      queryKey: queryKeys.routineRecommendation(resultId),
+      queryFn: () => apiClient.getRoutineRecommendation(resultId),
+    })
+  }
+
   async function handleSaveRoutineSubmit(routineName: string) {
     const trimmedRoutineName = routineName.trim()
-    if (trimmedRoutineName.length === 0 || !previewToken || isSaving) {
+    if (trimmedRoutineName.length === 0 || isSaving) {
       return
     }
 
     setIsSaving(true)
     try {
-      const savedRoutine = await apiClient.saveRoutine({ title: trimmedRoutineName, previewToken })
-      setSavedResultId(skinResultId)
-      setSavedRoutineName(savedRoutine.title.trim() || trimmedRoutineName)
+      let nextPreviewToken = previewToken
+      if (!nextPreviewToken) {
+        const refreshed = await fetchRoutineRecommendation()
+        if (refreshed.alreadySaved) {
+          setIsSaveSheetOpen(false)
+          return
+        }
+
+        nextPreviewToken = refreshed.previewToken
+        if (!nextPreviewToken) {
+          notify.error('루틴 저장 정보를 다시 불러오지 못했습니다. 잠시 후 다시 시도해주세요.')
+          return
+        }
+      }
+
+      await apiClient.saveRoutine({ title: trimmedRoutineName, previewToken: nextPreviewToken })
+      setIsRoutineSavedOptimistic(true)
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.routineListPreview() }),
         queryClient.invalidateQueries({ queryKey: queryKeys.routineListInfinite() }),
@@ -270,6 +290,11 @@ function ResultRoutinePage() {
       ])
       setIsSaveSheetOpen(false)
       showRoutineSavedToast()
+      void fetchRoutineRecommendation()
+        .catch(() => {})
+        .finally(() => {
+          setIsRoutineSavedOptimistic(false)
+        })
     } finally {
       setIsSaving(false)
     }
@@ -385,7 +410,7 @@ function ResultRoutinePage() {
 
           <RoutineNameBottomSheet
             closeAriaLabel="루틴 저장 시트 닫기"
-            initialValue={savedResultId === skinResultId ? savedRoutineName : ''}
+            initialValue=""
             isSubmitting={isSaving}
             onOpenChange={handleSaveSheetOpenChange}
             onSubmit={handleSaveRoutineSubmit}
