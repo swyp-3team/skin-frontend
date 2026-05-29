@@ -18,6 +18,7 @@ interface RoutineNameBottomSheetProps {
   maxLength?: number
   isSubmitting?: boolean
   submitDisabled?: boolean
+  requireChanged?: boolean
 }
 
 interface RoutineNameBottomSheetFormProps {
@@ -28,6 +29,7 @@ interface RoutineNameBottomSheetFormProps {
   maxLength: number
   isSubmitting: boolean
   submitDisabled: boolean
+  requireChanged: boolean
   onSubmit: (routineName: string) => void | Promise<void>
 }
 
@@ -39,6 +41,7 @@ function RoutineNameBottomSheetForm({
   maxLength,
   isSubmitting,
   submitDisabled,
+  requireChanged,
   onSubmit,
 }: RoutineNameBottomSheetFormProps) {
   const [draft, setDraft] = useState(initialValue)
@@ -46,9 +49,15 @@ function RoutineNameBottomSheetForm({
 
   const routineNameLength = draft.length
   const trimmedRoutineName = draft.trim()
+  const trimmedInitialRoutineName = initialValue.trim()
   const isTyped = routineNameLength > 0
   const isFocusState = !isTyped && isFocused
-  const canSubmit = trimmedRoutineName.length > 0 && !isSubmitting && !submitDisabled
+  const isChangedFromInitial = trimmedRoutineName !== trimmedInitialRoutineName
+  const canSubmit =
+    trimmedRoutineName.length > 0 &&
+    !isSubmitting &&
+    !submitDisabled &&
+    (!requireChanged || isChangedFromInitial)
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -122,6 +131,7 @@ function RoutineNameBottomSheet({
   maxLength = 10,
   isSubmitting = false,
   submitDisabled = false,
+  requireChanged = false,
 }: RoutineNameBottomSheetProps) {
   return (
     <RoutineBottomSheetFrame
@@ -138,6 +148,7 @@ function RoutineNameBottomSheet({
           maxLength={maxLength}
           onSubmit={onSubmit}
           placeholder={placeholder}
+          requireChanged={requireChanged}
           submitDisabled={submitDisabled}
           submitLabel={submitLabel}
           submittingLabel={submittingLabel}

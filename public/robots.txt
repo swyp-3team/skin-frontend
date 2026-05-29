@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+
+# Auth/personalized pages
+Disallow: /oauth2/callback
+Disallow: /mypage/
+Disallow: /results/
+
+# Excluded from search exposure policy for now
+Disallow: /survey
+Disallow: /products/
+
+Sitemap: https://layerd.co.kr/sitemap.xml

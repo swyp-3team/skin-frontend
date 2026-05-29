@@ -297,6 +297,7 @@ function RoutineDetailPage() {
         onOpenChange={setIsRenameSheetOpen}
         onSubmit={handleRenameRoutineSubmit}
         open={isRenameSheetOpen}
+        requireChanged
         title="루틴 이름 변경"
       />
 
